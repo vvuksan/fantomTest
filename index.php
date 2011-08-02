@@ -34,6 +34,8 @@ function getTimings() {
     </ul>
 
 <div id="tab-waterfall">
+<div id="large_screenshot">
+</div>
 <div id=header>
 <form id="query_form">
 URL <input name="url" size=60>
@@ -47,6 +49,12 @@ URL <input name="url" size=60>
 $(function(){
     $("#tabs").tabs();
     $("#query_button").button();
+
+    $('#large_screenshot').dialog({
+      title: "Large Picture",
+      autoOpen: false,
+      width: 800 });   
+
 });
 </script>
 </body>
