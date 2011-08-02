@@ -116,10 +116,11 @@ function get_har($url) {
     $tmpfname = $tmpfname1 . ".png";
     rename($tmpfname1, $tmpfname);
     
-    $command = "export DISPLAY=:1; " . $conf['phantomjs_exec'] . " " . $url . " " . $tmpfname;
-    error_log($command);
+    $command = "env DISPLAY=:1 " . $conf['phantomjs_exec'] . " " . $url . " " . $tmpfname;
+    if ( $conf['debug'] == 1 )
+      error_log($command);
     exec($command, $output_array, $ret_value);
-    
+
     # For some reason you may get DEBUG statements in the output e.g.  ** (:32751): DEBUG: NP_Initialize\
     # Let's get rid of them
     foreach ( $output_array as $key => $line ) {
@@ -141,6 +142,8 @@ function get_har($url) {
         unlink($tmpfname);
         
         return array($output, $imgbinary);
+    } else {
+        return array("Error", false);
     }
 
 }
