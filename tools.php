@@ -84,8 +84,17 @@ function generate_waterfall($har) {
         $white_space = ($time_offset / $total_time) * 100;
         $progress_bar = ($request["duration"] / $total_time) * 100;
         
-        $haroutput .= "\n<tr><td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a></td>' . '
-        <td>' . $request["resp_code"] . '</td>
+        // Check what the HTTP response code is. If it's 300 it's a redirect
+        // Let's label row appropriately.
+        if ( $request["resp_code"] >= 300 && $request["resp_code"] < 400 ) {
+            $urlclass = "redirect";
+        } else if ( $request["resp_code"] >= 400 ) {
+            $urlclass = "error";
+        } else
+            $urlclass = "normal";
+        
+        $haroutput .= "\n<tr><td class='" . $urlclass . "'><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a></td>' . "
+        <td class='" . $urlclass . "'>" . $request["resp_code"] . '</td>
         <td>' . $request["duration"] . '</td>
         <td>' . $request["size"] . '</td>
         <td><span class="bar">' .

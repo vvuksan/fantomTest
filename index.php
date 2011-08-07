@@ -2,22 +2,9 @@
 <head>
 <title>Page performance</title>
 <link type="text/css" href="css/flick/jquery-ui-1.8.14.custom.css" rel="stylesheet" />
+<link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
 <script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui-1.8.14.custom.min.js"></script>
-<style>
-body{ font: 62.5% "Trebuchet MS", sans-serif; margin: 10px;}
-.bar {
-  width: 600px;
-  background: white;
-  display: block;
-}
-.fill {
-  float: left;
-}
-.harview {
-  font-size: 12px;
-}
-</style>
 <script>
 function getTimings() {
     $("#results").html('<img src="img/spinner.gif">');
