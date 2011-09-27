@@ -29,7 +29,7 @@ function getTimings() {
 <?php
 require_once('./conf.php');
 if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
-    print "<select name='site_id'><option value='-1'>Local</option>";
+    print "Test from <select name='site_id'><option value='-1'>Local</option>";
     foreach ( $conf['remotes'] as $index => $remote ) {
       print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
     }
