@@ -7,11 +7,14 @@ function validate_url($url) {
     if ( !preg_match("/^http/", $url) )
         $url = "http://" . $url;
  
-    return $url;
+    $validated_url = filter_var($url, FILTER_VALIDATE_URL);
+    return $validated_url;
     
 }
 
-
+//////////////////////////////////////////////////////////////////////////////
+// Generate waterfall chart from HAR (HTTP Archive file)
+//////////////////////////////////////////////////////////////////////////////
 function generate_waterfall($har) {
 
     # This variable will keep the start time of the whole request chain.
@@ -113,11 +116,15 @@ function generate_waterfall($har) {
 
 } // end of function generate_waterfall()
 
-
-function get_har($url) {
+//////////////////////////////////////////////////////////////////////////////
+// Use Phantom JS to produce a JSON containing the HTTP archive and the
+// Image
+//////////////////////////////////////////////////////////////////////////////
+function get_har_using_phantomjs($url) {
 
     global $conf;
     
+    ///////////////////////////////////////////////////////////////////////////
     // Can't supply suffix for the temp file therefore we'll first create the
     // tempname then rename it with .png extension since that is what PhantomJS
     // expects
@@ -125,13 +132,14 @@ function get_har($url) {
     $tmpfname = $tmpfname1 . ".png";
     rename($tmpfname1, $tmpfname);
     
-    $command = "env DISPLAY=:1 " . $conf['phantomjs_exec'] . " " . $url . " " . $tmpfname;
+    // Command to execute Phantom
+    $command = "env DISPLAY=" . $conf['display'] . " " . $conf['phantomjs_exec'] . " " . $url . " " . $tmpfname;
     if ( $conf['debug'] == 1 )
       error_log($command);
     exec($command, $output_array, $ret_value);
 
-    # For some reason you may get DEBUG statements in the output e.g.  ** (:32751): DEBUG: NP_Initialize\
-    # Let's get rid of them
+    // For some reason you may get DEBUG statements in the output e.g.  ** (:32751): DEBUG: NP_Initialize\
+    // Let's get rid of them. Look for first occurence of {
     foreach ( $output_array as $key => $line ) {
         if ( preg_match("/{/", $line) ) {
             break;
@@ -140,19 +148,37 @@ function get_har($url) {
 
     }
 
+    ////////////////////////////////////////////////////////////////////////////
     // Phantom JS exited normally. It doesn't mean URL properly loaded just
     // that Phantom didn't fail for other reasons ie. can't execute
+    ////////////////////////////////////////////////////////////////////////////
     if ( $ret_value == 0 ) {
         $output = join("\n", $output_array);
-        if ( filesize($tmpfname) != 0 )
-          $imgbinary = base64_encode(fread(fopen($tmpfname, "r"), filesize($tmpfname)));
-        else
-          $imgbinary = false;
-        unlink($tmpfname);
+        $har = json_decode($output, TRUE);
         
-        return array($output, $imgbinary);
+        // If har_array is null JSON could not be parsed
+        if ( $har === NULL ) {
+            
+           $out = array( "success" => 0, "error_message" => "PhantomJS ran successfully however output couldn't be parsed.");
+            
+        } else {
+            
+            if ( filesize($tmpfname) != 0 )
+              $imgbinary = base64_encode(fread(fopen($tmpfname, "r"), filesize($tmpfname)));
+            else
+              $imgbinary = false;
+            unlink($tmpfname);
+
+            $out = array ( "har" => $har, "screenshot" => $imgbinary, "success" => 1 );
+            
+        }
+    
+        // If har_array is null JSON could not be parsed        
+        return $out;
+        
     } else {
-        return array("Error", false);
+        
+        return array( "success" => 0, "error_message" => "PhantomJS exited abnormally. Perhaps Xvfb is not running. Please check your webserver error log" );
     }
 
 }

@@ -126,15 +126,15 @@ if (phantom.args.length === 0) {
 
     page.open(page.address, function (status) {
         var har;
-        if (status !== 'success') {
-            console.log('FAIL to load the address');
-        } else {
+//        if (status !== 'success') {
+//            console.log('FAIL to load the address');
+//        } else {
             page.title = page.evaluate(function () {
                 return document.title;
             });
             har = createHAR(page.address, page.title, page.startTime, page.resources);
             console.log(JSON.stringify(har, undefined, 4));
-        }
+//        }
  	page.render(output);
 	
         phantom.exit();
