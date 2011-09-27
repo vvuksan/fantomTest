@@ -37,6 +37,16 @@ and phantomjs binary is in /opt/phantomjs/phantomjs you would put following valu
 * Now open up fantomTest in your browser.
 
 
+Configuration
+=============
+
+If you install fantomtest on multiple nodes ie. say you have servers in Europe, USA you can access stats
+from a single interface by configuring URLs in conf.php. Simply add following to your conf file. 
+
+$conf['remotes'][] = array("name" => "US", "provider" => "http_get", "base_url" => "http://myurl.usa/fantomtest/");
+
+to add additional ones simply repeat the line with the new name and URL.
+
 License
 =======
 Apache

@@ -24,7 +24,18 @@ function getTimings() {
 <div id="large_screenshot">
 </div>
 <div id=header>
+
 <form id="query_form">
+<?php
+require_once('./conf.php');
+if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
+    print "<select name='site_id'><option value='-1'>Local</option>";
+    foreach ( $conf['remotes'] as $index => $remote ) {
+      print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
+    }
+    print "</select> ";
+}
+?>
 URL <input name="url" size=60>
 <button id="query_button" onclick="getTimings(); return false;">Get timings</button>
 </form>
