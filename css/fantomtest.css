@@ -1,0 +1,24 @@
+body{
+  font: 62.5% "Trebuchet MS",sans-serif;
+  margin: 10px;
+}
+.bar {
+  width: 600px;
+  background: white;
+  display: block;
+}
+.fill {
+  float: left;
+}
+.harview {
+  font-size: 12px;
+}
+.normal {
+  background: white;
+}
+.redirect {
+  background: #FFFC86;
+}
+.error {
+  background: #FF9786;
+}
