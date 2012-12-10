@@ -45,9 +45,22 @@ function generate_waterfall($har) {
         # Find out when the last request ended
         if ( $end_time > $max_end_time )
             $max_end_time = $end_time;
+
+        foreach ( $request['request']['headers'] as $index => $header ) {
+            $headers[] = $header['name'] . ": " . $header['value'];
+        }
+        $req_headers = "<h3>Request Headers: </h3><pre>" .  join("\n", $headers)  ."</pre>";
+        
+        $resp_headers = "<h3>Response Headers: </h3><pre>";
+        foreach ( $request['response']['headers'] as $index => $header ) {
+            $resp_headers .= $header['name'] . ": " . $header['value'] . "\n";
+        }
+        $resp_headers .="</pre>";
+        
     
         $requests[] = array("url" => $url, "start_time" => $start_time,
-            "duration" => $request_duration, "size" => $resp_size, "resp_code" => $resp_code );
+            "duration" => $request_duration, "size" => $resp_size, "resp_code" => $resp_code,
+            "req_headers" => $req_headers, "resp_headers" => $resp_headers );
         
     }
 
@@ -65,6 +78,7 @@ function generate_waterfall($har) {
     
     
     $haroutput = '
+    <button id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
     <table class="harview">
     <tr>
     <td colspan=5 align=center>
@@ -87,17 +101,11 @@ function generate_waterfall($har) {
         $white_space = ($time_offset / $total_time) * 100;
         $progress_bar = ($request["duration"] / $total_time) * 100;
         
-        // Check what the HTTP response code is. If it's 300 it's a redirect
-        // Let's label row appropriately.
-        if ( $request["resp_code"] >= 300 && $request["resp_code"] < 400 ) {
-            $urlclass = "redirect";
-        } else if ( $request["resp_code"] >= 400 ) {
-            $urlclass = "error";
-        } else
-            $urlclass = "normal";
-        
-        $haroutput .= "\n<tr><td class='" . $urlclass . "'><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a></td>' . "
-        <td class='" . $urlclass . "'>" . $request["resp_code"] . '</td>
+        $haroutput .= "\n<tr><td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a>
+        <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
+        <div class="http_headers" style="display: none;" id="item_' . $key .'">
+        <br />' .  $request['req_headers'] . "<br />" .  $request['resp_headers'] .  '</div></td>' . '
+        <td>' . $request["resp_code"] . '</td>
         <td>' . $request["duration"] . '</td>
         <td>' . $request["size"] . '</td>
         <td><span class="bar">' .
@@ -120,7 +128,7 @@ function generate_waterfall($har) {
 // Use Phantom JS to produce a JSON containing the HTTP archive and the
 // Image
 //////////////////////////////////////////////////////////////////////////////
-function get_har_using_phantomjs($url) {
+function get_har_using_phantomjs($url, $include_image = true) {
 
     global $conf;
     
@@ -132,8 +140,7 @@ function get_har_using_phantomjs($url) {
     $tmpfname = $tmpfname1 . ".png";
     rename($tmpfname1, $tmpfname);
     
-    // Command to execute Phantom
-    $command = "env DISPLAY=" . $conf['display'] . " " . $conf['phantomjs_exec'] . " " . $url . " " . $tmpfname;
+    $command = $conf['phantomjs_exec'] . " '" . $url . "' " . $tmpfname;
     if ( $conf['debug'] == 1 )
       error_log($command);
     exec($command, $output_array, $ret_value);
@@ -163,7 +170,7 @@ function get_har_using_phantomjs($url) {
             
         } else {
             
-            if ( filesize($tmpfname) != 0 )
+            if ( filesize($tmpfname) != 0 && $include_image )
               $imgbinary = base64_encode(fread(fopen($tmpfname, "r"), filesize($tmpfname)));
             else
               $imgbinary = false;

@@ -22,3 +22,7 @@ body{
 .error {
   background: #FF9786;
 }
+
+.http_headers {
+  font-size: 8px;  
+}

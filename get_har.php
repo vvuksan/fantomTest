@@ -15,8 +15,10 @@ if ( isset($_GET['url'])) {
         exit(1);
     }
     
+    isset($_REQUEST['include_image']) && $_REQUEST['include_image'] == 1 ?  $include_image = true : $include_image = false;
+    
     // Runs command locally
-    $results = get_har_using_phantomjs($url);
+    $results = get_har_using_phantomjs($url, $include_image);
 
     print json_encode($results);  
 }
