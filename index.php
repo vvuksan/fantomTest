@@ -36,8 +36,10 @@ if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
     print "</select> ";
 }
 ?>
-URL <input name="url" size=60>
+URL <input name="url" size=100>
 <button id="query_button" onclick="getTimings(); return false;">Get timings</button>
+<br />
+<input type="checkbox" name="include_image" checked=true>Include page screenshot<br>
 </form>
 </div>
 <div id=results>

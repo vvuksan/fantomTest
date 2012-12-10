@@ -29,10 +29,12 @@ if ( isset($_GET['url'])) {
         $site_id = $_GET['site_id'];
         # Make sure Remote URL doesn't have any trailing slashes
         $base_url = rtrim($conf['remotes'][$site_id]['base_url'], '/');
-        $json = file_get_contents($base_url . "/get_har.php?url=" . $url);
+	isset($_REQUEST['include_image']) ? $include_image = 1 : $include_image = 0;
+        $json = file_get_contents($base_url . "/get_har.php?url=" . $url . "&include_image=" . $include_image );
         $results = json_decode($json, TRUE);
     } else {
-        $results = get_har_using_phantomjs($url);        
+	isset($_REQUEST['include_image']) ? $include_image = true : $include_image = false;
+        $results = get_har_using_phantomjs($url, $include_image);        
     }
     
     // Check whether phantomjs succeeded
@@ -49,7 +51,7 @@ if ( isset($_GET['url'])) {
     }
 
     // Include a screenshot if it exists
-    if ( isset( $results['screenshot']) ) {
+    if ( isset( $results['screenshot']) && isset($_REQUEST['include_image']) ) {
         print "<script>
         var largeimage='" . $results['screenshot'] . "';
         </script>";
