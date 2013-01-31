@@ -7,6 +7,7 @@
 <script type="text/javascript" src="js/jquery-ui-1.8.14.custom.min.js"></script>
 <script>
 function getTimings() {
+    window.location.hash = $("#checked_url").val();
     $("#results").html('<img src="img/spinner.gif">');
     $.get('waterfall.php', $("#query_form").serialize(), function(data) {
 	$("#results").html(data);
@@ -36,10 +37,10 @@ if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
     print "</select> ";
 }
 ?>
-URL <input name="url" size=100>
+URL <input id="checked_url" name="url" size=100>
 <button id="query_button" onclick="getTimings(); return false;">Get timings</button>
 <br />
-<input type="checkbox" name="include_image" checked=true>Include page screenshot<br>
+<input type="checkbox" name="include_image">Include page screenshot<br>
 </form>
 </div>
 <div id=results>
@@ -56,6 +57,11 @@ $(function(){
       width: 800 });   
 
 });
+var myhash = window.location.hash;
+if ( myhash != "" ) {
+  $("#checked_url").val(myhash.replace("#",""));
+  getTimings();
+}
 </script>
 </body>
 </html>

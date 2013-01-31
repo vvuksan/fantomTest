@@ -47,20 +47,17 @@ function generate_waterfall($har) {
             $max_end_time = $end_time;
 
         foreach ( $request['request']['headers'] as $index => $header ) {
-            $headers[] = $header['name'] . ": " . $header['value'];
-        }
-        $req_headers = "<h3>Request Headers: </h3><pre>" .  join("\n", $headers)  ."</pre>";
-        
-        $resp_headers = "<h3>Response Headers: </h3><pre>";
+            $req_headers[$header['name']] = $header['value'];
+        }        
         foreach ( $request['response']['headers'] as $index => $header ) {
-            $resp_headers .= $header['name'] . ": " . $header['value'] . "\n";
+            $resp_headers[$header['name']] = $header['value'];
         }
-        $resp_headers .="</pre>";
-        
-    
+            
         $requests[] = array("url" => $url, "start_time" => $start_time,
             "duration" => $request_duration, "size" => $resp_size, "resp_code" => $resp_code,
             "req_headers" => $req_headers, "resp_headers" => $resp_headers );
+
+        unset($req_headers, $resp_headers);
         
     }
 
@@ -86,7 +83,10 @@ function generate_waterfall($har) {
     </td>
     </tr>
         <tr>
-            <th>URL</th>
+            <th>#</th>
+            <th width=50%>URL</th>
+            <th>Server</th>
+            <th>Hit?</th>
             <th>Resp Code</th>
             <th>Duration</th>
             <th>Size (bytes)</th>
@@ -101,11 +101,20 @@ function generate_waterfall($har) {
         $white_space = ($time_offset / $total_time) * 100;
         $progress_bar = ($request["duration"] / $total_time) * 100;
         
-        $haroutput .= "\n<tr><td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a>
+        $haroutput .= "\n<tr><td>" . $key
+        . "</td><td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a>
         <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
-        <div class="http_headers" style="display: none;" id="item_' . $key .'">
-        <br />' .  $request['req_headers'] . "<br />" .  $request['resp_headers'] .  '</div></td>' . '
-        <td>' . $request["resp_code"] . '</td>
+        <div class="http_headers" style="display: none;" id="item_' . $key .'">';
+        foreach ( $request['resp_headers'] as $key => $value ) {
+            $haroutput .= "<b>" . $key . "</b>: " . $value . "<br />";
+        }
+
+        isset($request['resp_headers']['X-Cache']) ? $hit_or_miss = $request['resp_headers']['X-Cache'] : $hit_or_miss = "UNK";
+        isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
+
+        $haroutput .= '<td>' . $server . '</td>' .
+        '<td class="x-cache-' . $hit_or_miss . '">' . $hit_or_miss . '</td>' .
+        '<td>' . $request["resp_code"] . '</td>
         <td>' . $request["duration"] . '</td>
         <td>' . $request["size"] . '</td>
         <td><span class="bar">' .
@@ -128,7 +137,7 @@ function generate_waterfall($har) {
 // Use Phantom JS to produce a JSON containing the HTTP archive and the
 // Image
 //////////////////////////////////////////////////////////////////////////////
-function get_har_using_phantomjs($url, $include_image = true) {
+function get_har_using_phantomjs($url, $include_image = true, $for_harviewer = false) {
 
     global $conf;
     
@@ -148,7 +157,7 @@ function get_har_using_phantomjs($url, $include_image = true) {
     // For some reason you may get DEBUG statements in the output e.g.  ** (:32751): DEBUG: NP_Initialize\
     // Let's get rid of them. Look for first occurence of {
     foreach ( $output_array as $key => $line ) {
-        if ( preg_match("/{/", $line) ) {
+        if ( preg_match("/^{/", $line) ) {
             break;
         } else
             $output_array[$key] = "";
@@ -162,6 +171,11 @@ function get_har_using_phantomjs($url, $include_image = true) {
     if ( $ret_value == 0 ) {
         $output = join("\n", $output_array);
         $har = json_decode($output, TRUE);
+        
+        # If it's for the har viewer just output 
+        if ( $for_harviewer ) {
+	  return $har;
+        }
         
         // If har_array is null JSON could not be parsed
         if ( $har === NULL ) {

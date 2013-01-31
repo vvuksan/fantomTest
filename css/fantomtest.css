@@ -26,3 +26,10 @@ body{
 .http_headers {
   font-size: 8px;  
 }
+
+.x-cache-HIT {
+  background: lightgreen;
+}
+.x-cache-MISS {
+  background: orange;
+}
