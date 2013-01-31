@@ -109,11 +109,21 @@ function generate_waterfall($har) {
             $haroutput .= "<b>" . $key . "</b>: " . $value . "<br />";
         }
 
-        isset($request['resp_headers']['X-Cache']) ? $hit_or_miss = $request['resp_headers']['X-Cache'] : $hit_or_miss = "UNK";
+        if ( isset($request['resp_headers']['X-Cache']) ) {
+	   $hit_or_miss = $request['resp_headers']['X-Cache'];
+	   if ( preg_match("/HIT$/", $request['resp_headers']['X-Cache'] )) {
+		$hit_or_miss_css = "HIT";
+	   } else {
+		$hit_or_miss_css = "MISS";
+	   }
+ 	} else {
+ 		$hit_or_miss_css = "UNK";
+ 		$hit_or_miss = "UNK";
+ 	}
         isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
 
         $haroutput .= '<td>' . $server . '</td>' .
-        '<td class="x-cache-' . $hit_or_miss . '">' . $hit_or_miss . '</td>' .
+        '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
         '<td>' . $request["resp_code"] . '</td>
         <td>' . $request["duration"] . '</td>
         <td>' . $request["size"] . '</td>
@@ -137,7 +147,7 @@ function generate_waterfall($har) {
 // Use Phantom JS to produce a JSON containing the HTTP archive and the
 // Image
 //////////////////////////////////////////////////////////////////////////////
-function get_har_using_phantomjs($url, $include_image = true, $for_harviewer = false) {
+function get_har_using_phantomjs($url, $include_image = true) {
 
     global $conf;
     
@@ -171,11 +181,6 @@ function get_har_using_phantomjs($url, $include_image = true, $for_harviewer = f
     if ( $ret_value == 0 ) {
         $output = join("\n", $output_array);
         $har = json_decode($output, TRUE);
-        
-        # If it's for the har viewer just output 
-        if ( $for_harviewer ) {
-	  return $har;
-        }
         
         // If har_array is null JSON could not be parsed
         if ( $har === NULL ) {
