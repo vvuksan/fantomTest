@@ -43,12 +43,15 @@ function getPingMtr() {
   <form id="query_form">
   <?php
   require_once('./conf.php');
+  // If we define remotes create a select box
   if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
       print "Test from <select name='site_id'><option value='-1'>Local</option>";
       foreach ( $conf['remotes'] as $index => $remote ) {
 	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
       }
       print "</select> ";
+  } else {
+    print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
   URL <input id="checked_url" name="url" size=100>
@@ -65,6 +68,21 @@ function getPingMtr() {
   <div id=header>
   
   <form id="dns_form">
+  <?php
+  require_once('./conf.php');
+  // If we define remotes create a select box
+  if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
+      print "Test from <select name='site_id'>
+      <option value='-100'>All Remotes</option>
+      <option value='-1'>Local</option>";
+      foreach ( $conf['remotes'] as $index => $remote ) {
+	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
+      }
+      print "</select> ";
+  } else {
+    print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
+  }
+  ?>
   Host name <input id="hostname" name="hostname" size=100>
   <button class="query_buttons" id="dns_querybutton" onclick="getDns(); return false;">Resolve</button>
   <br />
@@ -78,6 +96,20 @@ function getPingMtr() {
   <div id=header>
   
   <form id="pingmtr_form">
+  <?php
+  // If we define remotes create a select box
+  if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
+      print "Test from <select name='site_id'>
+      <option value='-100'>All Remotes</option>
+      <option value='-1'>Local</option>";
+      foreach ( $conf['remotes'] as $index => $remote ) {
+	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
+      }
+      print "</select> ";
+  } else {
+    print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
+  }
+  ?>
   Host name <input id="hostname" name="hostname" size=100>
   <button class="query_buttons" id="dns_querybutton" onclick="getPingMtr(); return false;">Ping/MTR</button>
   <br />
