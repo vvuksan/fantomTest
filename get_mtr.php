@@ -47,11 +47,23 @@ if ( $_REQUEST['site_id'] == -1 ) {
     // Get results from all remotes         
     foreach ( $conf['remotes'] as $index => $remote ) {
         
-        print "<div id='remote_" . ${index} . "'><button onClick='$(\"#sort_menu\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
-        print "<div class='dns_results'>";
-        print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_mtr.php?site_id=-1" .
-        "&hostname=" . $_REQUEST['hostname'] ));
-        print "</div>";
+        print "<div id='remote_" . ${index} . "'>
+        <button onClick='$(\"#mtrping_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
+        
+        print "<div id='mtrping_results_" . ${index} ."'>";
+        
+        #print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_mtr.php?site_id=-1" .
+        #"&hostname=" . $_REQUEST['hostname'] ));
+        print "<img src=\"img/spinner.gif\"></div>";
+        
+        print '
+        <script>
+        $.get("get_mtr.php", "site_id=' . $index . '&hostname=' . htmlentities($_REQUEST['hostname']) . '", function(data) {
+            $("#mtrping_results_' . ${index} .'").html(data);
+         });
+        </script>
+        <p></p>';
+        
     }
 
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
