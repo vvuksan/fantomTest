@@ -29,11 +29,23 @@ if ( $_REQUEST['site_id'] == -1 ) {
 
     // Get results from all remotes         
     foreach ( $conf['remotes'] as $index => $remote ) {
+
+        print "<div id='remote_" . ${index} . "'>
+        <button onClick='$(\"#dns_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
         
-        print "<div><h3>" .$conf['remotes'][$index]['name']. "</h3></div>";
-        print "<div class=dns_results>";
-        print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_dns.php?site_id=-1" .
-        "&hostname=" . $_REQUEST['hostname'] ));
+        print "<div id='dns_results_" . ${index} ."'>";
+        
+        #print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_mtr.php?site_id=-1" .
+        #"&hostname=" . $_REQUEST['hostname'] ));
+        print "<img src=\"img/spinner.gif\"></div>";
+        
+        print '
+        <script>
+        $.get("get_dns.php", "site_id=' . $index . '&hostname=' . htmlentities($_REQUEST['hostname']) . '", function(data) {
+            $("#dns_results_' . ${index} .'").html(data);
+         });
+        </script>
+        <p></p>';
         print "</div>";
     }
 
