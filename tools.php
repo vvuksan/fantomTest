@@ -79,7 +79,7 @@ function generate_waterfall($har) {
     <table class="harview">
     <tr>
     <td colspan=5 align=center>
-    Total time for a fully downloaded page is ' . sprintf("%.3f", $total_time) . ' sec
+    Total time for a fully downloaded page is <span id="total-time">' . sprintf("%.3f", $total_time) . '</span> sec
     </td>
     </tr>
         <tr>
@@ -127,7 +127,7 @@ function generate_waterfall($har) {
         '<td>' . $request["resp_code"] . '</td>
         <td>' . $request["duration"] . '</td>
         <td>' . $request["size"] . '</td>
-        <td><span class="bar">' .
+        <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
         '<span class="fill" style="background: #AAB2FF; width: ' . $progress_bar .  '%">&nbsp;</span>'.
         "</span></td></tr>";
