@@ -1,14 +1,14 @@
 <html>
 <head>
 <title>Page performance</title>
-<link type="text/css" href="css/flick/jquery-ui-1.8.14.custom.css" rel="stylesheet" />
+<link type="text/css" href="css/flick/jquery-ui-1.10.4.custom.css" rel="stylesheet" />
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
-<script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
-<script type="text/javascript" src="js/jquery-ui-1.8.14.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js"></script>
 <script>
 
 function buildTimeTicks(totalTime) {
-    console.log(totalTime);
+    console.log("Total time " + totalTime);
     
     var defaultMarks = [10, 100, 200, 250, 500, 1000, 2000, 5000, 10000],
         target = totalTime / 8,
@@ -46,7 +46,6 @@ function buildTimeTicks(totalTime) {
     });
     results.append(marks); 
 
-
     var tickWidth = pixelRatio * (timelineWidth * mark / totalTime),
         x = tickWidth,
         time = mark;
@@ -55,6 +54,10 @@ function buildTimeTicks(totalTime) {
     ctx.fillStyle = '#333';
     ctx.font = '14pt helvetica';
     ctx.beginPath();
+    // Add Zero line
+    ctx.fillText("0", 0, 30);
+    ctx.moveTo(0, 40);
+    ctx.lineTo(0, timelineHeight * pixelRatio);
     while (x < timelineWidth * pixelRatio) {
         if (time < 1000) {
             ctx.fillText(time + "ms", x+1, 30);
