@@ -122,6 +122,15 @@ function generate_waterfall($har) {
  	}
         isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
 
+        # Check if EdgeCast
+        if ( preg_match("/^ECS/", $request['resp_headers']['Server']) ) {
+            $server = trim($request['resp_headers']['Server']);
+        }
+
+        if ( isset($request['resp_headers']['CF-RAY']) ) {
+            $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
+        }
+        
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
         '<td>' . $request["resp_code"] . '</td>
