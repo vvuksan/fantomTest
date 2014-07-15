@@ -101,7 +101,8 @@ function generate_waterfall($har) {
         $white_space = ($time_offset / $total_time) * 100;
         $progress_bar = ($request["duration"] / $total_time) * 100;
         
-        $haroutput .= "\n<tr><td>" . $key
+        $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>
+        <td>" . $key
         . "</td><td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a>
         <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
         <div class="http_headers" style="display: none;" id="item_' . $key .'">';
@@ -111,7 +112,7 @@ function generate_waterfall($har) {
 
         if ( isset($request['resp_headers']['X-Cache']) ) {
 	   $hit_or_miss = $request['resp_headers']['X-Cache'];
-	   if ( preg_match("/HIT$/", $request['resp_headers']['X-Cache'] )) {
+	   if ( preg_match("/Hit|HIT$/", $request['resp_headers']['X-Cache'] )) {
 		$hit_or_miss_css = "HIT";
 	   } else {
 		$hit_or_miss_css = "MISS";
@@ -126,7 +127,15 @@ function generate_waterfall($har) {
         if ( preg_match("/^ECS/", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
         }
+        
+        if ( preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
+            $server = "CloudFront";
+        }
 
+        if ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
+            $server = trim($request['resp_headers']['Server']);
+        }
+        
         if ( isset($request['resp_headers']['CF-RAY']) ) {
             $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
         }

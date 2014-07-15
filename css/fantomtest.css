@@ -23,6 +23,25 @@ body{
   background: #FF9786;
 }
 
+.response_200 {
+}
+
+.response_301 {
+  background: #FFFC86;
+}
+
+.response_302 {
+  background: #FFFC86;
+}
+
+.response_404 {
+  background: #FF9786;
+}
+
+.response_403 {
+  background: #FF9786;
+}
+
 .http_headers {
   font-size: 8px;  
 }
