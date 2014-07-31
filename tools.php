@@ -124,7 +124,7 @@ function generate_waterfall($har) {
         isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
 
         # Check if EdgeCast
-        if ( preg_match("/^ECS/", $request['resp_headers']['Server']) ) {
+        if ( preg_match("/^(ECS|ECD)/", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
         }
         
