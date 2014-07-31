@@ -1,3 +1,15 @@
+<?php
+$base_dir = dirname(__FILE__);
+
+# Load main config file.
+require_once $base_dir . "/conf_default.php";
+
+# Include user-defined overrides if they exist.
+if( file_exists( $base_dir . "/conf.php" ) ) {
+  include_once $base_dir . "/conf.php";
+}
+
+?>
 <html>
 <head>
 <title>Page performance</title>
@@ -114,7 +126,6 @@ function getPingMtr() {
   
   <form id="query_form">
   <?php
-  require_once('./conf.php');
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
       print "Test from <select name='site_id'><option value='-1'>Local</option>";
@@ -141,7 +152,6 @@ function getPingMtr() {
   
   <form id="dns_form">
   <?php
-  require_once('./conf.php');
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
       print "Test from <select name='site_id'>
