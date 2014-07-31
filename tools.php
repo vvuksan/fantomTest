@@ -1,6 +1,14 @@
 <?php
 
-require_once('./conf.php');
+$base_dir = dirname(__FILE__);
+
+# Load main config file.
+require_once $base_dir . "/conf_default.php";
+
+# Include user-defined overrides if they exist.
+if( file_exists( $base_dir . "/conf.php" ) ) {
+  include_once $base_dir . "/conf.php";
+}
 
 // Let's make sure there is http at the front of a URL
 function validate_url($url) {

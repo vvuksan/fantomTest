@@ -1,6 +1,14 @@
 <?php
 
-require_once("./conf.php");
+$base_dir = dirname(__FILE__);
+
+# Load main config file.
+require_once $base_dir . "/conf_default.php";
+
+# Include user-defined overrides if they exist.
+if( file_exists( $base_dir . "/conf.php" ) ) {
+  include_once $base_dir . "/conf.php";
+}
 
 $site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 

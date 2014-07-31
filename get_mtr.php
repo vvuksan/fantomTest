@@ -1,6 +1,14 @@
 <?php
 
-require_once("./conf.php");
+$base_dir = dirname(__FILE__);
+
+# Load main config file.
+require_once $base_dir . "/conf_default.php";
+
+# Include user-defined overrides if they exist.
+if( file_exists( $base_dir . "/conf.php" ) ) {
+  include_once $base_dir . "/conf.php";
+}
 
 if ( ! $conf['pingmtr_enabled'] ) {
     die("Can't run PING/MTR as it has been disabled. Set pingmtr_enabled to true in conf.php");
