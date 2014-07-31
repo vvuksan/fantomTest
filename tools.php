@@ -128,16 +128,28 @@ function generate_waterfall($har) {
             $server = trim($request['resp_headers']['Server']);
         }
         
+        # CloudFront
         if ( preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
             $server = "CloudFront";
         }
 
+        # NetDNA
         if ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
         }
         
+        # Cloudflare
         if ( isset($request['resp_headers']['CF-RAY']) ) {
             $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
+	    $hit_or_miss_css = $request['resp_headers']['CF-Cache-Status'];
+	    $hit_or_miss = $request['resp_headers']['CF-Cache-Status'];
+        }
+        
+	# Highwinds
+        if ( isset($request['resp_headers']['X-HW']) ) {
+            $server = "HW " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['X-HW']);
+	    $hit_or_miss_css = "HIT";
+	    $hit_or_miss = "HIT";
         }
         
         $haroutput .= '<td>' . $server . '</td>' .
