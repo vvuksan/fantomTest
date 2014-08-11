@@ -10,6 +10,7 @@ $conf['debug'] = 1;
 $conf['pingmtr_enabled'] = true;
 $conf['ping_bin'] = "/bin/ping";
 $conf['mtr_bin'] = "/usr/bin/mtr";
+$conf['nmap_bin'] = "/usr/bin/nmap";
 
 # Read README on what are remotes
 #$conf['remotes'][] = array("name" => "US", "provider" => "http_get", "base_url" => "http://myurl.usa/fantomtest/");

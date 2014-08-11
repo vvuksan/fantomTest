@@ -109,6 +109,12 @@ function getPingMtr() {
 	$("#pingmtr_results").html(data);
      });
 }
+function getSSL() {
+    $("#ssl_results").html('<img src="img/spinner.gif">');
+    $.get('get_ssl.php', $("#ssl_form").serialize(), function(data) {
+	$("#ssl_results").html(data);
+     });
+}
 </script>
 </head>
 <body>
@@ -117,6 +123,7 @@ function getPingMtr() {
 	<li><a href="#tab-waterfall">URL Test</a></li>
 	<li><a href="#tab-dns">DNS</a></li>
 	<li><a href="#tab-pingmtr">Ping/MTR</a></li>
+	<li><a href="#tab-ssl">SSL ciphers</a></li>
     </ul>
 
 <div id="tab-waterfall">
@@ -198,6 +205,33 @@ function getPingMtr() {
   </form>
   </div>
   <div id=pingmtr_results>
+  </div>
+</div>
+
+<div id="tab-ssl">
+  <div id=header>
+  
+  <form id="ssl_form">
+  <?php
+  // If we define remotes create a select box
+  if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
+      print "Test from <select name='site_id'>
+      <option value='-100'>All Remotes</option>
+      <option value='-1'>Local</option>";
+      foreach ( $conf['remotes'] as $index => $remote ) {
+	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
+      }
+      print "</select> ";
+  } else {
+    print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
+  }
+  ?>
+  Host name <input id="hostname" name="hostname" size=100>
+  <button class="query_buttons" id="ssl_querybutton" onclick="getSSL(); return false;">Get SSL ciphers</button>
+  <br />
+  </form>
+  </div>
+  <div id=ssl_results>
   </div>
 </div>
 
