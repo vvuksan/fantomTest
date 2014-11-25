@@ -2,9 +2,6 @@
 
 $conf['phantomjs_exec'] = "/opt/phantomjs/bin/phantomjs /var/www/fantomtest/phantomjs/netsniff.js";
 
-# What XVFB display number is being used
-$conf['display'] = ":1";
-
 $conf['debug'] = 1;
 
 $conf['pingmtr_enabled'] = true;
