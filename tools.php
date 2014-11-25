@@ -131,21 +131,23 @@ function generate_waterfall($har) {
  	}
         isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
 
-        # Check if EdgeCast
-        if ( preg_match("/^ECS/", $request['resp_headers']['Server']) ) {
+        # Check if Server header provided. It's used by NetDNA and Edgecast
+        if ( isset($request['resp_headers']['Server']) ) {
+          
+          if ( preg_match("/^ECS/", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
+          } # NetDNA
+          elseif ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
+            $server = trim($request['resp_headers']['Server']);
+          }
+       
         }
-        
+       
         # CloudFront
-        if ( preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
+        if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
             $server = "CloudFront";
         }
 
-        # NetDNA
-        if ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
-            $server = trim($request['resp_headers']['Server']);
-        }
-        
         # Cloudflare
         if ( isset($request['resp_headers']['CF-RAY']) ) {
             $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
@@ -245,6 +247,137 @@ function get_har_using_phantomjs($url, $include_image = true) {
         return array( "success" => 0, "error_message" => "PhantomJS exited abnormally. Perhaps Xvfb is not running. Please check your webserver error log" );
     }
 
+}
+
+
+#############################################################################################
+#
+#
+function get_curl_timings_with_headers($original_url) {
+  
+    $url = validate_url($original_url);
+    
+    if ( $url === FALSE ) {
+        print json_encode( array( "error" => "URL is not valid" ) );
+        exit(1);
+    }
+    
+    $url_parts = parse_url($url);
+
+    $curly = curl_init();    
+    curl_setopt($curly, CURLOPT_HEADER, 1);
+    curl_setopt($curly, CURLOPT_TIMEOUT, 4);
+    curl_setopt($curly, CURLOPT_RETURNTRANSFER, 1);
+    switch ( $url_parts['scheme'] ) {
+	case "http":
+    	  curl_setopt($curly, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
+          curl_setopt($curly, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP);
+          break;
+        case "https":
+          curl_setopt($curly, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+          curl_setopt($curly, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+	  break;
+        default:
+          die("<h3>Invalid protocol supplied. You need either http:// or https://</h3>");
+    } 
+    
+    curl_setopt($curly,CURLOPT_ENCODING , "gzip"); 
+    
+    curl_setopt($curly, CURLOPT_URL, $url);
+    
+    curl_exec($curly);
+    
+    $response = curl_multi_getcontent($curly);
+    
+    if(curl_errno($curly)) {
+        $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($ch) );
+    } else {
+      list($header, $content) = explode("\r\n\r\n", $response);
+      
+      $info = curl_getinfo($curly);
+      $results = array(
+	  "return_code" => $info['http_code'],
+	  "error_message" => "",
+	  "content_type" => $info['content_type'],
+	  "response_size" => $info['size_download'],
+	  "header_size" => $info['header_size'],
+	  "headers_string" => $header,
+	  "md5" => md5($content),
+          "dns_lookuptime" => $info['namelookup_time'],
+	  "connect_time" => $info['connect_time'] - $info['namelookup_time'],
+	  "pretransfer_time" => $info['pretransfer_time'] - $info['connect_time'],
+	  "starttransfer_time" => $info['starttransfer_time'] - $info['pretransfer_time'],
+          "transfer_time" =>  $info['total_time'] - $info['starttransfer_time'],
+	  "total_time" => $info['total_time'],
+          "primary_ip" => $info['primary_ip']
+	  );
+    }
+    
+    curl_close($curly);
+    return $results;
+  
+}
+
+
+function print_url_results($records) {
+  
+  global $conf;
+  
+  print "<table border=1><tr><th>Remote</th><th>Resolved IP</th>
+      <th>Cache</th>
+      <th>Hit?</th>
+      <th>HTTP code</th>
+      <th>Resp size</th>
+      <th>Hdr size</th>
+      <th>DNS time</th>
+      <th>Connect Time</th><th>Request Sent</th>
+      <th>Request Started</th><th>Tx Time</th><th>Total Time</th></tr>";
+      
+  foreach ( $records as $id => $record ) { 
+    if ( preg_match("/.*X-Served-By: (.*)\n/", $record['headers_string'], $out) ) {
+      $fastly_cache = $out[1];        
+    } else {
+      $fastly_cache = "NA";
+    }
+
+    if ( preg_match("/.*X-Cache: (.*)\n/", $record['headers_string'], $out) ) {
+      $cache_hit = $out[1];        
+    } else {
+      $cache_hit = "NA";
+    }
+
+    if ( $id == -1 ) {
+      $site_name = "Local";
+    } else {
+      $site_name = $conf['remotes'][$id]['name'];
+      
+    }
+    print "<tr><td>" . $site_name;
+    
+    print "<div id='remote_" . $id .  "' >".
+   "<button class=\"http_headers\" onClick='$(\"#url_results_" . $id .  "\").toggle(); return false;'>Headers</button></div>";
+
+    print "<div id='url_results_" . $id .  "' style=\"display: none;\">";
+    print "<pre>" . $record['headers_string'] ;
+    print "</pre></div>";
+    print "</td>" .
+        "<td>" . $record['primary_ip'] . "</td>" . 
+        "<td class=cache_servers>" . $fastly_cache . "</td>" . 
+        "<td class=cache_servers>" . $cache_hit . "</td>" . 
+        "<td>" . $record['return_code'] . "</td>" . 
+        "<td class=number>" . $record['response_size'] . "</td>" . 
+        "<td class=number>" . $record['header_size'] . "</td>" . 
+        "<td class=number>" . number_format($record['dns_lookuptime'],3) . "</td>" .
+        "<td class=number>" . number_format($record['connect_time'],3) . "</td>" .
+        "<td class=number>" . number_format($record['pretransfer_time'], 3) . "</td>" . 
+        "<td class=number>" . number_format($record['starttransfer_time'], 3) . "</td>" . 
+        "<td class=number>" . number_format($record['transfer_time'], 3) . "</td>" . 
+        "<td class=number>" . number_format($record['total_time'], 3) . "</td>". 
+        "</tr>";
+  } // foreach ( $records as $record ) { 
+
+  print "</table>";
+ 
 }
 
 ?>

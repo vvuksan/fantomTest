@@ -103,6 +103,12 @@ function getDns() {
 	$("#dns_results").html(data);
      });
 }
+function getURL() {
+    $("#url_results").html('<img src="img/spinner.gif">');
+    $.get('get_url.php', $("#url_form").serialize(), function(data) {
+	$("#url_results").html(data);
+     });
+}
 function getPingMtr() {
     $("#pingmtr_results").html('<img src="img/spinner.gif">');
     $.get('get_mtr.php', $("#pingmtr_form").serialize(), function(data) {
@@ -120,7 +126,8 @@ function getSSL() {
 <body>
 <div id="tabs">
     <ul>
-	<li><a href="#tab-waterfall">URL Test</a></li>
+	<li><a href="#tab-waterfall">Page Waterfall</a></li>
+	<li><a href="#tab-url">URL Test</a></li>
 	<li><a href="#tab-dns">DNS</a></li>
 	<li><a href="#tab-pingmtr">Ping/MTR</a></li>
 	<li><a href="#tab-ssl">SSL ciphers</a></li>
@@ -145,7 +152,7 @@ function getSSL() {
   }
   ?>
   URL <input id="checked_url" name="url" size=100>
-  <button class="query_buttons" id="query_button" onclick="getTimings(); return false;">Get timings</button>
+  <button class="query_buttons" id="query_button" onclick="getTimings(); return false;">Get waterfall</button>
   <br />
   <input type="checkbox" name="include_image">Include page screenshot<br>
   </form>
@@ -153,6 +160,35 @@ function getSSL() {
   <div id=results>
   </div>
 </div>
+
+<div id="tab-url">
+  <div id=header>
+  
+  <form id="url_form">
+  <?php
+  // If we define remotes create a select box
+  if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
+      print "Test from <select name='site_id'>
+      <option value='-100'>All Remotes</option>
+      <option value='-1'>Local</option>";
+      foreach ( $conf['remotes'] as $index => $remote ) {
+	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
+      }
+      print "</select> ";
+  } else {
+    print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
+  }
+  ?>
+  URL <input id="url" name="url" size=100>
+  <button class="query_buttons" id="url_querybutton" onclick="getURL(); return false;">Get timings</button>
+  <br />
+  </form>
+  </div>
+  <div id=url_results>
+  </div>
+
+</div>
+
 
 <div id="tab-dns">
   <div id=header>

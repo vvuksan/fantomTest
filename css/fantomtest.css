@@ -46,6 +46,14 @@ body{
   font-size: 8px;  
 }
 
+.cache_servers {
+  font-size: 8px;  
+}
+
+.number {
+  text-align: right;  
+}
+
 .x-cache-HIT {
   background: lightgreen;
 }
