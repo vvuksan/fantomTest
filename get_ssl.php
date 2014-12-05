@@ -1,5 +1,8 @@
 <?php
 
+#############################################################################
+# Use NMAP to discover what SSL ciphers remote server supports
+#############################################################################
 $base_dir = dirname(__FILE__);
 
 # Load main config file.
@@ -35,7 +38,11 @@ if ( $_REQUEST['site_id'] == -1 ) {
     <div style="background-color: #DCDCDC">
     <pre>
     <?php
-    passthru("cd " . __DIR__ . "/ssl; " . $conf['nmap_bin'] . " --script ssl-enum-ciphers.nse -p 443 " . $_REQUEST['hostname']); 
+    # First make sure nmap is available
+    if ( !is_executable($conf['nmap_bin']) ) {
+      die("NMAP is not executable. Current path is to to " . $conf['nmap_bin'] . " please set \$conf['nmap_bin'] in conf.php to proper path");
+    }
+    passthru("cd " . __DIR__ . "/ssl; " . $conf['nmap_bin'] . " --script ssl-enum-ciphers.nse -p 443 " . $user['ip']); 
     ?>
     </pre>
     </div>
