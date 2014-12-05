@@ -1,9 +1,9 @@
 fantomTest
 ==========
 
-This is a simple webapp that allows you to obtain HTTP performance of a web 
-page by using getting the timings for all web page resources and plotting them
-in a waterfall chart. In addition screenshot of the page will be produced.
+FantomTest started as a simple webapp that allows you to obtain HTTP performance of a web 
+page by getting the timings for all web page resources and plotting them in a waterfall chart.
+This has been expanded to also include individual URL test, DNS, ping/MTR results.
 
 To get timings we are utilizing the excellent PhantomJS semi-headless webKit
 browser. PhantomJS will render a URL with all it's resources and produce HAR
@@ -14,16 +14,14 @@ Installation
 
 * Download and install PhantomJS from http://www.phantomjs.org/. Install it
  in e.g. /opt/phantomjs. 
-* Install PHP scripts somewhere in the Web Server HTDOCS area. 
-* Configure conf.php. This is the full path name to the phantomjs executable
-and the netsniff.js which is distributed with fantomTest. netsniff.js is in the
-fantomTest directory. For example if you install fantomTest in /var/www/html/fantomTest
-and phantomjs binary is in /opt/phantomjs/phantomjs you would put following value
+* Install PHP scripts somewhere in the Web Server HTDOCS area e.g. /var/www/fantomtest
+* Configure conf.php. In most cases you will only need to configure the location of
+phantomjs binary e.g.
 
-  $conf['phantomjs_exec'] = "/opt/phantomjs/phantomjs /var/www/html/fantomTest/phantomjs/netsniff.js";
+  $conf['phantomjs_bin'] = "/opt/phantomjs/phantomjs";
 
+* You can override any value in conf_default.php with the value in conf.php
 * Now open up fantomTest in your browser.
-
 
 Configuration
 =============
