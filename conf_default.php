@@ -1,9 +1,11 @@
 <?php
 
-$conf['phantomjs_exec'] = "/opt/phantomjs/bin/phantomjs /var/www/fantomtest/phantomjs/netsniff.js";
+$conf['phantomjs_bin'] = "/opt/phantomjs/bin/phantomjs";
+$conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff.js";
 
-$conf['debug'] = 1;
+$conf['debug'] = 0;
 
+# Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;
 $conf['ping_bin'] = "/bin/ping";
 $conf['mtr_bin'] = "/usr/bin/mtr";
