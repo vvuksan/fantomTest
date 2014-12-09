@@ -309,7 +309,7 @@ function get_curl_timings_with_headers($original_url) {
 	  "starttransfer_time" => $info['starttransfer_time'] - $info['pretransfer_time'],
           "transfer_time" =>  $info['total_time'] - $info['starttransfer_time'],
 	  "total_time" => $info['total_time'],
-          "primary_ip" => $info['primary_ip']
+          "primary_ip" => isset($info['primary_ip']) ? $info['primary_ip']: "Not avail"
 	  );
     }
     
