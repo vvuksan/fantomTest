@@ -33,6 +33,20 @@ $conf['remotes'][] = array("name" => "US", "provider" => "http_get", "base_url" 
 
 to add additional ones simply repeat the line with the new name and URL.
 
+
+SlimerJS
+========
+
+There is also gecko (firefox) based scriptable browser similar to PhantomJS called SlimjerJS. 
+It can be downloaded from
+
+http://slimerjs.org/
+
+To use it you need to install XVFB and use this in your conf.php
+
+    $conf['phantomjs_exec'] = "SLIMERJSLAUNCHER=/usr/bin/firefox DISPLAY=:1 xvfb-run /opt/slimerjs/slimerjs /var/www/fantomtest/phantomjs/netsniff-slimer.js ";
+
+
 License
 =======
 Apache
