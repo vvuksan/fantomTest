@@ -4,6 +4,7 @@ $base_dir = dirname(__FILE__);
 
 # Load main config file.
 require_once $base_dir . "/conf_default.php";
+require_once $base_dir . "/tools.php";
 
 # Include user-defined overrides if they exist.
 if( file_exists( $base_dir . "/conf.php" ) ) {

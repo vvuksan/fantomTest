@@ -14,11 +14,16 @@ if ( ! $conf['pingmtr_enabled'] ) {
     die("Can't run PING/MTR as it has been disabled. Set pingmtr_enabled to true in conf.php");
 }
 
-# Is it an IP 
+##################################################################
+# Since we are shelling out we need to make sure what we
+# are being supplied is an IP or a hostname that actually resolves
+# or it's an IP
+##################################################################
 if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
     $user['ip'] = $_REQUEST['hostname'];
 } else {
     $user['ip'] = gethostbyname($_REQUEST['hostname']);
+    # If resolution fails it just returns hostname back
     if ( $user['ip'] == $_REQUEST['hostname'] )
         die("Address is not an IP and I can't resolve it. Doing nothing");
 }
@@ -39,7 +44,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     <div style="background-color: #DCDCDC">
     <pre>
     <?php
-    passthru($conf['ping_bin'] . " -c 4 " . $_REQUEST['hostname']); 
+    passthru($conf['ping_bin'] . " -c 4 " . $user['ip']); 
     ?>
     </pre>
     </div>
