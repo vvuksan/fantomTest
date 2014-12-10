@@ -5,6 +5,14 @@ $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/ne
 
 $conf['debug'] = 0;
 
+# IMPORTANT 
+# Do not verify SSL peers. I am setting this to false since for most of my remote
+# nodes I use self-signed certificates. This does expose me to MITM (man in the middle attack)
+# however I am willing to accept that risk. Set this to true if you want to make verify
+# peer certs
+$conf['ssl_peer_verify'] = false;
+
+
 # Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;
 $conf['ping_bin'] = "/bin/ping";

@@ -323,7 +323,9 @@ function print_url_results($records) {
   
   global $conf;
   
-  print "<table border=1><tr><th>Remote</th><th>Resolved IP</th>
+  print "<table border=1 class=tablesorter>
+  <thead>
+  <tr><th>Remote</th><th>Resolved IP</th>
       <th>Cache</th>
       <th>Hit?</th>
       <th>HTTP code</th>
@@ -331,7 +333,8 @@ function print_url_results($records) {
       <th>Hdr size</th>
       <th>DNS time</th>
       <th>Connect Time</th><th>Request Sent</th>
-      <th>Request Started</th><th>Tx Time</th><th>Total Time</th></tr>";
+      <th>Request Started</th><th>Tx Time</th><th>Total Time</th></tr>
+  </thead><tbody>";
       
   foreach ( $records as $id => $record ) { 
     if ( preg_match("/.*X-Served-By: (.*)\n/", $record['headers_string'], $out) ) {
@@ -376,7 +379,7 @@ function print_url_results($records) {
         "</tr>";
   } // foreach ( $records as $record ) { 
 
-  print "</table>";
+  print "</tbody></table>";
  
 }
 
