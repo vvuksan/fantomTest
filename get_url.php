@@ -55,10 +55,17 @@ if ( $_REQUEST['site_id'] == -1 ) {
             die("<h3>Invalid protocol supplied. You need either http:// or https://</h3>");
       } 
       
-      curl_setopt($curly[$id],CURLOPT_ENCODING , "gzip"); 
+      curl_setopt($curly[$id], CURLOPT_ENCODING , "gzip"); 
       curl_setopt($curly[$id], CURLOPT_URL, $url);
-      curl_multi_add_handle($mh, $curly[$id]);    
+      # Disable SSL peer verify ie. don't check remote side SSL certificates
+      if ( ! $conf['ssl_peer_verify'] ) {
+	curl_setopt($curly[$id], CURLOPT_SSL_VERIFYPEER, FALSE);
+	curl_setopt($curly[$id], CURLOPT_SSL_VERIFYHOST, FALSE); 
+	curl_setopt($curly[$id], CURLOPT_VERBOSE , TRUE);
+      }
+      curl_multi_add_handle($mh, $curly[$id]);
     }
+    
     // execute the handles
     $running = null;
     do {
@@ -99,6 +106,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
 $(function(){
 
     $(".http_headers").button();
+    $("table").tablesorter();
 
 });
 </script>

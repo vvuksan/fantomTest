@@ -17,6 +17,7 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
 <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js"></script>
+<script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
 <script>
 
 function buildTimeTicks(totalTime) {

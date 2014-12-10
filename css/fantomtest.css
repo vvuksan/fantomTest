@@ -60,3 +60,50 @@ body{
 .x-cache-MISS {
   background: orange;
 }
+
+
+
+table.tablesorter {
+	font-family:arial;
+	margin:10px 0pt 15px;
+	font-size: 10pt;
+	width: 100%;
+	text-align: left;
+}
+table.tablesorter thead tr th {
+	background-color: #dddddd;
+	border: 1px solid #FFF;
+	font-size: 8pt;
+	padding: 4px;
+}
+table.tablesorter tfoot tr th {
+	background-color: #dddddd;
+	border: 1px solid #FFF;
+	font-size: 11pt;
+	padding: 4px;
+}
+table.tablesorter tbody td {
+	color: #3D3D3D;
+	padding: 4px;
+	vertical-align: top;
+}
+table.tablesorter thead tr .headerSortUp {
+	background-image: url(asc.png);
+}
+table.tablesorter thead tr .headerSortDown {
+	background-image: url(desc.png);
+}
+table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
+background-color: #8dbdd8;
+}
+
+table.tablesorter .header {
+	background-image: url(bg.png);
+	background-repeat: no-repeat;
+	border-left: 1px solid #FFF;
+	border-right: 1px solid #000;
+	border-top: 1px solid #FFF;
+	padding-left: 30px;
+	padding-top: 8px;
+	height: auto;
+}
