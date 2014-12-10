@@ -18,17 +18,31 @@ if ( !isset($_REQUEST['hostname'])) {
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
+    $start_time = microtime(TRUE);
     $result = dns_get_record($_REQUEST['hostname'], DNS_A);
+    $query_time_in_ms = round((microtime(TRUE) - $start_time) * 1000);
+    
+    $resolver_ip_record = dns_get_record("whoami.akamai.net", DNS_A);
+    $resolver_ip = isset($resolver_ip_record[0]['ip']) ? $resolver_ip_record[0]['ip'] : "Unknown";
+    
+    if ( preg_match("/^74.125/", $resolver_ip ) ) {
+      $dns_provider = " - Google DNS";
+    } else {
+      $dns_provider = "";
+    }
     
     if ( count($result) > 0 ) {
-        print "<table border=1><tr><th>Hostname</th><th>TTL</th><th>Type</th><th>IP</th></tr>";
+        print "<table border=1 class=tablesorter>
+	  <thead><tr><th>Hostname</th><th>Resolver IP</th><th>Query Time (ms)</th><th>TTL</th><th>Type</th><th>IP</th></tr></thead><tbody>";
         foreach( $result as $index => $record ) {
-            print "<tr><td>" . $record['host'] . "</td><td>" .
-                $record['ttl'] . "</td><td>" .
-                $record['type'] . "</td><td>" .
-                $record['ip'] . "</td></tr>";
+            print "<tr><td>" . $record['host'] . "</td>
+            <td>" . $resolver_ip . " " . $dns_provider .  "</td>
+            <td>" . $query_time_in_ms . "</td>            
+            <td>" . $record['ttl'] . "</td>
+            <td>" . $record['type'] . "</td>
+            <td>" . $record['ip'] . "</td></tr>";
         }
-        print "</table>";
+        print "</tbody></table>";
     } else {
         
     }
