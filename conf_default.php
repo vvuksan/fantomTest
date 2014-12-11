@@ -12,6 +12,8 @@ $conf['debug'] = 0;
 # peer certs
 $conf['ssl_peer_verify'] = false;
 
+# Try too detect CDNs used
+$conf['cdn_detection'] = true;
 
 # Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;

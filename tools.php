@@ -325,9 +325,14 @@ function print_url_results($records) {
   
   print "<table border=1 class=tablesorter>
   <thead>
-  <tr><th>Remote</th><th>Resolved IP</th>
-      <th>Cache</th>
-      <th>Hit?</th>
+  <tr><th>Remote</th><th>Resolved IP</th>";
+
+  if ( $conf['cdn_detection'] ) {
+    print "  <th>X-Served-By</th>
+      <th>Cache Hit?</th>";
+  }
+  
+  print "    <th>Gzip</th>
       <th>HTTP code</th>
       <th>Resp size</th>
       <th>Hdr size</th>
@@ -335,25 +340,30 @@ function print_url_results($records) {
       <th>Connect Time</th><th>Request Sent</th>
       <th>Request Started</th><th>Tx Time</th><th>Total Time</th></tr>
   </thead><tbody>";
-      
-  foreach ( $records as $id => $record ) { 
-    if ( preg_match("/.*X-Served-By: (.*)\n/", $record['headers_string'], $out) ) {
-      $fastly_cache = $out[1];        
-    } else {
-      $fastly_cache = "NA";
-    }
+  
+  foreach ( $records as $id => $record ) {
+    # Try to identify CDNs    
+    if ( $conf['cdn_detection'] ) {
 
-    if ( preg_match("/.*X-Cache: (.*)\n/", $record['headers_string'], $out) ) {
-      $cache_hit = $out[1];        
-    } else {
-      $cache_hit = "NA";
+      if ( preg_match("/.*X-Served-By: (.*)\n/", $record['headers_string'], $out) ) {
+        $xservedby = $out[1];        
+      } else {
+        $xservedby = "NA";
+      }
+  
+      if ( preg_match("/.*X-Cache: (.*)\n/", $record['headers_string'], $out) ) {
+        $cache_hit = trim($out[1]);        
+      } else {
+        $cache_hit = "NA";
+      }
+
     }
 
     if ( $id == -1 ) {
       $site_name = "Local";
     } else {
       $site_name = $conf['remotes'][$id]['name'];
-      
+
     }
     print "<tr><td>" . $site_name;
     
@@ -363,19 +373,27 @@ function print_url_results($records) {
     print "<div id='url_results_" . $id .  "' style=\"display: none;\">";
     print "<pre>" . $record['headers_string'] ;
     print "</pre></div>";
+
+    $gzip = preg_match("/Content-Encoding: gzip/i", $record['headers_string']) ? "Yes" : "No";
+
+    $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
+
     print "</td>" .
-        "<td>" . $record['primary_ip'] . "</td>" . 
-        "<td class=cache_servers>" . $fastly_cache . "</td>" . 
-        "<td class=cache_servers>" . $cache_hit . "</td>" . 
-        "<td>" . $record['return_code'] . "</td>" . 
-        "<td class=number>" . $record['response_size'] . "</td>" . 
-        "<td class=number>" . $record['header_size'] . "</td>" . 
+        "<td>" . $record['primary_ip'] . "</td>";
+    if ( $conf['cdn_detection'] ) {
+      print "<td class=cache_servers>" . $xservedby . "</td>" .
+        "<td class='" . $cache_hit_styling . "'>" . $cache_hit . "</td>";
+    }
+    print "<td class='" . strtolower($gzip) . "-gzip'>" . $gzip . "</td>" .
+        "<td>" . $record['return_code'] . "</td>" .
+        "<td class=number>" . $record['response_size'] . "</td>" .
+        "<td class=number>" . $record['header_size'] . "</td>" .
         "<td class=number>" . number_format($record['dns_lookuptime'],3) . "</td>" .
         "<td class=number>" . number_format($record['connect_time'],3) . "</td>" .
-        "<td class=number>" . number_format($record['pretransfer_time'], 3) . "</td>" . 
-        "<td class=number>" . number_format($record['starttransfer_time'], 3) . "</td>" . 
-        "<td class=number>" . number_format($record['transfer_time'], 3) . "</td>" . 
-        "<td class=number>" . number_format($record['total_time'], 3) . "</td>". 
+        "<td class=number>" . number_format($record['pretransfer_time'], 3) . "</td>" .
+        "<td class=number>" . number_format($record['starttransfer_time'], 3) . "</td>" .
+        "<td class=number>" . number_format($record['transfer_time'], 3) . "</td>" .
+        "<td class=number>" . number_format($record['total_time'], 3) . "</td>".
         "</tr>";
   } // foreach ( $records as $record ) { 
 
