@@ -7,6 +7,27 @@ body{
   background: white;
   display: block;
 }
+
+.dns_time {
+  background: #1F7C83;
+}
+
+.conn_time {
+  background: #E58226;
+}
+
+.ssl_conn_time {
+  background: #C141CD;
+}
+
+.time_to_first_byte {
+  background: #1FE11F;
+}
+
+.download_time {
+  background: #1977DD;
+}
+
 .fill {
   float: left;
 }
@@ -61,6 +82,12 @@ body{
   background: orange;
 }
 
+.yes-gzip {
+  background: lightgreen;
+}
+.no-gzip {
+  background: orange;
+}
 
 
 table.tablesorter {
