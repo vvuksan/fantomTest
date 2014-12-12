@@ -134,7 +134,7 @@ function generate_waterfall($har) {
         # Check if Server header provided. It's used by NetDNA and Edgecast
         if ( isset($request['resp_headers']['Server']) ) {
           
-          if ( preg_match("/^ECS/", $request['resp_headers']['Server']) ) {
+          if ( preg_match("/^EC(S|A)/", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
           } # NetDNA
           elseif ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
@@ -364,7 +364,7 @@ function print_url_results($records) {
       <th>Hdr size</th>
       <th>DNS time</th>
       <th>Connect Time</th><th>Request Sent</th>
-      <th>Request Started</th><th>Tx Time</th><th>Total Time</th></tr>
+      <th>Time to First Byte</th><th>Tx Time</th><th>Total Time</th></tr>
   </thead><tbody>";
   
   foreach ( $records as $id => $record ) {
