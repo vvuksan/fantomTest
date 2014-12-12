@@ -8,6 +8,17 @@ body{
   display: block;
 }
 
+.curl_bar {
+  background: white;
+  display: block;
+}
+
+
+.time_legend {
+  text-align: center;
+  color: white;
+}
+
 .dns_time {
   background: #1F7C83;
 }
@@ -20,11 +31,15 @@ body{
   background: #C141CD;
 }
 
+.request_time {
+  background: #FF9786;
+}
+
 .time_to_first_byte {
   background: #1FE11F;
 }
 
-.download_time {
+.transfer_time {
   background: #1977DD;
 }
 

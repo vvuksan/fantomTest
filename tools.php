@@ -106,8 +106,8 @@ function generate_waterfall($har) {
     
         $time_offset = $request["start_time"] - $min_start_time;
         
-        $white_space = ($time_offset / $total_time) * 100;
-        $progress_bar = ($request["duration"] / $total_time) * 100;
+        $white_space = round(($time_offset / $total_time) * 100);
+        $progress_bar = round(($request["duration"] / $total_time) * 100);
         
         $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>
         <td>" . $key
@@ -323,6 +323,14 @@ function print_url_results($records) {
   
   global $conf;
   
+  print "<div class=\"time_legend\">";
+  print '<span class="fill dns_time" style="width: 10%">DNS time</span>';
+  print '<span class="fill conn_time" style="width: 10%">Conn Time</span>';
+  print '<span class="fill request_time" style="width: 10%">Request Sent</span>';
+  print '<span class="fill time_to_first_byte" style="width: 10%">TTFB wait</span>';
+  print '<span class="fill transfer_time" style="width: 10%">Transfer Time</span>';
+  print "</div><br />";
+  
   print "<table border=1 class=tablesorter>
   <thead>
   <tr><th>Remote</th><th>Resolved IP</th>";
@@ -365,7 +373,7 @@ function print_url_results($records) {
       $site_name = $conf['remotes'][$id]['name'];
 
     }
-    print "<tr><td>" . $site_name;
+    print "<tr><td rowspan=2>" . $site_name;
     
     print "<div id='remote_" . $id .  "' >".
    "<button class=\"http_headers\" onClick='$(\"#url_results_" . $id .  "\").toggle(); return false;'>Headers</button></div>";
@@ -374,18 +382,19 @@ function print_url_results($records) {
     print "<pre>" . $record['headers_string'] ;
     print "</pre></div>";
 
+    print "</td>";
+        
     $gzip = preg_match("/Content-Encoding: gzip/i", $record['headers_string']) ? "Yes" : "No";
 
     $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
 
-    print "</td>" .
-        "<td>" . $record['primary_ip'] . "</td>";
+    print "<td rowspan=2>" . $record['primary_ip'] . "</td>";
     if ( $conf['cdn_detection'] ) {
-      print "<td class=cache_servers>" . $xservedby . "</td>" .
-        "<td class='" . $cache_hit_styling . "'>" . $cache_hit . "</td>";
+      print "<td rowspan=2 class=cache_servers>" . $xservedby . "</td>" .
+        "<td rowspan=2 class='" . $cache_hit_styling . "'>" . $cache_hit . "</td>";
     }
-    print "<td class='" . strtolower($gzip) . "-gzip'>" . $gzip . "</td>" .
-        "<td>" . $record['return_code'] . "</td>" .
+    print "<td rowspan=2 class='" . strtolower($gzip) . "-gzip'>" . $gzip . "</td>" .
+        "<td rowspan=2>" . $record['return_code'] . "</td>" .
         "<td class=number>" . $record['response_size'] . "</td>" .
         "<td class=number>" . $record['header_size'] . "</td>" .
         "<td class=number>" . number_format($record['dns_lookuptime'],3) . "</td>" .
@@ -395,6 +404,19 @@ function print_url_results($records) {
         "<td class=number>" . number_format($record['transfer_time'], 3) . "</td>" .
         "<td class=number>" . number_format($record['total_time'], 3) . "</td>".
         "</tr>";
+
+    # Make the bar graph of response
+    print "<tr><td colspan=8>";
+    print "<span class=\"curl_bar\">";
+    print '<span class="fill dns_time" style="width: ' . number_format(100 * $record['dns_lookuptime']/$record['total_time'], 1) .  '%">&nbsp;</span>';
+    print '<span class="fill conn_time" style="width: ' . number_format(100 * $record['connect_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
+    print '<span class="fill request_time" style="width: ' . number_format(100 * $record['pretransfer_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
+    print '<span class="fill time_to_first_byte" style="width: ' . number_format(100 * $record['starttransfer_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
+    print '<span class="fill transfer_time" style="width: ' . number_format(100 * $record['transfer_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
+    print "</span>";
+
+    print "</td></tr>";
+    
   } // foreach ( $records as $record ) { 
 
   print "</tbody></table>";
