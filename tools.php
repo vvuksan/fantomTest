@@ -187,17 +187,24 @@ function generate_waterfall($har) {
 // Use Phantom JS to produce a JSON containing the HTTP archive and the
 // Image
 //////////////////////////////////////////////////////////////////////////////
-function get_har_using_phantomjs($url, $include_image = true) {
+function get_har_using_phantomjs($original_url, $include_image = true) {
 
     global $conf;
     
+    $url = validate_url($original_url);
+    
+    if ( $url === FALSE ) {
+        print json_encode( array( "error" => "URL is not valid" ) );
+        exit(1);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Can't supply suffix for the temp file therefore we'll first create the
     // tempname then rename it with .png extension since that is what PhantomJS
     // expects
     $tmpfname1 = tempnam("/tmp", "phantom");
     $tmpfname = $tmpfname1 . ".png";
-    rename($tmpfname1, $tmpfname);
+    rename($tmpfname1, $tmpfname);    
     
     $command = $conf['phantomjs_exec'] . " '" . $url . "' " . $tmpfname;
     if ( $conf['debug'] == 1 )
@@ -214,6 +221,17 @@ function get_har_using_phantomjs($url, $include_image = true) {
 
     }
 
+    # Same thing at the end we may end up with stuff like this
+    # Unsafe JavaScript attempt to access frame with URL about:blank from frame
+    $found_closing_curly_brace = false;
+
+    foreach ( $output_array as $key => $line ) {
+        if ( ! $found_closing_curly_brace && preg_match("/^}/", $line) ) {
+            $found_closing_curly_brace = 1;
+        } else if ( $found_closing_curly_brace )
+            $output_array[$key] = "";
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     // Phantom JS exited normally. It doesn't mean URL properly loaded just
     // that Phantom didn't fail for other reasons ie. can't execute
@@ -221,14 +239,14 @@ function get_har_using_phantomjs($url, $include_image = true) {
     if ( $ret_value == 0 ) {
         $output = join("\n", $output_array);
         $har = json_decode($output, TRUE);
-        
+
         // If har_array is null JSON could not be parsed
         if ( $har === NULL ) {
-            
+
            $out = array( "success" => 0, "error_message" => "PhantomJS ran successfully however output couldn't be parsed.");
-            
+
         } else {
-            
+
             if ( filesize($tmpfname) != 0 && $include_image )
               $imgbinary = base64_encode(fread(fopen($tmpfname, "r"), filesize($tmpfname)));
             else
@@ -238,7 +256,7 @@ function get_har_using_phantomjs($url, $include_image = true) {
             $out = array ( "har" => $har, "screenshot" => $imgbinary, "success" => 1 );
             
         }
-    
+
         // If har_array is null JSON could not be parsed        
         return $out;
         
@@ -290,7 +308,7 @@ function get_curl_timings_with_headers($original_url) {
     $response = curl_multi_getcontent($curly);
     
     if(curl_errno($curly)) {
-        $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($ch) );
+        $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($curly) );
     } else {
       list($header, $content) = explode("\r\n\r\n", $response);
       
