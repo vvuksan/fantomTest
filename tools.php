@@ -408,11 +408,11 @@ function print_url_results($records) {
     # Make the bar graph of response
     print "<tr><td colspan=8>";
     print "<span class=\"curl_bar\">";
-    print '<span class="fill dns_time" style="width: ' . number_format(100 * $record['dns_lookuptime']/$record['total_time'], 1) .  '%">&nbsp;</span>';
-    print '<span class="fill conn_time" style="width: ' . number_format(100 * $record['connect_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
-    print '<span class="fill request_time" style="width: ' . number_format(100 * $record['pretransfer_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
-    print '<span class="fill time_to_first_byte" style="width: ' . number_format(100 * $record['starttransfer_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
-    print '<span class="fill transfer_time" style="width: ' . number_format(100 * $record['transfer_time']/$record['total_time'], 1) .  '%">&nbsp;</span>';
+    print '<span class="fill dns_time" style="width: ' . floor(100 * $record['dns_lookuptime']/$record['total_time']) .  '%">&nbsp;</span>';
+    print '<span class="fill conn_time" style="width: ' . floor(100 * $record['connect_time']/$record['total_time']) .  '%">&nbsp;</span>';
+    print '<span class="fill request_time" style="width: ' . floor(100 * $record['pretransfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
+    print '<span class="fill time_to_first_byte" style="width: ' . floor(100 * $record['starttransfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
+    print '<span class="fill transfer_time" style="width: ' . floor(100 * $record['transfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
     print "</span>";
 
     print "</td></tr>";
