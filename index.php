@@ -12,7 +12,7 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 ?>
 <html>
 <head>
-<title>Page performance</title>
+<title>FantomTest Tools</title>
 <link type="text/css" href="css/flick/jquery-ui-1.10.4.custom.css" rel="stylesheet" />
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
 <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
@@ -122,9 +122,9 @@ function getSSLCiphers() {
 	$("#ssl_ciphers_results").html(data);
      });
 }
-function getSSLCertificate() {
+function getSSLCert() {
     $("#ssl_cert_results").html('<img src="img/spinner.gif">');
-    $.get('get_ssl_certificate.php', $("#ssl_cert_form").serialize(), function(data) {
+    $.get('get_ssl_cert.php', $("#ssl_cert_form").serialize(), function(data) {
 	$("#ssl_cert_results").html(data);
      });
 }
@@ -270,7 +270,8 @@ function getSSLCertificate() {
   }
   ?>
   Host name <input id="hostname" name="hostname" size=100>
-  Port <input id="port" name="port" value=443 size=6>
+  Port <input id="port" name="port" value=443 size=6> <p />
+  Optional SNI name (usually blank): <input id="sni_name" name="sni_name" size=60>
   <button class="query_buttons" id="ssl_querybutton" onclick="getSSLCert(); return false;">Get certificate</button>
   <br />
   </form>

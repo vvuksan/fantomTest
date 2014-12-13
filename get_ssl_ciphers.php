@@ -30,7 +30,8 @@ if ( !isset($_REQUEST['port']) ) {
 
 $site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 
-$conf['remote_exe'] = "get_ssl.php";
+# Need name of this script so we can execute the same on remote nodes
+$conf['remote_exe'] = basename ( __FILE__ );
 
 ///////////////////////////////////////////////////////////////////////////////
 // site_id == -1 means run only on this node. This is the only time
@@ -66,18 +67,16 @@ if ( $_REQUEST['site_id'] == -1 ) {
     foreach ( $conf['remotes'] as $index => $remote ) {
         
         print "<div id='remote_" . ${index} . "'>
-        <button onClick='$(\"#mtrping_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
+        <button onClick='$(\"#ciphers_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
         
-        print "<div id='mtrping_results_" . ${index} ."'>";
+        print "<div id='ciphers_results_" . ${index} ."'>";
         
-        #print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_ssl.php?site_id=-1" .
-        #"&hostname=" . $_REQUEST['hostname'] ));
         print "<img src=\"img/spinner.gif\"></div>";
         
         print '
         <script>
         $.get("' . $conf['remote_exe'] . '", "site_id=' . $index . '&hostname=' . htmlentities($_REQUEST['hostname']) . '", function(data) {
-            $("#mtrping_results_' . ${index} .'").html(data);
+            $("#ciphers_results_' . ${index} .'").html(data);
          });
         </script>
         <p></p>';
@@ -89,7 +88,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     print "<div><h3>" .$conf['remotes'][$site_id]['name']. "</h3></div>";
     print "<div class=dns_results>";
     print (file_get_contents($conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?site_id=-1" .
-    "&hostname=" . $_REQUEST['hostname'] ));
+        "&hostname=" . $_REQUEST['hostname'] . "&port=" . $port ));
     print "</div>";
     
     
