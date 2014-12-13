@@ -94,11 +94,11 @@ if ( $_REQUEST['site_id'] == -1 ) {
         # Convert UNIX dates into human readable
         if ( preg_match("/^VALID(.*)_T$/i", $key) )
           $parts = date('r', $parts);
-        print "<tr><td>" . strtoupper($key) . "</td>";
+        print "<tr><th>" . strtoupper($key) . "</th>";
         if ( is_array($parts) ) {
           print "<td><table border=1 class=\"tablesorter\">";
           foreach ( $parts as $subkey => $value ) {
-            print "<tr><td>" . strtoupper($subkey) . "</td><td>" . $value ."</td></tr>";
+            print "<tr><th>" . strtoupper($subkey) . "</th><td>" . $value ."</td></tr>";
           }
           print "</table></td></tr>";
         } else {
