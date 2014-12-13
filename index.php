@@ -116,10 +116,16 @@ function getPingMtr() {
 	$("#pingmtr_results").html(data);
      });
 }
-function getSSL() {
-    $("#ssl_results").html('<img src="img/spinner.gif">');
-    $.get('get_ssl.php', $("#ssl_form").serialize(), function(data) {
-	$("#ssl_results").html(data);
+function getSSLCiphers() {
+    $("#ssl_ciphers_results").html('<img src="img/spinner.gif">');
+    $.get('get_ssl_ciphers.php', $("#ssl_ciphers_form").serialize(), function(data) {
+	$("#ssl_ciphers_results").html(data);
+     });
+}
+function getSSLCertificate() {
+    $("#ssl_cert_results").html('<img src="img/spinner.gif">');
+    $.get('get_ssl_certificate.php', $("#ssl_cert_form").serialize(), function(data) {
+	$("#ssl_cert_results").html(data);
      });
 }
 </script>
@@ -131,7 +137,8 @@ function getSSL() {
 	<li><a href="#tab-url">URL Test</a></li>
 	<li><a href="#tab-dns">DNS</a></li>
 	<li><a href="#tab-pingmtr">Ping/MTR</a></li>
-	<li><a href="#tab-ssl">SSL ciphers</a></li>
+	<li><a href="#tab-ssl-cert">SSL certificate</a></li>
+	<li><a href="#tab-ssl-ciphers">SSL ciphers</a></li>
     </ul>
 
 <div id="tab-waterfall">
@@ -245,10 +252,9 @@ function getSSL() {
   </div>
 </div>
 
-<div id="tab-ssl">
+<div id="tab-ssl-cert">
   <div id=header>
-  
-  <form id="ssl_form">
+  <form id="ssl_cert_form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
@@ -264,11 +270,41 @@ function getSSL() {
   }
   ?>
   Host name <input id="hostname" name="hostname" size=100>
-  <button class="query_buttons" id="ssl_querybutton" onclick="getSSL(); return false;">Get SSL ciphers</button>
+  Port <input id="port" name="port" value=443 size=6>
+  <button class="query_buttons" id="ssl_querybutton" onclick="getSSLCert(); return false;">Get certificate</button>
   <br />
   </form>
   </div>
-  <div id=ssl_results>
+  <div id=ssl_cert_results>
+
+  </div>
+</div>
+
+<div id="tab-ssl-ciphers">
+  <div id=header>
+  
+  <form id="ssl_ciphers_form">
+  <?php
+  // If we define remotes create a select box
+  if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
+      print "Test from <select name='site_id'>
+      <option value='-100'>All Remotes</option>
+      <option value='-1'>Local</option>";
+      foreach ( $conf['remotes'] as $index => $remote ) {
+	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
+      }
+      print "</select> ";
+  } else {
+    print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
+  }
+  ?>
+  Host name <input id="hostname" name="hostname" size=100>
+  Port <input id="port" name="port" value=443 size=6>
+  <button class="query_buttons" id="ssl_querybutton" onclick="getSSLCiphers(); return false;">Get SSL ciphers</button>
+  <br />
+  </form>
+  </div>
+  <div id=ssl_ciphers_results>
   </div>
 </div>
 

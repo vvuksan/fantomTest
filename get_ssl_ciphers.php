@@ -22,6 +22,12 @@ if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
         die("Address is not an IP and I can't resolve it. Doing nothing");
 }
 
+if ( !isset($_REQUEST['port']) ) {
+  $port = 443;
+} else {
+  $port = is_numeric($_REQUEST['port']) && $REQUEST['port'] > 1 && $_REQUEST['port'] < 65536 ? $_REQUEST['port'] : 443;
+}
+
 $site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 
 $conf['remote_exe'] = "get_ssl.php";
@@ -42,7 +48,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     if ( !is_executable($conf['nmap_bin']) ) {
       die("NMAP is not executable. Current path is to to " . $conf['nmap_bin'] . " please set \$conf['nmap_bin'] in conf.php to proper path");
     }
-    passthru("cd " . __DIR__ . "/ssl; " . $conf['nmap_bin'] . " --script ssl-enum-ciphers.nse -p 443 " . $user['ip']); 
+    passthru("cd " . __DIR__ . "/ssl; " . $conf['nmap_bin'] . " --script ssl-enum-ciphers.nse -p " . $port . " " . $user['ip']); 
     ?>
     </pre>
     </div>
