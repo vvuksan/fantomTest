@@ -53,7 +53,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     <div style="background-color: #FAFAD2">
     <pre>
     <?php
-    passthru($conf['mtr_bin'] . " --report-wide --report-cycles=1 --report " . $_REQUEST['hostname']);
+    passthru($conf['mtr_bin'] . " --report-wide -z --report-cycles=1 --report " . $_REQUEST['hostname']);
     ?>
     </pre>
     </div>
