@@ -4,6 +4,7 @@ $base_dir = dirname(__FILE__);
 
 # Load main config file.
 require_once $base_dir . "/conf_default.php";
+require_once $base_dir . "/tools.php";
 
 # Include user-defined overrides if they exist.
 if( file_exists( $base_dir . "/conf.php" ) ) {
@@ -16,70 +17,97 @@ if ( !isset($_REQUEST['hostname'])) {
     die("Need to supply hostname");
 }
 
-if ( $_REQUEST['site_id'] == -1 ) {
 
-    $start_time = microtime(TRUE);
-    $result = dns_get_record($_REQUEST['hostname'], DNS_A);
-    $query_time_in_ms = round((microtime(TRUE) - $start_time) * 1000);
-    
-    $resolver_ip_record = dns_get_record("whoami.akamai.net", DNS_A);
-    $resolver_ip = isset($resolver_ip_record[0]['ip']) ? $resolver_ip_record[0]['ip'] : "Unknown";
-    
-    if ( preg_match("/^74.125/", $resolver_ip ) ) {
-      $dns_provider = " - Google DNS";
-    } else {
-      $dns_provider = "";
-    }
-    
-    if ( count($result) > 0 ) {
-        print "<table border=1 class=tablesorter>
-	  <thead><tr><th>Hostname</th><th>Resolver IP</th><th>Query Time (ms)</th><th>TTL</th><th>Type</th><th>IP</th></tr></thead><tbody>";
-        foreach( $result as $index => $record ) {
-            print "<tr><td>" . $record['host'] . "</td>
-            <td>" . $resolver_ip . " " . $dns_provider .  "</td>
-            <td>" . $query_time_in_ms . "</td>            
-            <td>" . $record['ttl'] . "</td>
-            <td>" . $record['type'] . "</td>
-            <td>" . $record['ip'] . "</td></tr>";
-        }
-        print "</tbody></table>";
-    } else {
-        
-    }
+$conf['remote_exe'] = basename ( __FILE__ );
+
+###############################################################################
+# Test needs to be executed locally
+if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
+
+  $results = get_dns_record_with_timing($_REQUEST['hostname']);
+  
+  # Return JSON response
+  if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {    
+    header('Content-type: application/json');
+    print json_encode($results);
+    exit(1);
+  } else {
+    $myresults["-1"] = $results;
+    print_dns_results($myresults);
+  }
 
 } else if ( $site_id == -100 ) {
 
-    // Get results from all remotes         
-    foreach ( $conf['remotes'] as $index => $remote ) {
+  $mh = curl_multi_init();
 
-        print "<div id='remote_" . ${index} . "'>
-        <button onClick='$(\"#dns_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
-        
-        print "<div id='dns_results_" . ${index} ."'>";
-        
-        #print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_mtr.php?site_id=-1" .
-        #"&hostname=" . $_REQUEST['hostname'] ));
-        print "<img src=\"img/spinner.gif\"></div>";
-        
-        print '
-        <script>
-        $.get("get_dns.php", "site_id=' . $index . '&hostname=' . htmlentities($_REQUEST['hostname']) . '", function(data) {
-            $("#dns_results_' . ${index} .'").html(data);
-         });
-        </script>
-        <p></p>';
-        print "</div>";
+  // Get results from all remotes         
+  foreach ( $conf['remotes'] as $id => $remote ) {
+
+    $url = $remote['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1&hostname=" . htmlentities($_REQUEST['hostname']);
+    $url_parts = parse_url($url);
+    $curly[$id] = curl_init();    
+    curl_setopt($curly[$id], CURLOPT_HEADER, 1);
+    curl_setopt($curly[$id], CURLOPT_TIMEOUT, 4);
+    curl_setopt($curly[$id], CURLOPT_RETURNTRANSFER, 1);
+    switch ( $url_parts['scheme'] ) {
+	case "http":
+	  curl_setopt($curly[$id], CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
+	  curl_setopt($curly[$id], CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP);
+	  break;
+	case "https":
+	  curl_setopt($curly[$id], CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+	  curl_setopt($curly[$id], CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+	  break;
+	default:
+	  die("<h3>Invalid protocol supplied. You need either http:// or https://</h3>");
+    } 
+    
+    curl_setopt($curly[$id], CURLOPT_ENCODING , "gzip"); 
+    curl_setopt($curly[$id], CURLOPT_URL, $url);
+    # Disable SSL peer verify ie. don't check remote side SSL certificates
+    if ( ! $conf['ssl_peer_verify'] ) {
+      curl_setopt($curly[$id], CURLOPT_SSL_VERIFYPEER, FALSE);
+      curl_setopt($curly[$id], CURLOPT_SSL_VERIFYHOST, FALSE); 
+      curl_setopt($curly[$id], CURLOPT_VERBOSE , TRUE);
     }
+    curl_multi_add_handle($mh, $curly[$id]);
+  }
+  
+  // execute the handles
+  $running = null;
+  do {
+    curl_multi_exec($mh, $running);
+  } while($running > 0);
+
+  $results = array();
+  
+  foreach($curly as $id => $c) {
+    
+    if(curl_errno($c)) {
+      print "<h3>" . curl_error($c) . "</h3>";
+    }
+    
+    $response = curl_multi_getcontent($c);
+    
+    if ( $response != "" ) {
+      list($header, $content) = explode("\r\n\r\n", $response);
+      $results[$id] = json_decode($content, TRUE);
+    }
+    
+  }
+  
+  #print "<PRE>"; print_r($results);
+  print_dns_results($results);
 
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
-    
-    print "<div><h3>" .$conf['remotes'][$site_id]['name']. "</h3></div>";
-    print "<div class=dns_results>";
-    print (file_get_contents($conf['remotes'][$site_id]['base_url'] . "get_dns.php?site_id=-1" .
-    "&hostname=" . $_REQUEST['hostname'] ));
-    print "</div>";
-    
-    
+
+  $content = file_get_contents($conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1" .
+    "&hostname=" . htmlentities($_REQUEST['hostname'] ));
+
+  $results[$site_id] = json_decode($content, TRUE);
+  
+  print_dns_results($results);
+
 } else {
     die("No valid site_id supplied");
 }
