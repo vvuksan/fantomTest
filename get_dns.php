@@ -47,7 +47,7 @@ if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
     $url_parts = parse_url($url);
     $curly[$id] = curl_init();    
     curl_setopt($curly[$id], CURLOPT_HEADER, 1);
-    curl_setopt($curly[$id], CURLOPT_TIMEOUT, 4);
+    curl_setopt($curly[$id], CURLOPT_TIMEOUT, 60);
     curl_setopt($curly[$id], CURLOPT_RETURNTRANSFER, 1);
     switch ( $url_parts['scheme'] ) {
 	case "http":

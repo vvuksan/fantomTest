@@ -282,7 +282,7 @@ function get_dns_record_with_timing($dns_name, $record_type = "A") {
   
   return array( "records" => $result,
     "query_time" => $query_time,
-    "resolver_ip" => $resolver_ip);
+    "resolver_ip" => $resolver_ip );
 
 }
 
@@ -313,6 +313,7 @@ function print_dns_results($results) {
       <th>Type</th>
       <th>IP</th>
       <th>Query Time (ms)</th>
+      <th>Query Time comparison</th>
       </tr>
     </thead>
     <tbody>
@@ -324,18 +325,33 @@ function print_dns_results($results) {
       else
         $site_name = $conf['remotes'][$site_id]['name'];
 
+      if ( ! isset($result['records']) or count($result['records']) == 0 ) {
+        print "<tr>
+          <td>" . $site_name . "</td>
+          <td>No Results</td>
+          <td>NA</td>
+          <td>NA</td>
+          <td>NA</td>
+          <td>No Results</td>
+          <td align=right>0</td><td>&nbsp;</td></tr>";
+        continue;
+      }
+
       $query_time_in_ms = round($result['query_time'] * 1000);
-      $resolver_ip = preg_match("/^74.125/", $result['resolver_ip']) ? $result['resolver_ip'] . " - Google DNS" : $result['resolver_ip']; 
+      $resolver_ip = preg_match("/^74.125/", $result['resolver_ip']) ? $result['resolver_ip'] . " - Google DNS" : $result['resolver_ip'];
+
       foreach( $result['records'] as $index => $record ) {
           print "<tr>
           <td>" . $site_name . "</td>
           <td>" . $record['host'] . "</td>
           <td>" . $resolver_ip . "</td>
-          <td>" . $record['ttl'] . "</td>
+          <td align=right>" . $record['ttl'] . "</td>
           <td>" . $record['type'] . "</td>
-          <td>" . $record['ip'] . "</td>";
+          <td>" . $record['ip'] . "</td>
+          <td align=right>" . $query_time_in_ms . "</td>
+          ";
           print "<td><span class=\"curl_bar\">";
-          print '<span class="fill" style="background: #FFEC4B; width: ' . floor(100 * $result['query_time']/$max_time) .  '%">' . $query_time_in_ms . '</span>';
+          print '<span class="fill" style="background: #FFEC4B; width: ' . floor(100 * $result['query_time']/$max_time) .  '%">&nbsp;</span>';
           print "</span></td>";
           print "</tr>";
       }
@@ -368,7 +384,7 @@ function get_curl_timings_with_headers($original_url) {
 
     $curly = curl_init();    
     curl_setopt($curly, CURLOPT_HEADER, 1);
-    curl_setopt($curly, CURLOPT_TIMEOUT, 4);
+    curl_setopt($curly, CURLOPT_TIMEOUT, 60);
     curl_setopt($curly, CURLOPT_RETURNTRANSFER, 1);
     switch ( $url_parts['scheme'] ) {
 	case "http":
