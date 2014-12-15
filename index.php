@@ -259,8 +259,8 @@ function getSSLCert() {
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
       print "Test from <select name='site_id'>
-      <option value='-100'>All Remotes</option>
-      <option value='-1'>Local</option>";
+      <option value='-1'>Local</option>
+      <option value='-100'>All Remotes</option>";
       foreach ( $conf['remotes'] as $index => $remote ) {
 	print "<option value='" . $index . "'>" . $remote['name'] . "</option>"; 
       }
