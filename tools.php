@@ -267,10 +267,94 @@ function get_har_using_phantomjs($original_url, $include_image = true) {
 
 }
 
+#############################################################################################
+# Get DNS record
+#############################################################################################
+function get_dns_record_with_timing($dns_name, $record_type = "A") {
+
+  $start_time = microtime(TRUE);
+  $result = dns_get_record($dns_name, DNS_A);
+  # Calculate query time
+  $query_time = microtime(TRUE) - $start_time;
+  
+  $resolver_ip_record = dns_get_record("whoami.akamai.net", DNS_A);
+  $resolver_ip = isset($resolver_ip_record[0]['ip']) ? $resolver_ip_record[0]['ip'] : "Unknown";
+  
+  return array( "records" => $result,
+    "query_time" => $query_time,
+    "resolver_ip" => $resolver_ip);
+
+}
 
 #############################################################################################
-#
-#
+# Get DNS record
+#############################################################################################
+function print_dns_results($results) {
+  
+  global $conf;
+
+  if ( count($results) > 0 ) {
+
+    # Find max time
+    $max_time = 0;
+
+    foreach ( $results as $site_id => $result ) {
+      if ( $result['query_time'] > $max_time )
+        $max_time = $result['query_time'];
+    }
+    ?>
+
+  <table border=1 class=tablesorter>
+    <thead><tr>
+      <th>Site Name</th>
+      <th>Hostname</th>
+      <th>Resolver IP</th>
+      <th>TTL</th>
+      <th>Type</th>
+      <th>IP</th>
+      <th>Query Time (ms)</th>
+      </tr>
+    </thead>
+    <tbody>
+ <?php
+    foreach ( $results as $site_id => $result ) {
+
+      if ( $site_id == "-1")
+        $site_name = "Local";
+      else
+        $site_name = $conf['remotes'][$site_id]['name'];
+
+      $query_time_in_ms = round($result['query_time'] * 1000);
+      $resolver_ip = preg_match("/^74.125/", $result['resolver_ip']) ? $result['resolver_ip'] . " - Google DNS" : $result['resolver_ip']; 
+      foreach( $result['records'] as $index => $record ) {
+          print "<tr>
+          <td>" . $site_name . "</td>
+          <td>" . $record['host'] . "</td>
+          <td>" . $resolver_ip . "</td>
+          <td>" . $record['ttl'] . "</td>
+          <td>" . $record['type'] . "</td>
+          <td>" . $record['ip'] . "</td>";
+          print "<td><span class=\"curl_bar\">";
+          print '<span class="fill" style="background: #FFEC4B; width: ' . floor(100 * $result['query_time']/$max_time) .  '%">' . $query_time_in_ms . '</span>';
+          print "</span></td>";
+          print "</tr>";
+      }
+    }
+?>
+    </tbody>
+  </table>
+  <script>
+    $("table").tablesorter();
+  </script>
+<?php
+
+  }
+  
+}
+
+#############################################################################################
+# Get Curl timings
+#############################################################################################
 function get_curl_timings_with_headers($original_url) {
   
     $url = validate_url($original_url);
@@ -336,7 +420,9 @@ function get_curl_timings_with_headers($original_url) {
   
 }
 
-
+#############################################################################################
+# Print cURL results
+#############################################################################################
 function print_url_results($records) {
   
   global $conf;
@@ -392,7 +478,7 @@ function print_url_results($records) {
 
     }
     print "<tr><td rowspan=2>" . $site_name;
-    
+
     print "<div id='remote_" . $id .  "' >".
    "<button class=\"http_headers\" onClick='$(\"#url_results_" . $id .  "\").toggle(); return false;'>Headers</button></div>";
 
@@ -401,7 +487,7 @@ function print_url_results($records) {
     print "</pre></div>";
 
     print "</td>";
-        
+
     $gzip = preg_match("/Content-Encoding: gzip/i", $record['headers_string']) ? "Yes" : "No";
 
     $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
@@ -438,7 +524,7 @@ function print_url_results($records) {
   } // foreach ( $records as $record ) { 
 
   print "</tbody></table>";
- 
+
 }
 
 ?>

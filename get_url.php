@@ -36,7 +36,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     // Get results from all remotes         
     foreach ( $conf['remotes'] as $id => $remote ) {
 
-      $url = $remote['base_url'] . "get_url.php?json=1&site_id=-1&url=" . htmlentities($_REQUEST['url']);
+      $url = $remote['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1&url=" . htmlentities($_REQUEST['url']);
       $url_parts = parse_url($url);
       $curly[$id] = curl_init();    
       curl_setopt($curly[$id], CURLOPT_HEADER, 1);
