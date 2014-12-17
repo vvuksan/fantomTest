@@ -384,7 +384,7 @@ function get_curl_timings_with_headers($original_url) {
 
     $curly = curl_init();    
     curl_setopt($curly, CURLOPT_HEADER, 1);
-    curl_setopt($curly, CURLOPT_TIMEOUT, 60);
+    curl_setopt($curly, CURLOPT_TIMEOUT, 4);
     curl_setopt($curly, CURLOPT_RETURNTRANSFER, 1);
     switch ( $url_parts['scheme'] ) {
 	case "http":

@@ -11,7 +11,7 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
-#header('Content-type: application/json');
+$conf['remote_exe'] = basename ( __FILE__ );
 
 $site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
 
