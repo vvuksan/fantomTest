@@ -187,8 +187,8 @@ function getSSLCert() {
     print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
-  URL <input id="url" name="url" size=100><br/>
-  Timeout (max amount of time to wait) <input id="timeout" name="timeout" size=5 value=60>
+  URL <input id="url" name="url" size=100>
+  Max time to wait for load <input id="timeout" name="timeout" size=5 value=60>
   <button class="query_buttons" id="url_querybutton" onclick="getURL(); return false;">Get timings</button>
   <br />
   </form>
