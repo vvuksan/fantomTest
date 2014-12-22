@@ -14,6 +14,7 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 $conf['remote_exe'] = basename ( __FILE__ );
 
 $site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
+$timeout = is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ?$_REQUEST['timeout'] : 60;
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
@@ -40,7 +41,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
       $url_parts = parse_url($url);
       $curly[$id] = curl_init();    
       curl_setopt($curly[$id], CURLOPT_HEADER, 1);
-      curl_setopt($curly[$id], CURLOPT_TIMEOUT, 60);
+      curl_setopt($curly[$id], CURLOPT_TIMEOUT, $timeout);
       curl_setopt($curly[$id], CURLOPT_RETURNTRANSFER, 1);
       switch ( $url_parts['scheme'] ) {
           case "http":
