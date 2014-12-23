@@ -25,6 +25,12 @@ function createHAR(address, title, startTime, resources)
             return;
         }
 
+        // Exclude Data URI from HAR file because
+        // they aren't included in specification
+        if (request.url.match(/(^data:(image|font)\/.*)/i)) {
+            return;
+	}
+
         entries.push({
             startedDateTime: request.time.toISOString(),
             time: endReply.time - request.time,
@@ -61,7 +67,8 @@ function createHAR(address, title, startTime, resources)
                 wait: startReply.time - request.time,
                 receive: endReply.time - startReply.time,
                 ssl: -1
-            }
+            },
+            pageref: address
         });
     });
 
@@ -77,7 +84,9 @@ function createHAR(address, title, startTime, resources)
                 startedDateTime: startTime.toISOString(),
                 id: address,
                 title: title,
-                pageTimings: {}
+                pageTimings: {
+                    onLoad: page.endTime - page.startTime
+                }
             }],
             entries: entries
         }
