@@ -47,7 +47,8 @@ if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
     $url_parts = parse_url($url);
     $curly[$id] = curl_init();    
     curl_setopt($curly[$id], CURLOPT_HEADER, 1);
-    curl_setopt($curly[$id], CURLOPT_TIMEOUT, 60);
+    # How long to wait for CURL response. DNS responses should be quick so 4 seconds should be plenty
+    curl_setopt($curly[$id], CURLOPT_TIMEOUT, 4);
     curl_setopt($curly[$id], CURLOPT_RETURNTRANSFER, 1);
     switch ( $url_parts['scheme'] ) {
 	case "http":
