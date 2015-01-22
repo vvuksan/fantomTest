@@ -37,7 +37,7 @@ function generate_waterfall($har) {
         $request_duration = $request['time'] / 1000;
         $url = $request['request']['url'];
         $resp_code = intval($request['response']['status']);
-        $resp_size = floatval($request['response']['bodySize']);
+        $resp_size = floatval($request['response']['content']['size']);
         
         // Extract the milliseconds since strtotime doesn't seem to retain it
         preg_match("/(.*)T(.*)\.(.*)(Z)/", $started_time, $out);
