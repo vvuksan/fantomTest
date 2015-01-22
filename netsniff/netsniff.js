@@ -27,7 +27,7 @@ function createHAR(address, title, startTime, resources)
 
         // Exclude Data URI from HAR file because
         // they aren't included in specification
-        if (request.url.match(/(^data:(image|font)\/.*)/i)) {
+        if (request.url.match(/(^data:(image|font|application)\/.*)/i)) {
             return;
 	}
 
@@ -51,7 +51,7 @@ function createHAR(address, title, startTime, resources)
                 cookies: [],
                 headers: endReply.headers,
                 redirectURL: "",
-                headersSize: -1,
+                headersSize: startReply.headerSize,
                 bodySize: startReply.bodySize,
                 content: {
                     size: startReply.bodySize,
