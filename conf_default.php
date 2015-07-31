@@ -18,6 +18,7 @@ $conf['cdn_detection'] = true;
 # Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;
 $conf['ping_bin'] = "/bin/ping";
+$conf['ping6_bin'] = "/bin/ping6";
 $conf['mtr_bin'] = "/usr/bin/mtr";
 $conf['nmap_bin'] = "/usr/bin/nmap";
 
