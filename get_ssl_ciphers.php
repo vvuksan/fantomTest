@@ -25,7 +25,7 @@ if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
 if ( !isset($_REQUEST['port']) ) {
   $port = 443;
 } else {
-  $port = is_numeric($_REQUEST['port']) && $REQUEST['port'] > 1 && $_REQUEST['port'] < 65536 ? $_REQUEST['port'] : 443;
+  $port = is_numeric($_REQUEST['port']) && $_REQUEST['port'] > 1 && $_REQUEST['port'] < 65536 ? $_REQUEST['port'] : 443;
 }
 
 $site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
