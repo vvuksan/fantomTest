@@ -44,7 +44,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     <div style="background-color: #DCDCDC">
     <pre>
     <?php
-    if ( filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+    if ( filter_var($user['ip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
       passthru($conf['ping6_bin'] . " -c 4 " . $user['ip']);
     } else {
       passthru($conf['ping_bin'] . " -c 4 " . $user['ip']);
