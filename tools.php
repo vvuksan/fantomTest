@@ -185,8 +185,8 @@ function generate_waterfall($har) {
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
         '<td>' . $request["resp_code"] . '</td>
-        <td>' . $request["duration"] . '</td>
-        <td>' . $request["size"] . '</td>
+        <td align="right">' . number_format($request["duration"], 3) . '</td>
+        <td align="right">' . $request["size"] . '</td>
         <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
         '<span class="fill" style="background: #AAB2FF; width: ' . $progress_bar .  '%">&nbsp;</span>'.
