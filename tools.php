@@ -178,7 +178,7 @@ function generate_waterfall($har) {
             $hit_or_miss = $out[1];
         }
 
-        if ( preg_match("/(Golfe2|GSE|HTTP server \(unknown\))/i",  $request['resp_headers']['Server']) ) {
+        if ( preg_match("/(Golfe2|GSE|adclick_server|HTTP server \(unknown\))/i",  $request['resp_headers']['Server']) ) {
             $server = "Google";
         }
 
