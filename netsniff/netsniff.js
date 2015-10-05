@@ -109,6 +109,9 @@ if (phantom.args.length === 0) {
     if ( phantom.args.length === 2 ) {
 	output = phantom.args[1];
     }
+    page.customHeaders = {
+  "Pragma": "akamai-x-cache-on, akamai-x-cache-remote-on, akamai-x-check-cacheable, akamai-x-get-cache-key, akamai-x-get-true-cache-key, akamai-x-serial-no"
+};
     
     page.resources = [];
 

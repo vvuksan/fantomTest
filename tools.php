@@ -120,7 +120,7 @@ function generate_waterfall($har) {
 
         if ( isset($request['resp_headers']['X-Cache']) ) {
 	   $hit_or_miss = $request['resp_headers']['X-Cache'];
-	   if ( preg_match("/Hit|HIT$/", $request['resp_headers']['X-Cache'] )) {
+	   if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|Hit|HIT$)/", $request['resp_headers']['X-Cache'] )) {
 		$hit_or_miss_css = "HIT";
 	   } else {
 		$hit_or_miss_css = "MISS";
@@ -148,20 +148,37 @@ function generate_waterfall($har) {
             $server = "CloudFront";
         }
 
+        # ChinaCache
+        if ( isset($request['resp_headers']['Powered-By-ChinaCache']) ) {
+            $server = "ChinaCache";
+        }
+
+        # CD Networks
+        if ( isset($request['resp_headers']['X-Px']) ) {
+            $server = "CDNetworks";
+        }
+
         # Cloudflare
         if ( isset($request['resp_headers']['CF-RAY']) ) {
             $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
 	    $hit_or_miss_css = $request['resp_headers']['CF-Cache-Status'];
 	    $hit_or_miss = $request['resp_headers']['CF-Cache-Status'];
         }
-        
+
 	# Highwinds
         if ( isset($request['resp_headers']['X-HW']) ) {
             $server = "HW " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['X-HW']);
 	    $hit_or_miss_css = "HIT";
 	    $hit_or_miss = "HIT";
         }
-        
+
+        # Match Akamai headers
+        if ( preg_match("/(\w+)(\s+).*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
+            $server = "Akamai";
+            $hit_or_miss = $out[1];
+        }
+
+
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
         '<td>' . $request["resp_code"] . '</td>
