@@ -96,7 +96,7 @@ function generate_waterfall($har) {
             <th>Server</th>
             <th>Hit?</th>
             <th>Resp Code</th>
-            <th>Duration</th>
+            <th>Dur</th>
             <th>Size (bytes)</th>
             <th></th>
         </tr>'
