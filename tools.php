@@ -178,6 +178,9 @@ function generate_waterfall($har) {
             $hit_or_miss = $out[1];
         }
 
+        if ( preg_match("/(Golfe2|GSE|HTTP server \(unknown\))/i",  $request['resp_headers']['Server']) ) {
+            $server = "Google";
+        }
 
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
