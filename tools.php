@@ -182,6 +182,10 @@ function generate_waterfall($har) {
             $server = "Google";
         }
 
+        if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
+            $server = "AWS S3";
+        }
+
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
         '<td>' . $request["resp_code"] . '</td>
