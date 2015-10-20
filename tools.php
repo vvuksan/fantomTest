@@ -129,6 +129,8 @@ function generate_waterfall($har) {
  		$hit_or_miss_css = "UNK";
  		$hit_or_miss = "UNK";
  	}
+
+ 	#
         isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
 
         # Check if Server header provided. It's used by NetDNA and Edgecast
@@ -152,37 +154,34 @@ function generate_waterfall($har) {
         if ( isset($request['resp_headers']['Powered-By-ChinaCache']) ) {
             $server = "ChinaCache";
         }
-
+        # Incapsula
+        else if ( isset($request['resp_headers']['X-CDN']) ) {
+            $server = "Incapsula";
+        }
         # CD Networks
-        if ( isset($request['resp_headers']['X-Px']) ) {
+        else if ( isset($request['resp_headers']['X-Px']) ) {
             $server = "CDNetworks";
         }
-
         # Cloudflare
-        if ( isset($request['resp_headers']['CF-RAY']) ) {
+        else if ( isset($request['resp_headers']['CF-RAY']) ) {
             $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
 	    $hit_or_miss_css = $request['resp_headers']['CF-Cache-Status'];
 	    $hit_or_miss = $request['resp_headers']['CF-Cache-Status'];
         }
-
-	# Highwinds
-        if ( isset($request['resp_headers']['X-HW']) ) {
+        # Highwinds
+        else if ( isset($request['resp_headers']['X-HW']) ) {
             $server = "HW " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['X-HW']);
 	    $hit_or_miss_css = "HIT";
 	    $hit_or_miss = "HIT";
         }
-
         # Match Akamai headers
-        if ( preg_match("/(\w+)(\s+).*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
+        else if ( preg_match("/(\w+)(\s+).*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
             $server = "Akamai";
             $hit_or_miss = $out[1];
-        }
-
-        if ( preg_match("/(Golfe2|GSE|adclick_server|HTTP server \(unknown\))/i",  $request['resp_headers']['Server']) ) {
+        # Not exhaustive way to identify Google
+        } else if ( preg_match("/google.*com\//i", $request["url"]) ) {
             $server = "Google";
-        }
-
-        if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
+        } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
         }
 
