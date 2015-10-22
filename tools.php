@@ -136,7 +136,7 @@ function generate_waterfall($har) {
         # Check if Server header provided. It's used by NetDNA and Edgecast
         if ( isset($request['resp_headers']['Server']) ) {
           
-          if ( preg_match("/^EC(S|A)/", $request['resp_headers']['Server']) ) {
+          if ( preg_match("/^EC/", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
           } # NetDNA
           elseif ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
