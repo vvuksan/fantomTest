@@ -48,7 +48,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
 ?>
      Verify yourself with OpenSSL command:
 <div style="background-color: #DCDCDC">
-    <pre>echo "HEAD / HTTP/1.1" |  openssl s_client -showcerts <?php if ( $sni_name != "" ) print "-servername " . $sni_name; ?> -connect <?php print $user['ip'] . ":" . $port; ?> | openssl x509  -noout  -text</pre>    
+    <pre>echo "HEAD / HTTP/1.1" |  openssl s_client -showcerts <?php if ( $sni_name != "" ) print "-servername " . htmlentities($sni_name); ?> -connect <?php print htmlentities($_REQUEST['hostname']) . ":" . $port; ?> | openssl x509  -noout  -text</pre>
 </div>    
 <?php
 
