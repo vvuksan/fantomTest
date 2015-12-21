@@ -14,11 +14,13 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 $conf['remote_exe'] = basename ( __FILE__ );
 
 $site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
-$timeout = is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ?$_REQUEST['timeout'] : 60;
+$timeout = is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ? $_REQUEST['timeout'] : 60;
+
+$optional_request_headers = isset($_REQUEST['optional_headers']) ? explode("||", htmlentities($_REQUEST['optional_headers'])) : array();
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers($_GET['url']);
+    $record = get_curl_timings_with_headers($_GET['url'], $optional_request_headers);
     
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');
@@ -58,6 +60,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
       
       curl_setopt($curly[$id], CURLOPT_ENCODING , "gzip"); 
       curl_setopt($curly[$id], CURLOPT_URL, $url);
+
       # Disable SSL peer verify ie. don't check remote side SSL certificates
       if ( ! $conf['ssl_peer_verify'] ) {
 	curl_setopt($curly[$id], CURLOPT_SSL_VERIFYPEER, FALSE);
