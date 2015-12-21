@@ -14,9 +14,13 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 $conf['remote_exe'] = basename ( __FILE__ );
 
 $site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
-$timeout = is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ? $_REQUEST['timeout'] : 60;
+$timeout = isset($_REQUEST['timeout']) && is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ? $_REQUEST['timeout'] : 60;
 
-$optional_request_headers = isset($_REQUEST['optional_headers']) ? explode("||", htmlentities($_REQUEST['optional_headers'])) : array();
+if ( isset($_REQUEST['optional_headers']) and $_REQUEST['optional_headers'] != "" ) {
+  $optional_request_headers = explode("||", htmlentities($_REQUEST['optional_headers']));
+} else {
+  $optional_request_headers = array();
+}
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
@@ -39,7 +43,12 @@ if ( $_REQUEST['site_id'] == -1 ) {
     // Get results from all remotes         
     foreach ( $conf['remotes'] as $id => $remote ) {
 
-      $url = $remote['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1&url=" . htmlentities($_REQUEST['url']);
+      $args[] = "json=1";
+      $args[] = "site_id=-1";
+      $args[] = "url=" . htmlentities($_REQUEST['url']);
+      $args[] = "optional_headers=" . htmlentities($_REQUEST['optional_headers']);
+
+      $url = $remote['base_url'] . $conf['remote_exe'] . "?" . join("&", $args);
       $url_parts = parse_url($url);
       $curly[$id] = curl_init();    
       curl_setopt($curly[$id], CURLOPT_HEADER, 1);
