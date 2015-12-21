@@ -394,8 +394,8 @@ function print_dns_results($results) {
 #############################################################################################
 # Get Curl timings
 #############################################################################################
-function get_curl_timings_with_headers($original_url) {
-  
+function get_curl_timings_with_headers($original_url, $request_headers = array()) {
+
     $url = validate_url($original_url);
     
     if ( $url === FALSE ) {
@@ -423,7 +423,7 @@ function get_curl_timings_with_headers($original_url) {
     } 
     
     curl_setopt($curly,CURLOPT_ENCODING , "gzip"); 
-    
+    curl_setopt($curly, CURLOPT_HTTPHEADER, $request_headers );
     curl_setopt($curly, CURLOPT_URL, $url);
     
     curl_exec($curly);

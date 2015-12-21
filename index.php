@@ -189,8 +189,8 @@ function getSSLCert() {
   ?>
   URL <input id="url" name="url" size=100>
   Max time to wait for load <input id="timeout" name="timeout" size=5 value=60>
-  <button class="query_buttons" id="url_querybutton" onclick="getURL(); return false;">Get timings</button>
-  <br />
+  <button class="query_buttons" id="url_querybutton" onclick="getURL(); return false;">Get timings</button><p>
+  Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es): <input name="optional_headers" size=80>
   </form>
   </div>
   <div id=url_results>
