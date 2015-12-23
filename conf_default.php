@@ -12,8 +12,13 @@ $conf['debug'] = 0;
 # peer certs
 $conf['ssl_peer_verify'] = false;
 
-# Try too detect CDNs used
+# Try to detect CDNs used
 $conf['cdn_detection'] = true;
+
+# These are the headers that can be used in the URL test. If you are finding you are using the
+# the same headers all the time you can set them here to default to a value
+# For example Accept-Language:es || User-Agent:Mozilla
+$conf['arbitrary_headers'] = "";
 
 # Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;
