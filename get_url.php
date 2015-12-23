@@ -16,8 +16,8 @@ $conf['remote_exe'] = basename ( __FILE__ );
 $site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
 $timeout = isset($_REQUEST['timeout']) && is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ? $_REQUEST['timeout'] : 60;
 
-if ( isset($_REQUEST['optional_headers']) and $_REQUEST['optional_headers'] != "" ) {
-  $optional_request_headers = explode("||", htmlentities($_REQUEST['optional_headers']));
+if ( isset($_REQUEST['arbitrary_headers']) and $_REQUEST['arbitrary_headers'] != "" ) {
+  $optional_request_headers = explode("||", htmlentities($_REQUEST['arbitrary_headers']));
 } else {
   $optional_request_headers = array();
 }
@@ -46,7 +46,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
       $args[] = "json=1";
       $args[] = "site_id=-1";
       $args[] = "url=" . htmlentities($_REQUEST['url']);
-      $args[] = "optional_headers=" . htmlentities($_REQUEST['optional_headers']);
+      $args[] = "arbitrary_headers=" . htmlentities($_REQUEST['arbitrary_headers']);
 
       $url = $remote['base_url'] . $conf['remote_exe'] . "?" . join("&", $args);
       $url_parts = parse_url($url);
