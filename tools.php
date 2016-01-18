@@ -10,6 +10,11 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
+# Include user-defined function if they exist.
+if( file_exists( $base_dir . "/override_functions.php" ) ) {
+  include_once $base_dir . "/override_functions.php";
+}
+
 // Let's make sure there is http at the front of a URL
 function validate_url($url) {
     if ( !preg_match("/^http/", $url) )
@@ -309,6 +314,18 @@ function get_dns_record_with_timing($dns_name, $record_type = "A") {
 
 }
 
+
+############################################################################################
+# Format IP address to print out
+############################################################################################
+if ( !function_exists("format_ip_address") ) {
+
+    function format_ip_address($ip) {
+        return($ip);
+    }
+
+}
+
 #############################################################################################
 # Get DNS record
 #############################################################################################
@@ -370,7 +387,7 @@ function print_dns_results($results) {
           <td>" . $resolver_ip . "</td>
           <td align=right>" . $record['ttl'] . "</td>
           <td>" . $record['type'] . "</td>
-          <td>" . $record['ip'] . "</td>
+          <td>" . format_ip_address($record['ip']) . "</td>
           <td align=right>" . $query_time_in_ms . "</td>
           ";
           print "<td><span class=\"curl_bar\">";

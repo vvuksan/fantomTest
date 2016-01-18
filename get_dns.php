@@ -17,7 +17,6 @@ if ( !isset($_REQUEST['hostname'])) {
     die("Need to supply hostname");
 }
 
-
 $conf['remote_exe'] = basename ( __FILE__ );
 
 ###############################################################################
