@@ -1,5 +1,7 @@
 <?php
 
+# Rename this file to override_functions.php
+
 # These are custom override that can override certain functions. Currently only 
 # function to overide is 
 
