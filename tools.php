@@ -160,7 +160,10 @@ function generate_waterfall($har) {
             $server = "ChinaCache";
         }
         # Incapsula
-        else if ( isset($request['resp_headers']['X-CDN']) ) {
+        else if ( isset($request['resp_headers']['X-Instart-Request-ID']) ) {
+            $server = "Instart";
+        }
+        else if ( isset($request['resp_headers']['X-CDN']) and $request['resp_headers']['X-CDN'] == "Incapsula" ) {
             $server = "Incapsula";
         }
         # CD Networks
