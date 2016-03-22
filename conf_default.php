@@ -2,7 +2,7 @@
 
 $conf['phantomjs_bin'] = "/opt/phantomjs/bin/phantomjs";
 
-if ( preg_match("/^2/", `$conf['phantomjs_bin'] -v`) ) {
+if ( preg_match("/^2/", passthru($conf['phantomjs_bin'] . " -v")) ) {
   $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff-v2.js";
 } else {
   $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff.js";
