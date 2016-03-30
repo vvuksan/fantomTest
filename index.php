@@ -131,6 +131,13 @@ function getSSLCert() {
 </script>
 </head>
 <body>
+<?php
+if ( is_readable("./banner.php") ) {
+   print "<div id='banner'>"
+   include_once("./banner.php");
+   print "</div>";
+}
+?>
 <div id="tabs">
     <ul>
 	<li><a href="#tab-waterfall">Page Waterfall</a></li>
