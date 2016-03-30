@@ -43,6 +43,13 @@ body{
   background: #1977DD;
 }
 
+#banner {
+  background: lightyellow;
+  text-align: center;
+  font-size: 16px;
+  border: 1px solid #000;
+}
+
 .fill {
   float: left;
 }
