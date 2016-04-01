@@ -1,3 +1,4 @@
+
 <?php
 $base_dir = dirname(__FILE__);
 
@@ -133,7 +134,7 @@ function getSSLCert() {
 <body>
 <?php
 if ( is_readable("./banner.php") ) {
-   print "<div id='banner'>"
+   print "<div id='banner'>";
    include_once("./banner.php");
    print "</div>";
 }
