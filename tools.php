@@ -120,7 +120,7 @@ function generate_waterfall($har) {
         <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
         <div class="http_headers" style="display: none;" id="item_' . $key .'">';
         foreach ( $request['resp_headers'] as $key => $value ) {
-            $haroutput .= "<b>" . $key . "</b>: " . $value . "<br />";
+            $haroutput .= "<b>" . htmlentities($key) . "</b>: " . htmlentities($value) . "<br />";
         }
 
         if ( isset($request['resp_headers']['X-Cache']) ) {
@@ -136,30 +136,28 @@ function generate_waterfall($har) {
  	}
 
  	#
-        isset($request['resp_headers']['X-Served-By']) ? $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']) : $server = "UNK";
+        $server = "UNK";
+
+        if ( isset($request['resp_headers']['X-Served-By']) && preg_match("/^cache-/", $request['resp_headers']['X-Served-By']) ) {
+            $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']);
+        }
 
         # Check if Server header provided. It's used by NetDNA and Edgecast
-        if ( isset($request['resp_headers']['Server']) ) {
-          
-          if ( preg_match("/^EC/", $request['resp_headers']['Server']) ) {
-            $server = trim($request['resp_headers']['Server']);
-          } # NetDNA
-          elseif ( preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
-            $server = trim($request['resp_headers']['Server']);
-          }
-       
-        }
-       
-        # CloudFront
-        if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
-            $server = "CloudFront";
-        }
+          else if ( isset($request['resp_headers']['Server']) && preg_match("/^EC/", $request['resp_headers']['Server'])  ) {
+            $server = trim(str_replace("ECS", "Edgecast", $request['resp_headers']['Server']));
 
+        } else if ( isset($request['resp_headers']['Server']) && preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
+            $server = trim($request['resp_headers']['Server']);
+        # CloudFront
+        } 
+        else if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
+            $server = "CloudFront";
         # ChinaCache
-        if ( isset($request['resp_headers']['Powered-By-ChinaCache']) ) {
+        } 
+        else if ( isset($request['resp_headers']['Powered-By-ChinaCache']) ) {
             $server = "ChinaCache";
-        }
         # Incapsula
+        }
         else if ( isset($request['resp_headers']['X-Instart-Request-ID']) ) {
             $server = "Instart";
         }
@@ -183,14 +181,23 @@ function generate_waterfall($har) {
 	    $hit_or_miss = "HIT";
         }
         # Match Akamai headers
-        else if ( preg_match("/(\w+)(\s+).*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
+        else if ( isset($request['resp_headers']['X-Cache']) && preg_match("/(\w+)(\s+).*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
             $server = "Akamai";
             $hit_or_miss = $out[1];
         # Not exhaustive way to identify Google
-        } else if ( preg_match("/google.*com\//i", $request["url"]) ) {
+        } else if ( preg_match("/google.*\.com\//i", $request["url"]) ) {
             $server = "Google";
         } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
+        } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
+            $server = "MS Bing";
+        } else if ( isset($request['resp_headers']['X-Varnish']) || isset($request['resp_headers']['Via']) && preg_match("/varnish/i", $request['resp_headers']['Via']) ) {
+            $server = "Varnish";
+            if ( isset($request['resp_headers']['X-AH-Environment']) ) {
+                $server .= " Acquia";
+            } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
+                $server .= " Drupal";
+            }
         }
 
         $haroutput .= '<td>' . $server . '</td>' .
@@ -542,7 +549,7 @@ function print_url_results($records) {
    "<button class=\"http_headers\" onClick='$(\"#url_results_" . $id .  "\").toggle(); return false;'>Headers</button></div>";
 
     print "<div id='url_results_" . $id .  "' style=\"display: none;\">";
-    print "<pre>" . $record['headers_string'] ;
+    print "<pre>" . htmlentities($record['headers_string']) ;
     print "</pre></div>";
 
     print "</td>";
