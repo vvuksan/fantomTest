@@ -27,6 +27,19 @@ if ( is_executable($conf['phantomjs_bin']) ) {
 
 }
 
+if ( $conf['pingmtr_enabled'] and is_executable($conf['ping_bin']) and is_executable($conf['ping_bin']) ) {
+    $pingmtr_enabled = true;
+} else {
+    $pingmtr_enabled = false;
+}
+
+if ( is_executable($conf['nmap_bin']) ) {
+    $sslciphers_enabled = true;
+} else {
+    $sslciphers_enabled = false;
+}
+
+
 # Include user-defined function if they exist.
 if( file_exists( $base_dir . "/override_functions.php" ) ) {
   include_once $base_dir . "/override_functions.php";
