@@ -1,12 +1,7 @@
 <?php
 
+# Path to PhantomJS
 $conf['phantomjs_bin'] = "/opt/phantomjs/bin/phantomjs";
-
-if ( preg_match("/^2/", exec($conf['phantomjs_bin'] . " -v")) ) {
-  $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff-v2.js";
-} else {
-  $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff.js";
-}
 
 $conf['debug'] = 0;
 
@@ -32,8 +27,11 @@ $conf['ping6_bin'] = "/bin/ping6";
 $conf['mtr_bin'] = "/usr/bin/mtr";
 $conf['nmap_bin'] = "/usr/bin/nmap";
 
+$conf['jquery_js_path']    = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js";
+$conf['jqueryui_js_path']  = "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js";
+$conf['jqueryui_css_path'] = "https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/themes/flick/jquery-ui.min.css";
+$conf['jquery_tablesorter'] = "https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.25.7/js/jquery.tablesorter.min.js";
+
 # Read README on what are remotes
 #$conf['remotes'][] = array("name" => "US", "provider" => "http_get", "base_url" => "http://myurl.usa/fantomtest/");
 #$conf['remotes'][] = array("name" => "Europe", "provider" => "http_get", "base_url" => "http://myurl.eu/fantomtest/");
-
-?>

@@ -1,4 +1,3 @@
-
 <?php
 $base_dir = dirname(__FILE__);
 
@@ -10,16 +9,23 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
+include_once("./tools.php");
+
 ?>
 <html>
 <head>
 <title>FantomTest Tools</title>
-<link type="text/css" href="css/flick/jquery-ui-1.10.4.custom.css" rel="stylesheet" />
+<link type="text/css" href="<?php print $conf['jqueryui_css_path']; ?>" rel="stylesheet" />
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
-<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
-<script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js"></script>
-<script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+<script type="text/javascript" src="<?php print $conf['jquery_js_path']; ?>"></script>
+<script type="text/javascript" src="<?php print $conf['jqueryui_js_path']; ?>"></script>
+<script type="text/javascript" src="<?php print $conf['jquery_tablesorter']; ?>"></script>
 <script>
+
+<?php
+# Enable
+if ( $waterfall_output ) {
+?>
 
 function buildTimeTicks(totalTime) {
     console.log("Total time " + totalTime);
@@ -99,6 +105,13 @@ function getTimings() {
         buildTimeTicks(totalTime);
     });
 }
+
+<?php
+
+}
+
+?>
+
 function getDns() {
     $("#dns_results").html('<img src="img/spinner.gif">');
     $.get('get_dns.php', $("#dns_form").serialize(), function(data) {
@@ -111,6 +124,9 @@ function getURL() {
 	$("#url_results").html(data);
      });
 }
+
+
+
 function getPingMtr() {
     $("#pingmtr_results").html('<img src="img/spinner.gif">');
     $.get('get_mtr.php', $("#pingmtr_form").serialize(), function(data) {
@@ -141,13 +157,27 @@ if ( is_readable("./banner.php") ) {
 ?>
 <div id="tabs">
     <ul>
+<?php 
+if ( $waterfall_output ) {
+?>
 	<li><a href="#tab-waterfall">Page Waterfall</a></li>
+<?php
+}
+?>
 	<li><a href="#tab-url">URL Test</a></li>
 	<li><a href="#tab-dns">DNS</a></li>
 	<li><a href="#tab-pingmtr">Ping/MTR</a></li>
 	<li><a href="#tab-ssl-cert">SSL certificate</a></li>
 	<li><a href="#tab-ssl-ciphers">SSL ciphers</a></li>
     </ul>
+
+    
+<?php 
+################################################################################################
+# Waterfall
+################################################################################################
+if ( $waterfall_output ) {
+?>
 
 <div id="tab-waterfall">
   <div id="large_screenshot">
@@ -176,6 +206,10 @@ if ( is_readable("./banner.php") ) {
   <div id=results>
   </div>
 </div>
+
+<?php
+}
+?>
 
 <div id="tab-url">
   <div id=header>
