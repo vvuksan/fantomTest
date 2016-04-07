@@ -187,6 +187,9 @@ function generate_waterfall($har) {
         # Not exhaustive way to identify Google
         } else if ( preg_match("/google.*\.com\//i", $request["url"]) ) {
             $server = "Google";
+        # Not exhaustive way to identify Facebook 
+        } else if ( preg_match("/facebook.*\.com\//i", $request["url"]) ) {
+            $server = "Facebook";
         } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
         } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
