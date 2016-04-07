@@ -126,19 +126,33 @@ function getURL() {
 }
 
 
-
+<?php
+if ( $pingmtr_enabled ) {
+?>
 function getPingMtr() {
     $("#pingmtr_results").html('<img src="img/spinner.gif">');
     $.get('get_mtr.php', $("#pingmtr_form").serialize(), function(data) {
 	$("#pingmtr_results").html(data);
      });
 }
+<?php
+}
+?>
+
+<?php
+if ( $pingmtr_enabled ) {
+?>
 function getSSLCiphers() {
     $("#ssl_ciphers_results").html('<img src="img/spinner.gif">');
     $.get('get_ssl_ciphers.php', $("#ssl_ciphers_form").serialize(), function(data) {
 	$("#ssl_ciphers_results").html(data);
      });
 }
+<?php
+}
+?>
+
+
 function getSSLCert() {
     $("#ssl_cert_results").html('<img src="img/spinner.gif">');
     $.get('get_ssl_cert.php', $("#ssl_cert_form").serialize(), function(data) {
@@ -166,9 +180,21 @@ if ( $waterfall_output ) {
 ?>
 	<li><a href="#tab-url">URL Test</a></li>
 	<li><a href="#tab-dns">DNS</a></li>
+<?php
+if ( $pingmtr_enabled ) {
+?>	
 	<li><a href="#tab-pingmtr">Ping/MTR</a></li>
+<?php
+}
+?>
 	<li><a href="#tab-ssl-cert">SSL certificate</a></li>
-	<li><a href="#tab-ssl-ciphers">SSL ciphers</a></li>
+<?php
+if ( $sslciphers_enabled ) {
+?>
+        <li><a href="#tab-ssl-ciphers">SSL ciphers</a></li>
+<?php
+}
+?>
     </ul>
 
     
@@ -269,6 +295,12 @@ if ( $waterfall_output ) {
   </div>
 </div>
 
+<?php
+#############################################################################################
+# Ping mtr
+if ( $pingmtr_enabled ) {
+?>
+
 <div id="tab-pingmtr">
   <div id=header>
   
@@ -295,6 +327,9 @@ if ( $waterfall_output ) {
   <div id=pingmtr_results>
   </div>
 </div>
+<?php
+}
+?>
 
 <div id="tab-ssl-cert">
   <div id=header>
@@ -325,6 +360,9 @@ if ( $waterfall_output ) {
   </div>
 </div>
 
+<?php
+if ( $sslciphers_enabled ) {
+?>
 <div id="tab-ssl-ciphers">
   <div id=header>
   
@@ -352,7 +390,9 @@ if ( $waterfall_output ) {
   <div id=ssl_ciphers_results>
   </div>
 </div>
-
+<?php
+}
+?>
 
 <script>
 $(function(){
