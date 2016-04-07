@@ -10,6 +10,23 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
+# Identify whether PhantomJS exists version
+if ( is_executable($conf['phantomjs_bin']) ) {
+
+    if ( preg_match("/^2/", exec($conf['phantomjs_bin'] . " -v")) ) {
+    $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff-v2.js";
+    } else {
+    $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff.js";
+    }
+
+    $waterfall_output = true;
+
+} else {
+
+    $waterfall_output = false;
+
+}
+
 # Include user-defined function if they exist.
 if( file_exists( $base_dir . "/override_functions.php" ) ) {
   include_once $base_dir . "/override_functions.php";
@@ -303,7 +320,7 @@ function get_har_using_phantomjs($original_url, $include_image = true) {
         
     } else {
         
-        return array( "success" => 0, "error_message" => "PhantomJS exited abnormally. Perhaps Xvfb is not running. Please check your webserver error log" );
+        return array( "success" => 0, "error_message" => "PhantomJS exited abnormally. Please check your webserver error log" );
     }
 
 }
