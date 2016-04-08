@@ -13,13 +13,24 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
+$host_name = trim($_REQUEST['hostname']);
+
 # Is it an IP 
-if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
-    $user['ip'] = $_REQUEST['hostname'];
+if(filter_var($host_name, FILTER_VALIDATE_IP)) {
+    $user['ip'] = $host_name;
+    $it_s_ip = true;
 } else {
-    $user['ip'] = gethostbyname($_REQUEST['hostname']);
-    if ( $user['ip'] == $_REQUEST['hostname'] )
+    # Strip off any white spaces
+    $host_name = trim($_REQUEST['hostname']);
+    # 
+    $user['ip'] = gethostbyname($host_name);
+    # If we get the same thing that we started with name is not resolvable
+    if ( $user['ip'] == $host_name ) {
         die("Address is not an IP and I can't resolve it. Doing nothing");
+    } else {
+        $it_s_ip = false;
+        $user['ip'] = trim($_REQUEST['hostname']);
+    }
 }
 
 if( isset($_REQUEST['sni_name']) && preg_match("/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i", $_REQUEST['sni_name']) ) {
@@ -53,11 +64,11 @@ if ( $_REQUEST['site_id'] == -1 ) {
 <?php
 
   $ssloptions = array(
-    "capture_peer_cert_chain" => true,
-    "allow_self_signed"=>false,
-    "verify_peer"=>true,
-    "cafile" => "/etc/ssl/certs/ca-certificates.crt"
+    "capture_peer_cert_chain" => TRUE,
+    "allow_self_signed"       => $it_s_ip ? true : false,
+    "verify_peer"             => $it_s_ip ? false : true,
     );
+
 
   if ( $_REQUEST['sni_name'] ) {
    $ssloptions["SNI_enabled"] = true;
@@ -67,7 +78,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
   } else {
    $ssloptions["SNI_enabled"] = false;
   }
-  
+
   # Set SSL stream context
   $ctx = stream_context_create( array("ssl" => $ssloptions) );
   
