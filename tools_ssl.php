@@ -113,6 +113,7 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
       
       $parsed_cert["ISSUER_NAME"] = $issuer_name;
       
+      ksort($parsed_cert);
       $captured_certs[] = $parsed_cert;
       
       $subject_cn = $parsed_cert["subject"]["CN"];
