@@ -63,12 +63,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
 </div>    
 <?php
 
-  $ssloptions = array(
-    "capture_peer_cert_chain" => TRUE,
-    "allow_self_signed"       => $it_s_ip ? true : false,
-    "verify_peer"             => $it_s_ip ? false : true,
-    );
-
+  require_once("./tools_ssl.php");
 
   if ( $_REQUEST['sni_name'] ) {
    $ssloptions["SNI_enabled"] = true;
@@ -79,29 +74,35 @@ if ( $_REQUEST['site_id'] == -1 ) {
    $ssloptions["SNI_enabled"] = false;
   }
 
-  # Set SSL stream context
-  $ctx = stream_context_create( array("ssl" => $ssloptions) );
-  
-  $fp = stream_socket_client("ssl://" . $user['ip'] . ":" . $port, $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $ctx);
-  # Grab the
-  if ( $fp ) {
-    $cont = stream_context_get_params($fp);
+  if ( $_REQUEST['sni_name'] ) {
+
+    $results = check_certificate_chain( $user['ip'], $port, $_REQUEST['sni_name']);
+
   } else {
-    print "There was an error " . $errstr;
+
+    $results = check_certificate_chain( $user['ip'], $port, "");
+
   }
-  
-  fclose($fp);
-  
-  foreach($cont["options"]["ssl"]["peer_certificate_chain"] as $cert) {
-      $parsed_cert = openssl_x509_parse($cert);
+
+  if ( $results["success"] ) {
+    print "<div id=\"ssl_cert_results\">";
+  } else {
+    print "<div id=\"ssl_cert_results\" class=\"ssl-cert-invalid\">";
+    print "<h2><font color=red>This certificate is invalid</font></h2>";
+    print "Possible reasons (not exhaustive):<br>";
+    print $results["message"];
+
+  }
+
+  foreach($results['certs'] as $cert) {
       print "<table border=1 class=\"tablesorter\">
         <thead><th>Key</th><th>Details</th></thead><tbody>";
-      
-      foreach ( $parsed_cert as $key => $parts ) {
+
+      foreach ( $cert as $key => $parts ) {
         # Gonna skip purposes for now
         if ( $key == "purposes" )
           continue;
-        
+
         # Convert UNIX dates into human readable
         if ( preg_match("/^VALID(.*)_T$/i", $key) )
           $parts = date('r', $parts);
@@ -119,8 +120,9 @@ if ( $_REQUEST['site_id'] == -1 ) {
       
       print "</table>";
       # Only care about our SSL certs that have SAN entries in them
-      unset($parsed_cert);
   }
+
+  print "</div>";
 
 
 ///////////////////////////////////////////////////////////////////////////////
