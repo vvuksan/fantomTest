@@ -111,6 +111,9 @@ body{
   background: orange;
 }
 
+.ssl-cert-invalid {
+  background: #FFF5EE;
+}
 
 table.tablesorter {
 	font-family:arial;
