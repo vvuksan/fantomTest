@@ -28,6 +28,13 @@ if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
         die("Address is not an IP and I can't resolve it. Doing nothing");
 }
 
+# Cap ping count to 20
+if ( isset($_REQUEST['ping_count']) and is_numeric($_REQUEST['ping_count']) and $_REQUEST['ping_count'] > 0 and $_REQUEST['ping_count'] <= 20 ) {
+    $ping_count = intval($_REQUEST['ping_count']);
+} else {
+    $ping_count = 10;
+}
+
 $site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 
 $conf['remote_exe'] = "get_mtr.php";
@@ -45,9 +52,9 @@ if ( $_REQUEST['site_id'] == -1 ) {
     <pre>
     <?php
     if ( filter_var($user['ip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
-      passthru($conf['ping6_bin'] . " -c 4 " . $user['ip']);
+      passthru($conf['ping6_bin'] . " -i 0.2 -c " . $ping_count . " " . $user['ip']);
     } else {
-      passthru($conf['ping_bin'] . " -c 4 " . $user['ip']);
+      passthru($conf['ping_bin'] . " -i 0.2 -c " . $ping_count . " " . $user['ip']);
     }
     ?>
     </pre>
@@ -72,20 +79,23 @@ if ( $_REQUEST['site_id'] == -1 ) {
 
     // Get results from all remotes         
     foreach ( $conf['remotes'] as $index => $remote ) {
-        
-        print "<div id='remote_" . ${index} . "'>
-        <button onClick='$(\"#mtrping_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
-        
-        print "<div id='mtrping_results_" . ${index} ."'>";
-        
+
+        print "<div id='remote_" . $index . "'>
+        <button onClick='$(\"#mtrping_results_" . $index . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
+
+        print "<div id='mtrping_results_" . $index ."'>";
+
         #print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_mtr.php?site_id=-1" .
         #"&hostname=" . $_REQUEST['hostname'] ));
         print "<img src=\"img/spinner.gif\"></div>";
-        
+
+        $args[] = 'hostname=' . htmlentities($_REQUEST['hostname']);
+        $args[] = 'ping_count=' . $ping_count;
+
         print '
         <script>
-        $.get("' . $conf['remote_exe'] . '", "site_id=' . $index . '&hostname=' . htmlentities($_REQUEST['hostname']) . '", function(data) {
-            $("#mtrping_results_' . ${index} .'").html(data);
+        $.get("' . $conf['remote_exe'] . '", "site_id=' . $index . '&' . join("&", $args) . '", function(data) {
+            $("#mtrping_results_' . $index .'").html(data);
          });
         </script>
         <p></p>';
@@ -100,8 +110,10 @@ if ( $_REQUEST['site_id'] == -1 ) {
     
     print "<div><h3>" .$conf['remotes'][$site_id]['name']. "</h3></div>";
     print "<div class=dns_results>";
-    print (file_get_contents($conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?site_id=-1" .
-    "&hostname=" . $_REQUEST['hostname'] ));
+    $args[] = 'hostname=' . htmlentities($_REQUEST['hostname']);
+    $args[] = 'ping_count=' . $ping_count;
+    $url = $conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?site_id=-1&" . join("&", $args);
+    print (file_get_contents($url));
     print "</div>";
     
     

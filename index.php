@@ -319,8 +319,9 @@ if ( $pingmtr_enabled ) {
     print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
-  Host name <input id="hostname" name="hostname" size=100>
-  <button class="query_buttons" id="dns_querybutton" onclick="getPingMtr(); return false;">Ping/MTR</button>
+  Host name <input id="hostname" name="hostname" size=80>
+  # Pings <input id="ping_count" name="ping_count" value=5 size=4>
+  <button class="query_buttons" id="ping_querybutton" onclick="getPingMtr(); return false;">Ping/MTR</button>
   <br />
   </form>
   </div>
