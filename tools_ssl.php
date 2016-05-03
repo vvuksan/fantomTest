@@ -46,24 +46,23 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
   # First we are gonna test whether certificate is good.
   $ssloptions = array(
       "capture_peer_cert_chain" => false, 
-      "allow_self_signed"=> false,
+      "allow_self_signed" => false,
       "verify_peer_name" => true,
-      "verify_peer"=> true
+      "verify_peer" => true,
       );
   
   $ctx = stream_context_create( array("ssl" => $ssloptions) );
 
-  $port = 443;
   # Let's establish a SSL connection
-  $fp = stream_socket_client("ssl://${hostname}:${port}", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $ctx);
+  $fp = stream_socket_client("ssl://$hostname:$port", $errno, $errstr, 4, STREAM_CLIENT_CONNECT, $ctx);
   if (!$fp) {
-  
+    $success = 0;
   } else {
     fclose($fp);
-    #return(array("success" => 1));
+    $success = 1;
+
   }
-  
-  
+
   $ssloptions = array(
       "capture_peer_cert_chain" => true, 
       "allow_self_signed"=> true,
@@ -83,18 +82,17 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
   # Set SSL stream context
   $ctx = stream_context_create( array("ssl" => $ssloptions) );
 
-  $port = 443;
   # Let's establish a SSL connection
-  $fp = stream_socket_client("ssl://${hostname}:${port}", $errno, $errstr, 30, STREAM_CLIENT_CONNECT, $ctx);
+  $fp = stream_socket_client("ssl://${hostname}:${port}", $errno, $errstr, 4, STREAM_CLIENT_CONNECT, $ctx);
   # Grab the context parameters like certificate chain etc.
-  
+
   $captured_certs = array();
   
   $cont = stream_context_get_params($fp);
   if (!$fp) {
     echo "$errstr ($errno)<br />\n";
   } else {
-  
+
     # Let's go through captured certificates
     foreach($cont["options"]["ssl"]["peer_certificate_chain"] as $cert) {
       $parsed_cert = openssl_x509_parse($cert);
@@ -128,26 +126,32 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
   
   $end = 1;
   
+  # Keep how many times we have gone through the chain to avoid an infinite loop
+  # in case of an unforseen issue
+  $count = 0;
+  
   ##################################################################################
   # Let's walk down the certificate chain
-  # 
-  ##################################################################################  
-  while ( $end  ) {
+  ##################################################################################
+  if ( ! $success ) {
+    while ( $end and $count < 6 ) {
 
-    if ( isset($certificates[$issuer_cn] )) {
-      if ( $debug ) print "Found " . $issuer_cn . " on the chain. Checking next\n";
-      $issuer_cn = $certificates[$issuer_cn]["issuer_cn"];
-    } else if ( isset($ca_certs[$issuer_cn])) {
-      if ( $debug ) print "Found " . $issuer_cn . " on in the CA store. We are good\n";
-      $success = 1;
-      $end = 0;
-    } else {
-      $success = 0;
-      $end = 0;
-    }
-  
+      $count++;
+
+      if ( isset($certificates[$issuer_cn] )) {
+        if ( $debug ) print "Found " . $issuer_cn . " on the chain. Checking next\n";
+          $issuer_cn = $certificates[$issuer_cn]["issuer_cn"];
+        } else if ( isset($ca_certs[$issuer_cn])) {
+          if ( $debug ) print "Found " . $issuer_cn . " on in the CA store. We are good\n";
+          $success = 1;
+          $end = 0;
+        } else {
+          $success = 0;
+          $end = 0;
+        }
+      }
   }
-  
+
   fclose($fp);
 
   return(array(
