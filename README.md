@@ -3,7 +3,13 @@ fantomTest
 
 FantomTest started as a simple webapp that allows you to obtain HTTP performance of a web 
 page by getting the timings for all web page resources and plotting them in a waterfall chart.
-This has been expanded to also include individual URL test, DNS, ping/MTR results.
+This has been expanded to also include 
+
+* individual URL test using CURL
+* DNS resolution
+* Ping/MTR results
+* TLS certificates
+* TLS Ciphers supported by the remote server
 
 To get timings we are utilizing the excellent PhantomJS semi-headless webKit
 browser. PhantomJS will render a URL with all it's resources and produce HAR
