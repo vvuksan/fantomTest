@@ -1,7 +1,7 @@
 <?php
 
 #############################################################################
-# Use NMAP to discover what SSL ciphers remote server supports
+# Use NMAP to discover what TLS ciphers remote server supports
 #############################################################################
 $base_dir = dirname(__FILE__);
 
@@ -66,17 +66,17 @@ if ( $_REQUEST['site_id'] == -1 ) {
     // Get results from all remotes         
     foreach ( $conf['remotes'] as $index => $remote ) {
         
-        print "<div id='remote_" . ${index} . "'>
-        <button onClick='$(\"#ciphers_results_" . ${index} . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
+        print "<div id='remote_" . $index . "'>
+        <button onClick='$(\"#ciphers_results_" . $index . "\").toggle();'>" .$conf['remotes'][$index]['name']. "</button></div>";
         
-        print "<div id='ciphers_results_" . ${index} ."'>";
+        print "<div id='ciphers_results_" . $index ."'>";
         
         print "<img src=\"img/spinner.gif\"></div>";
         
         print '
         <script>
         $.get("' . $conf['remote_exe'] . '", "site_id=' . $index . '&hostname=' . htmlentities($_REQUEST['hostname']) . '", function(data) {
-            $("#ciphers_results_' . ${index} .'").html(data);
+            $("#ciphers_results_' . $index .'").html(data);
          });
         </script>
         <p></p>';
