@@ -341,10 +341,34 @@ function get_har_using_phantomjs($original_url, $include_image = true) {
 #############################################################################################
 # Get DNS record
 #############################################################################################
-function get_dns_record_with_timing($dns_name, $record_type = "A") {
+function get_dns_record_with_timing($dns_name, $query_type = "A") {
 
   $start_time = microtime(TRUE);
-  $result = dns_get_record($dns_name, DNS_A);
+  switch ( $query_type ) {
+    case "A":
+      $record_type = DNS_A;
+      break;
+    case "CNAME":
+      $record_type = DNS_CNAME;
+      break;
+    case "AAAA":
+      $record_type = DNS_AAAA;
+      break;
+    case "MX":
+      $record_type = DNS_MX;
+      break;
+    case "SOA":
+      $record_type = DNS_SOA;
+      break;
+    case "TXT":
+      $record_type = DNS_TXT;
+      break;
+    default:
+      $record_type = DNS_A;
+
+  }
+
+  $result = dns_get_record($dns_name, $record_type);
   # Calculate query time
   $query_time = microtime(TRUE) - $start_time;
   
@@ -394,12 +418,16 @@ function print_dns_results($results) {
       <th>Resolver IP</th>
       <th>TTL</th>
       <th>Type</th>
-      <th>IP</th>
+      <th>Record</th>
       <th>Query Time (ms)</th>
-      <th>Query Time comparison</th>
       </tr>
     </thead>
     <tbody>
+    <style>
+    .dns_bar {
+      background: #00FF7F
+    }
+    </style>
  <?php
     foreach ( $results as $site_id => $result ) {
 
@@ -416,7 +444,7 @@ function print_dns_results($results) {
           <td>NA</td>
           <td>NA</td>
           <td>No Results</td>
-          <td align=right>0</td><td>&nbsp;</td></tr>";
+          <td align=right>0</td></tr>";
         continue;
       }
 
@@ -424,19 +452,45 @@ function print_dns_results($results) {
       $resolver_ip = preg_match("/^74.125/", $result['resolver_ip']) ? $result['resolver_ip'] . " - Google DNS" : $result['resolver_ip'];
 
       foreach( $result['records'] as $index => $record ) {
-          print "<tr>
+        switch ( $record['type'] ) {
+          case "A":
+            $record_output = format_ip_address($record['ip']);
+            break;
+          case "AAAA":
+            $record_output = $record['ipv6'];
+            break;
+          case "CNAME":
+            $record_output = $record['target'];
+            break;
+          case "TXT":
+            $record_output = $record['txt'];
+            break;
+          case "MX":
+            $record_output = $record['pri'] . " " . $record['target'];
+            break;
+          case "SOA":
+            $record_output = $record['mname'] . " <i>" . $record['rname']
+              . "</i> Serial: " . $record['serial'] . " Rfrsh: " . $record['refresh']
+              . " Retry/NegTTL: " . $record['retry'] . " Expire: " . $record['expire']
+              . " MinTTL: " . $record['minimum-ttl'];
+            break;
+          default:
+            $record_output = "No data. Maybe query type is unknown";
+        }
+
+
+        print "<tr>
           <td>" . $site_name . "</td>
           <td>" . $record['host'] . "</td>
           <td>" . $resolver_ip . "</td>
           <td align=right>" . $record['ttl'] . "</td>
           <td>" . $record['type'] . "</td>
-          <td>" . format_ip_address($record['ip']) . "</td>
-          <td align=right>" . $query_time_in_ms . "</td>
+          <td>" . $record_output . "</td>
           ";
-          print "<td><span class=\"curl_bar\">";
-          print '<span class="fill" style="background: #FFEC4B; width: ' . floor(100 * $result['query_time']/$max_time) .  '%">&nbsp;</span>';
-          print "</span></td>";
-          print "</tr>";
+        print "<td><span class=\"curl_bar\">";
+        print '<span class="fill dns_bar" style="width: ' . floor(100 * $result['query_time']/$max_time) .  '%">' .$query_time_in_ms .'</span>';
+        print "</span></td>";
+        print "</tr>";
       }
     }
 ?>

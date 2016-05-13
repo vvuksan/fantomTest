@@ -287,6 +287,16 @@ if ( $waterfall_output ) {
   }
   ?>
   Host name <input id="hostname" name="hostname" size=100>
+  Query Type <select name="query_type">
+  <?php
+  
+  foreach ( $conf['allowed_dns_query_types'] as $query_type ) {
+    print "<option value=\"" . $query_type . "\">" . $query_type . "</a>";
+  }
+  
+  ?>
+  </select>
+  
   <button class="query_buttons" id="dns_querybutton" onclick="getDns(); return false;">Resolve</button>
   <br />
   </form>

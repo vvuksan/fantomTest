@@ -17,13 +17,24 @@ if ( !isset($_REQUEST['hostname'])) {
     die("Need to supply hostname");
 }
 
+# What's the name of the remote script to execute if we need to invoke a remote
 $conf['remote_exe'] = basename ( __FILE__ );
+
+if ( isset($_REQUEST['query_type']) and in_array($_REQUEST['query_type'], $conf['allowed_dns_query_types']) ) {
+
+  $query_type = $_REQUEST['query_type'];
+
+} else {
+
+  $query_type = "A";
+
+}
 
 ###############################################################################
 # Test needs to be executed locally
 if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
 
-  $results = get_dns_record_with_timing($_REQUEST['hostname']);
+  $results = get_dns_record_with_timing($_REQUEST['hostname'], $query_type);
   
   # Return JSON response
   if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {    
@@ -42,7 +53,8 @@ if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
   // Get results from all remotes         
   foreach ( $conf['remotes'] as $id => $remote ) {
 
-    $url = $remote['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1&hostname=" . htmlentities($_REQUEST['hostname']);
+    $url = $remote['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1&hostname="
+	  . htmlentities($_REQUEST['hostname']) . "&query_type=" . $query_type;
     $url_parts = parse_url($url);
     $curly[$id] = curl_init();    
     curl_setopt($curly[$id], CURLOPT_HEADER, 1);
@@ -102,7 +114,7 @@ if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
 
   $content = file_get_contents($conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1" .
-    "&hostname=" . htmlentities($_REQUEST['hostname'] ));
+    "&hostname=" . htmlentities($_REQUEST['hostname'] ) . "&query_type=" . $query_type) ;
 
   $results[$site_id] = json_decode($content, TRUE);
   
@@ -111,6 +123,3 @@ if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
 } else {
     die("No valid site_id supplied");
 }
-
-
-?>
