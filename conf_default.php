@@ -20,6 +20,15 @@ $conf['cdn_detection'] = true;
 # For example Accept-Language:es || User-Agent:Mozilla
 $conf['arbitrary_headers'] = "";
 
+$conf['allowed_dns_query_types'] = array (
+    "A",
+    "AAAA",
+    "CNAME",
+    "MX",
+    "SOA",
+    "TXT",
+);
+
 # Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;
 $conf['ping_bin'] = "/bin/ping";
