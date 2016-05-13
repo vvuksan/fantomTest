@@ -34,9 +34,9 @@ if ( $conf['pingmtr_enabled'] and is_executable($conf['ping_bin']) and is_execut
 }
 
 if ( is_executable($conf['nmap_bin']) ) {
-    $sslciphers_enabled = true;
+    $tlsciphers_enabled = true;
 } else {
-    $sslciphers_enabled = false;
+    $tlsciphers_enabled = false;
 }
 
 

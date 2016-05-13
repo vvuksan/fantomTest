@@ -142,10 +142,10 @@ function getPingMtr() {
 <?php
 if ( $pingmtr_enabled ) {
 ?>
-function getSSLCiphers() {
-    $("#ssl_ciphers_results").html('<img src="img/spinner.gif">');
-    $.get('get_ssl_ciphers.php', $("#ssl_ciphers_form").serialize(), function(data) {
-	$("#ssl_ciphers_results").html(data);
+function getTLSCiphers() {
+    $("#tls_ciphers_results").html('<img src="img/spinner.gif">');
+    $.get('get_ssl_ciphers.php', $("#tls_ciphers_form").serialize(), function(data) {
+	$("#tls_ciphers_results").html(data);
      });
 }
 <?php
@@ -153,10 +153,10 @@ function getSSLCiphers() {
 ?>
 
 
-function getSSLCert() {
-    $("#ssl_cert_results").html('<img src="img/spinner.gif">');
-    $.get('get_ssl_cert.php', $("#ssl_cert_form").serialize(), function(data) {
-	$("#ssl_cert_results").html(data);
+function getTLSCert() {
+    $("#tls_cert_results").html('<img src="img/spinner.gif">');
+    $.get('get_ssl_cert.php', $("#tls_cert_form").serialize(), function(data) {
+	$("#tls_cert_results").html(data);
      });
 }
 </script>
@@ -187,11 +187,11 @@ if ( $pingmtr_enabled ) {
 <?php
 }
 ?>
-	<li><a href="#tab-ssl-cert">SSL certificate</a></li>
+	<li><a href="#tab-tls-cert">TLS certificate</a></li>
 <?php
-if ( $sslciphers_enabled ) {
+if ( $tlsciphers_enabled ) {
 ?>
-        <li><a href="#tab-ssl-ciphers">SSL ciphers</a></li>
+        <li><a href="#tab-tls-ciphers">TLS ciphers</a></li>
 <?php
 }
 ?>
@@ -342,9 +342,9 @@ if ( $pingmtr_enabled ) {
 }
 ?>
 
-<div id="tab-ssl-cert">
+<div id="tab-tls-cert">
   <div id=header>
-  <form id="ssl_cert_form">
+  <form id="tls_cert_form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
@@ -362,22 +362,22 @@ if ( $pingmtr_enabled ) {
   Host name <input id="hostname" name="hostname" size=100>
   Port <input id="port" name="port" value=443 size=6> <p />
   Optional SNI name (usually blank): <input id="sni_name" name="sni_name" size=60>
-  <button class="query_buttons" id="ssl_querybutton" onclick="getSSLCert(); return false;">Get certificate</button>
+  <button class="query_buttons" id="ssl_querybutton" onclick="getTLSCert(); return false;">Get certificate</button>
   <br />
   </form>
   </div>
-  <div id=ssl_cert_results>
+  <div id=tls_cert_results>
 
   </div>
 </div>
 
 <?php
-if ( $sslciphers_enabled ) {
+if ( $tlsciphers_enabled ) {
 ?>
-<div id="tab-ssl-ciphers">
+<div id="tab-tls-ciphers">
   <div id=header>
   
-  <form id="ssl_ciphers_form">
+  <form id="tls_ciphers_form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
@@ -394,11 +394,11 @@ if ( $sslciphers_enabled ) {
   ?>
   Host name <input id="hostname" name="hostname" size=100>
   Port <input id="port" name="port" value=443 size=6>
-  <button class="query_buttons" id="ssl_querybutton" onclick="getSSLCiphers(); return false;">Get SSL ciphers</button>
+  <button class="query_buttons" id="ssl_querybutton" onclick="getTLSCiphers(); return false;">Get TLS ciphers</button>
   <br />
   </form>
   </div>
-  <div id=ssl_ciphers_results>
+  <div id=tls_ciphers_results>
   </div>
 </div>
 <?php
