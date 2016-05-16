@@ -166,7 +166,7 @@ function generate_waterfall($har) {
  	}
 
  	#
-        $server = "UNK";
+        $server = "";
 
         if ( isset($request['resp_headers']['X-Served-By']) && preg_match("/^cache-/", $request['resp_headers']['X-Served-By']) ) {
             $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']);
@@ -226,12 +226,20 @@ function generate_waterfall($har) {
             $server = "MS Bing";
         } else if ( isset($request['resp_headers']['X-Varnish']) || isset($request['resp_headers']['Via']) && preg_match("/varnish/i", $request['resp_headers']['Via']) ) {
             $server = "Varnish";
-            if ( isset($request['resp_headers']['X-AH-Environment']) ) {
-                $server .= " Acquia";
-            } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
-                $server .= " Drupal";
-            }
         }
+
+        # Figure out if a specific CMS is being used
+        if ( isset($request['resp_headers']['X-AH-Environment']) ) {
+            $server .= " (Acquia)";
+        } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
+            $server .= " (Drupal)";
+        # Magento version 1
+        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/frontend=/i", $request['resp_headers']['Set-Cookie'] ) ) {
+            $server .= " (Magento1)";
+        }
+
+        if ( $server == "" )
+            $server = "UNK";
 
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
