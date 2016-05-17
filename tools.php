@@ -209,6 +209,9 @@ function generate_waterfall($har) {
         } else if ( preg_match("/json/i", $content_type_full ) ) {
           $content_type = "JSON";
           $compressable = true;
+        } else if ( preg_match("/image\/webp/i", $content_type_full ) ) {
+          $content_type = "WEBP";
+          $compressable = true;
         } else if ( preg_match("/svg/i", $content_type_full ) ) {
           $content_type = "SVG";
           $compressable = true;
