@@ -161,7 +161,7 @@ function generate_waterfall($har) {
         $time_offset = $request["start_time"] - $min_start_time;
 
         $white_space = round(($time_offset / $total_time) * 100);
-        $progress_bar = round(($request["duration"] / $total_time) * 100);
+        $progress_bar = ceil(($request["duration"] / $total_time) * 100);
 
         $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>";
         $haroutput .= "<td>" . $key . "</td>";
@@ -252,7 +252,7 @@ function generate_waterfall($har) {
         # Let's see if we can find any Cache headers and can identify whether request was a HIT or a MISS
         if ( isset($request['resp_headers']['X-Cache']) ) {
           $hit_or_miss = $request['resp_headers']['X-Cache'];
-          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|HIT$)/i", $request['resp_headers']['X-Cache'] )) {
+          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|Hit from Cloudfront|HIT$)/i", $request['resp_headers']['X-Cache'] )) {
             $hit_or_miss_css = "HIT";
           } else {
             $hit_or_miss_css = "MISS";
