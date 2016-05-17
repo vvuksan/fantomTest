@@ -211,7 +211,6 @@ function generate_waterfall($har) {
           $compressable = true;
         } else if ( preg_match("/image\/webp/i", $content_type_full ) ) {
           $content_type = "WEBP";
-          $compressable = true;
         } else if ( preg_match("/svg/i", $content_type_full ) ) {
           $content_type = "SVG";
           $compressable = true;
