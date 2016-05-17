@@ -118,32 +118,9 @@ function generate_waterfall($har) {
     
     
     $haroutput = '
-    <button id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
-    <style>
-    .compressed_yes, .compressed_no, .compressed_none {
-      color: white;
-      border: none;
-      text-decoration: none;
-      display: inline-block;
-      font-size: 5px;
-    }
-    .compressed_yes {
-      background-color: green;
-    }
-    .compressed_no {
-      font-weight: 900;
-      background-color: red;
-    }
-    .compressed_none {
-      background-color: blue;
-    }
-    </style>
-    <table class="harview">
-    <tr>
-    <td colspan=5 align=center>
+    <button class="header_button" id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
     Total time for a fully downloaded page is <span id="total-time">' . sprintf("%.3f", $total_time) . '</span> sec
-    </td>
-    </tr>
+    <table class="harview">
         <tr>
             <th>#</th>
             <th width=50%>URL</th>
@@ -337,6 +314,10 @@ function generate_waterfall($har) {
             $server .= " (Wordpress)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/frontend=/i", $request['resp_headers']['Set-Cookie'] ) ) {
             $server .= " (Magento1)";
+        } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) ) {
+            $server .= " (WebSphere)";
+        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/Demandware/i", $request['resp_headers']['Set-Cookie'] ) ) {
+            $server .= " (Demandware)";
         }
 
         if ( $server == "" )

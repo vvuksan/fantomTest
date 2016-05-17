@@ -13,8 +13,23 @@ body{
   display: block;
 }
 
-
-
+.compressed_yes, .compressed_no, .compressed_none {
+  color: white;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 5px;
+}
+.compressed_yes {
+  background-color: green;
+}
+.compressed_no {
+  font-weight: 900;
+  background-color: red;
+}
+.compressed_none {
+  background-color: blue;
+}
 
 .time_legend {
   text-align: center;
