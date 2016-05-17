@@ -119,6 +119,25 @@ function generate_waterfall($har) {
     
     $haroutput = '
     <button id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
+    <style>
+    .compressed_yes, .compressed_no, .compressed_none {
+      color: white;
+      border: none;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 5px;
+    }
+    .compressed_yes {
+      background-color: green;
+    }
+    .compressed_no {
+      font-weight: 900;
+      background-color: red;
+    }
+    .compressed_none {
+      background-color: blue;
+    }
+    </style>
     <table class="harview">
     <tr>
     <td colspan=5 align=center>
@@ -140,34 +159,111 @@ function generate_waterfall($har) {
     foreach ( $requests as $key => $request ) {
     
         $time_offset = $request["start_time"] - $min_start_time;
-        
+
         $white_space = round(($time_offset / $total_time) * 100);
         $progress_bar = round(($request["duration"] / $total_time) * 100);
-        
-        $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>
-        <td>" . $key
-        . "</td><td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . '</a>
+
+        $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>";
+        $haroutput .= "<td>" . $key . "</td>";
+
+        # Output the request url but shrink the screen output to 50 characters
+        $haroutput .= "<td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . "</a>";
+
+        $content_encoding = false;
+        $content_type = false;
+
+        # Add button that toggles response headers
+        $haroutput .= '
         <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
         <div class="http_headers" style="display: none;" id="item_' . $key .'">';
         foreach ( $request['resp_headers'] as $key => $value ) {
-            $haroutput .= "<b>" . htmlentities($key) . "</b>: " . htmlentities($value) . "<br />";
+          if ( strtolower($key) == "content-type" ) {
+            $content_type_full = $value;
+          }
+
+          if ( strtolower($key) == "content-encoding" ) {
+            $content_encoding = $value;
+          }
+
+          $haroutput .= "<b>" . htmlentities($key) . "</b>: " . htmlentities($value) . "<br />";
         }
 
-        if ( isset($request['resp_headers']['X-Cache']) ) {
-	   $hit_or_miss = $request['resp_headers']['X-Cache'];
-	   if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|Hit|HIT$)/", $request['resp_headers']['X-Cache'] )) {
-		$hit_or_miss_css = "HIT";
-	   } else {
-		$hit_or_miss_css = "MISS";
-	   }
- 	} else {
- 		$hit_or_miss_css = "UNK";
- 		$hit_or_miss = "UNK";
- 	}
+        $haroutput .= "</div>";
 
- 	#
+        $compressable = false;
+        if ( preg_match("/text\/html/i", $content_type_full ) ) {
+          $content_type = "HTML";
+          $compressable = true;
+        } else if ( preg_match("/text\/css/i", $content_type_full ) ){
+          $content_type = "CSS";
+          $compressable = true;
+        } else if ( preg_match("/javascript/i", $content_type_full ) ){
+          $content_type = "JS";
+          $compressable = true;
+        } else if ( preg_match("/image\/gif/i", $content_type_full ) ) {
+          $content_type = "GIF";
+        } else if ( preg_match("/image\/png/i", $content_type_full ) ) {
+          $content_type = "PNG";
+        } else if ( preg_match("/image\/jpeg/i", $content_type_full ) ) {
+          $content_type = "JPG";
+        } else if ( preg_match("/json/i", $content_type_full ) ) {
+          $content_type = "JSON";
+          $compressable = true;
+        } else if ( preg_match("/svg/i", $content_type_full ) ) {
+          $content_type = "SVG";
+          $compressable = true;
+        } else if ( preg_match("/font|woff/i", $content_type_full ) ){
+          $content_type = "FONT";
+          $compressable = true;
+        } else if ( preg_match("/text\/plain/i", $content_type_full ) ){
+          $content_type = "TXT";
+          $compressable = true;
+        } else if ( preg_match("/octet/i", $content_type_full ) ){
+          $content_type = "BIN";
+        } else if ( preg_match("/xml/i", $content_type_full ) ){
+          $content_type = "XML";
+          $compressable = true;
+        } else {
+          $content_type = "";
+        }
+
+        $addl = "";
+        # Check if content type is compressable and only on 2k+ files
+        if ( $request["size"] > 2048 && $compressable ) {
+          if ( $content_encoding ) {
+            $compressed = "yes";
+            $addl = "title=\"Compressed\"";
+          } else {
+            $compressed = "no";
+            $addl = "title=\"Not compressed however should be compressable\"";
+          }
+        } else {
+          $compressed = "none";
+          $addl = "title=\"Not compressable\"";
+        }
+
+
+        $haroutput .= " <button $addl class=\"compressed_" . $compressed ."\">". $content_type . "</button>";
+
+        $haroutput .= "</td>";
+
+        # Let's see if we can find any Cache headers and can identify whether request was a HIT or a MISS
+        if ( isset($request['resp_headers']['X-Cache']) ) {
+          $hit_or_miss = $request['resp_headers']['X-Cache'];
+          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|HIT$)/i", $request['resp_headers']['X-Cache'] )) {
+            $hit_or_miss_css = "HIT";
+          } else {
+            $hit_or_miss_css = "MISS";
+          }
+        } else {
+          $hit_or_miss_css = "UNK";
+          $hit_or_miss = "UNK";
+        }
+
+        # 
         $server = "";
 
+        # Let's try to identify some CDNs. This is Fastly
         if ( isset($request['resp_headers']['X-Served-By']) && preg_match("/^cache-/", $request['resp_headers']['X-Served-By']) ) {
             $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']);
         }
@@ -228,18 +324,21 @@ function generate_waterfall($har) {
             $server = "Varnish";
         }
 
+        ##############################################################################################
         # Figure out if a specific CMS is being used
         if ( isset($request['resp_headers']['X-AH-Environment']) ) {
             $server .= " (Acquia)";
         } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
             $server .= " (Drupal)";
         # Magento version 1
+        } else if ( isset($request['resp_headers']['Link']) && preg_match("/wp-json/", $request['resp_headers']['Link'])) {
+            $server .= " (Wordpress)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/frontend=/i", $request['resp_headers']['Set-Cookie'] ) ) {
             $server .= " (Magento1)";
         }
 
         if ( $server == "" )
-            $server = "UNK";
+            $server = "Unknown";
 
         $haroutput .= '<td>' . $server . '</td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
@@ -256,7 +355,13 @@ function generate_waterfall($har) {
     unset($requests);
     unset($har);
     
-    $haroutput .= "</table>";
+    $haroutput .= '</table>
+    <script>
+
+    $(function(){
+      $(".header_button").button();
+    });
+    ';
 
     return $haroutput;
 
