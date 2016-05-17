@@ -197,7 +197,7 @@ function generate_waterfall($har) {
         } else if ( preg_match("/text\/css/i", $content_type_full ) ){
           $content_type = "CSS";
           $compressable = true;
-        } else if ( preg_match("/javascript/i", $content_type_full ) ){
+        } else if ( preg_match("/javascript|text\/js/i", $content_type_full ) ){
           $content_type = "JS";
           $compressable = true;
         } else if ( preg_match("/image\/gif/i", $content_type_full ) ) {
@@ -242,8 +242,8 @@ function generate_waterfall($har) {
           $addl = "title=\"Not compressable\"";
         }
 
-
-        $haroutput .= " <button $addl class=\"compressed_" . $compressed ."\">". $content_type . "</button>";
+        if ( $content_type != "" )
+          $haroutput .= " <button $addl class=\"compressed_" . $compressed ."\">". $content_type . "</button>";
 
         $haroutput .= "</td>";
 
