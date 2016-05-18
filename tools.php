@@ -302,6 +302,8 @@ function generate_waterfall($har) {
             $server = "AWS S3";
         } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
             $server = "MS Bing";
+        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
+            $server = "Google Storage";
         } else if ( isset($request['resp_headers']['X-Varnish']) || isset($request['resp_headers']['Via']) && preg_match("/varnish/i", $request['resp_headers']['Via']) ) {
             $server = "Varnish";
         }
