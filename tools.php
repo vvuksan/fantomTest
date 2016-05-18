@@ -258,7 +258,7 @@ function generate_waterfall($har) {
             $server = trim($request['resp_headers']['Server']);
         # CloudFront
         } 
-        else if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/", $request['resp_headers']['Via']) ) {
+        else if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/i", $request['resp_headers']['Via']) ) {
             $server = "CloudFront";
         # ChinaCache
         } 
@@ -274,7 +274,12 @@ function generate_waterfall($har) {
         }
         # CD Networks
         else if ( isset($request['resp_headers']['X-Px']) ) {
-            $server = "CDNetworks";
+            if ( preg_match("/.*\.(.*)\.cdngp.net/i", $request['resp_headers']['X-Px'], $out )) {
+              $edge_location = " " .$out[1];
+            } else {
+              $edge_location = "";
+            }
+            $server = "CDNetworks" . $edge_location;
         }
         # Cloudflare
         else if ( isset($request['resp_headers']['CF-RAY']) ) {
@@ -296,7 +301,7 @@ function generate_waterfall($har) {
         } else if ( preg_match("/google.*\.com\//i", $request["url"]) ) {
             $server = "Google";
         # Not exhaustive way to identify Facebook 
-        } else if ( preg_match("/facebook.*\.com\//i", $request["url"]) ) {
+        } else if ( preg_match("/facebook.*\.(com|net)\//i", $request["url"]) ) {
             $server = "Facebook";
         } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
@@ -306,6 +311,11 @@ function generate_waterfall($har) {
             $server = "MS Bing";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
             $server = "Google Storage";
+        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Azion IMS" ) {
+            $server = "AzionCDN";
+        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "CDN77-Turbo" ) {
+            $edge_location = isset($request['resp_headers']['X-Edge-Location']) ? " " . $request['resp_headers']['X-Edge-Location'] : "";
+            $server = "CDN77" . $edge_location;
         } else if ( isset($request['resp_headers']['X-Varnish']) || isset($request['resp_headers']['Via']) && preg_match("/varnish/i", $request['resp_headers']['Via']) ) {
             $server = "Varnish";
         }
@@ -325,8 +335,9 @@ function generate_waterfall($har) {
             $server .= " (WebSphere)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/Demandware/i", $request['resp_headers']['Set-Cookie'] ) ) {
             $server .= " (Demandware)";
+        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Cowboy" && preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
+            $server .= " (Heroku)";
         }
-
         if ( $server == "" )
             $server = "Unknown";
 
