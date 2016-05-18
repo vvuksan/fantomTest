@@ -191,7 +191,10 @@ function generate_waterfall($har) {
         } else if ( preg_match("/svg/i", $content_type_full ) ) {
           $content_type = "SVG";
           $compressable = true;
-        } else if ( preg_match("/font|woff/i", $content_type_full ) ){
+        # WOFF is already compressed https://developers.googleblog.com/2015/02/smaller-fonts-with-woff-20-and-unicode.html
+        } else if ( preg_match("/woff/i", $content_type_full ) ){
+          $content_type = "FONT";
+        } else if ( preg_match("/font/i", $content_type_full ) ){
           $content_type = "FONT";
           $compressable = true;
         } else if ( preg_match("/text\/plain/i", $content_type_full ) ){
