@@ -300,6 +300,8 @@ function generate_waterfall($har) {
             $server = "Facebook";
         } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
+        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/AWSELB/i", $request['resp_headers']['Set-Cookie'] ) ) {
+            $server = "AWS ELB";
         } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
             $server = "MS Bing";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
