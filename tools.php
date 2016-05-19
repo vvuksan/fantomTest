@@ -229,21 +229,10 @@ function generate_waterfall($har) {
 
         $haroutput .= "</td>";
 
-        # Let's see if we can find any Cache headers and can identify whether request was a HIT or a MISS
-        if ( isset($request['resp_headers']['X-Cache']) ) {
-          $hit_or_miss = $request['resp_headers']['X-Cache'];
-          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|Hit from Cloudfront|HIT$)/i", $request['resp_headers']['X-Cache'] )) {
-            $hit_or_miss_css = "HIT";
-          } else {
-            $hit_or_miss_css = "MISS";
-          }
-        } else {
-          $hit_or_miss_css = "UNK";
-          $hit_or_miss = "UNK";
-        }
-
         # 
         $server = "";
+        $hit_or_miss = "UNK";
+        $hit_or_miss_css = "UNK";
 
         # Let's try to identify some CDNs. This is Fastly
         if ( isset($request['resp_headers']['X-Served-By']) && preg_match("/^cache-/", $request['resp_headers']['X-Served-By']) ) {
@@ -294,11 +283,11 @@ function generate_waterfall($har) {
 	    $hit_or_miss = "HIT";
         }
         # Match Akamai headers
-        else if ( isset($request['resp_headers']['X-Cache']) && preg_match("/(\w+)(\s+).*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
+        else if ( isset($request['resp_headers']['X-Cache']) && preg_match("/(\w+) from.*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
             $server = "Akamai";
             $hit_or_miss = $out[1];
         # Not exhaustive way to identify Google
-        } else if ( preg_match("/google.*\.com\//i", $request["url"]) ) {
+        } else if ( preg_match("/(doubleclick|google).*\.(com|net)\//i", $request["url"]) ) {
             $server = "Google";
         # Not exhaustive way to identify Facebook 
         } else if ( preg_match("/facebook.*\.(com|net)\//i", $request["url"]) ) {
@@ -313,8 +302,13 @@ function generate_waterfall($har) {
             $server = "Google Storage";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Azion IMS" ) {
             $server = "AzionCDN";
+        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "DOSarrest" ) {
+            $server = "DOSarrest";            
+        } else if ( isset($request['resp_headers']['X-Distil-CS'])  ) {
+            $server = "Distill";
+            $hit_or_miss = htmlentities($request['resp_headers']['X-Distil-CS']);
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "CDN77-Turbo" ) {
-            $edge_location = isset($request['resp_headers']['X-Edge-Location']) ? " " . $request['resp_headers']['X-Edge-Location'] : "";
+            $edge_location = isset($request['resp_headers']['X-Edge-Location']) ? " " . htmlentities($request['resp_headers']['X-Edge-Location']) : "";
             $server = "CDN77" . $edge_location;
         } else if ( isset($request['resp_headers']['X-Varnish']) || isset($request['resp_headers']['Via']) && preg_match("/varnish/i", $request['resp_headers']['Via']) ) {
             $server = "Varnish";
@@ -341,11 +335,27 @@ function generate_waterfall($har) {
         if ( $server == "" )
             $server = "Unknown";
 
-        $haroutput .= '<td>' . $server . '</td>' .
-        '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_or_miss . '</td>' .
-        '<td>' . $request["resp_code"] . '</td>
+        # Let's see if we can find any Cache headers and can identify whether request was a HIT or a MISS
+        if ( isset($request['resp_headers']['X-Cache']) && $hit_or_miss == "UNK" ) {
+          # We already figured out for Akamai whether's it's a hit or miss so don't do anything
+          if ( $server == "Akamai")
+            continue;
+          $hit_or_miss = $request['resp_headers']['X-Cache'];
+        }
+
+        if ( $hit_or_miss != "UNK" ) {
+          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|Hit from Cloudfront|HIT$)/i", $hit_or_miss )) {
+              $hit_or_miss_css = "HIT";
+          } else {
+              $hit_or_miss_css = "MISS";
+          }
+        }
+
+        $haroutput .= '<td>' . htmlentities($server) . '</td>' .
+        '<td class="x-cache-' . $hit_or_miss_css . '">' . htmlentities($hit_or_miss) . '</td>' .
+        '<td>' . htmlentities($request["resp_code"]) . '</td>
         <td align="right">' . number_format($request["duration"], 3) . '</td>
-        <td align="right">' . $request["size"] . '</td>
+        <td align="right">' . htmlentities($request["size"]) . '</td>
         <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
         '<span class="fill" style="background: #AAB2FF; width: ' . $progress_bar .  '%">&nbsp;</span>'.
