@@ -49,7 +49,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     if ( !is_executable($conf['nmap_bin']) ) {
       die("NMAP is not executable. Current path is to to " . $conf['nmap_bin'] . " please set \$conf['nmap_bin'] in conf.php to proper path");
     }
-    passthru("cd " . __DIR__ . "/ssl; " . $conf['nmap_bin'] . " --script ssl-enum-ciphers.nse -p " . $port . " " . $user['ip']); 
+    passthru($conf['nmap_bin'] . " --script=ssl-enum-ciphers -p " . $port . " " . $user['ip']); 
     ?>
     </pre>
     </div>
