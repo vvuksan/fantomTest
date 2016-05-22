@@ -230,8 +230,14 @@ function generate_waterfall($har) {
         # Let's check for questionable practices
         $questionable_practice = array();
         # Let's check for questionable practices
-        if ( isset($request['resp_headers']['Vary']) && preg_match("/User-Agent/i", $request['resp_headers']['Vary'] ) ) {
+        if ( isset($request['resp_headers']['Vary']) ) {
+          if ( preg_match("/User-Agent/i", $request['resp_headers']['Vary'] ) ) {
             $questionable_practice[] = "User-Agent used in Vary";
+          }
+          if ( preg_match("/Cookie/i", $request['resp_headers']['Vary'] ) ) {
+            $questionable_practice[] = "Cookie used in Vary";
+          }
+          
         }
 
         if ( sizeof($questionable_practice) > 0 ) {
@@ -239,7 +245,7 @@ function generate_waterfall($har) {
         }
 
         unset($questionable_practice);
-        
+
         $haroutput .= "</td>";
 
         # 
