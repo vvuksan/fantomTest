@@ -227,6 +227,19 @@ function generate_waterfall($har) {
         if ( $content_type != "" )
           $haroutput .= " <button $addl class=\"compressed_" . $compressed ."\">". $content_type . "</button>";
 
+        # Let's check for questionable practices
+        $questionable_practice = array();
+        # Let's check for questionable practices
+        if ( isset($request['resp_headers']['Vary']) && preg_match("/User-Agent/i", $request['resp_headers']['Vary'] ) ) {
+            $questionable_practice[] = "User-Agent used in Vary";
+        }
+
+        if ( sizeof($questionable_practice) > 0 ) {
+            $haroutput .= "<img title=\"" . join(",", $questionable_practice) . "\" width=20 src=\"img/attention.svg\">";
+        }
+
+        unset($questionable_practice);
+        
         $haroutput .= "</td>";
 
         # 
@@ -298,7 +311,7 @@ function generate_waterfall($har) {
             $server = "AWS ELB";
         } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
             $server = "MS Bing";
-        } else if ( preg_match("/ytimg\.com\//i", $request["url"]) ) {
+        } else if ( preg_match("/(yahoo|ytimg)\.com\//i", $request["url"]) ) {
             $server = "Yahoo";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
             $server = "Google Storage";
@@ -372,7 +385,7 @@ function generate_waterfall($har) {
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
         '<span class="fill" style="background: #AAB2FF; width: ' . $progress_bar .  '%">&nbsp;</span>'.
         "</span></td></tr>";
-    
+
     }
     
     unset($requests);
