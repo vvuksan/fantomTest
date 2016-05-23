@@ -357,6 +357,8 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['x-amz-id-2']) && $server != "AWS S3" ) {
             $server .= " (S3)";
         # Same with Google Cloud Storage (GCS)
+        } else if ( isset($request['resp_headers']['Server']) && preg_match("/cloudinary/", $request['resp_headers']['Server']) ) {
+            $server .= " (Cloudinary)";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
             $server .= " (GCS)";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Cowboy" && preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
