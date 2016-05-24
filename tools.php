@@ -280,7 +280,7 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['X-CDN']) and $request['resp_headers']['X-CDN'] == "Incapsula" ) {
             $server = "Incapsula";
         }
-        else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) or $request['resp_headers']['X-Yottaa-Metrics'] ) {
+        else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) or isset($request['resp_headers']['X-Yottaa-Metrics']) ) {
             $server = "Yottaa";
         }
         # CD Networks
@@ -326,8 +326,16 @@ function generate_waterfall($har) {
             $server = "Google Storage";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Azion IMS" ) {
             $server = "AzionCDN";
+        } else if ( isset($request['resp_headers']['Server']) && preg_match("/leasewebcdn/i" , $request['resp_headers']['Server'] ) ) {
+            $server = "LeaseWeb CDN";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "DOSarrest" ) {
             $server = "DOSarrest";            
+        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "EdgePrismSSL" ) {
+            if ( isset($request['resp_headers']['X-Server-Name']) )
+              $cache_node = $request['resp_headers']['X-Server-Name'];
+            else
+              $cache_node = "";
+            $server = "Limelight " . $cache_node;
         } else if ( isset($request['resp_headers']['X-Distil-CS'])  ) {
             $server = "Distill";
             $hit_or_miss = $request['resp_headers']['X-Distil-CS'];
@@ -370,7 +378,7 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) and $server != "Yottaa" ) {
             $server .= " (Yottaa)";
         }
-
+  
         if ( $server == "" )
             $server = "Unknown";
 
