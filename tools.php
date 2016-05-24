@@ -280,6 +280,9 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['X-CDN']) and $request['resp_headers']['X-CDN'] == "Incapsula" ) {
             $server = "Incapsula";
         }
+        else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) or $request['resp_headers']['X-Yottaa-Metrics'] ) {
+            $server = "Yottaa";
+        }
         # CD Networks
         else if ( isset($request['resp_headers']['X-Px']) ) {
             if ( preg_match("/.*\.(.*)\.cdngp.net/i", $request['resp_headers']['X-Px'], $out )) {
@@ -363,6 +366,9 @@ function generate_waterfall($har) {
             $server .= " (GCS)";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Cowboy" && preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
             $server .= " (Heroku)";
+        # Yottaa may be using other CDNs for their static delivery
+        } else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) and $server != "Yottaa" ) {
+            $server .= " (Yottaa)";
         }
 
         if ( $server == "" )
