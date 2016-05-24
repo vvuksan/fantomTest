@@ -329,7 +329,9 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['Server']) && preg_match("/leasewebcdn/i" , $request['resp_headers']['Server'] ) ) {
             $server = "LeaseWeb CDN";
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "DOSarrest" ) {
-            $server = "DOSarrest";            
+            $server = "DOSarrest";
+        } else if ( isset($request['resp_headers']['X-Via']) && preg_match("/1.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['X-Via'], $out ) ) {
+            $server = "Quantil " .  $out[1];
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "EdgePrismSSL" ) {
             if ( isset($request['resp_headers']['X-Server-Name']) )
               $cache_node = $request['resp_headers']['X-Server-Name'];
@@ -353,7 +355,7 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
             $server .= " (Drupal)";
         # Magento version 1
-        } else if ( isset($request['resp_headers']['Link']) && preg_match("/wp-json/", $request['resp_headers']['Link'])) {
+        } else if ( isset($request['resp_headers']['WP-Super-Cache']) || isset($request['resp_headers']['X-Pingback']) || (isset($request['resp_headers']['Link']) && preg_match("/wp-json/", $request['resp_headers']['Link']))) {
             $server .= " (Wordpress)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/frontend=/i", $request['resp_headers']['Set-Cookie'] ) ) {
             $server .= " (Magento1)";
