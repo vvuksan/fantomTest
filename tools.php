@@ -262,7 +262,7 @@ function generate_waterfall($har) {
           else if ( isset($request['resp_headers']['Server']) && preg_match("/^EC/", $request['resp_headers']['Server'])  ) {
             $server = trim(str_replace("ECS", "Edgecast", $request['resp_headers']['Server']));
 
-        } else if ( isset($request['resp_headers']['Server']) && preg_match("/^NetDNA/", $request['resp_headers']['Server']) ) {
+        } else if ( isset($request['resp_headers']['Server']) && preg_match("/^NetDNA/i", $request['resp_headers']['Server']) ) {
             $server = trim($request['resp_headers']['Server']);
         # CloudFront
         } 
@@ -355,7 +355,8 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
             $server .= " (Drupal)";
         # Magento version 1
-        } else if ( isset($request['resp_headers']['WP-Super-Cache']) || isset($request['resp_headers']['X-Pingback']) || (isset($request['resp_headers']['Link']) && preg_match("/wp-json/", $request['resp_headers']['Link']))) {
+        } else if ( isset($request['resp_headers']['WP-Super-Cache']) || isset($request['resp_headers']['X-Pingback'])
+                   || (isset($request['resp_headers']['Link']) && preg_match("/wp-json|wp\.me/i", $request['resp_headers']['Link']))) {
             $server .= " (Wordpress)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/frontend=/i", $request['resp_headers']['Set-Cookie'] ) ) {
             $server .= " (Magento1)";
@@ -370,7 +371,7 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['x-amz-id-2']) && $server != "AWS S3" ) {
             $server .= " (S3)";
         # Same with Google Cloud Storage (GCS)
-        } else if ( isset($request['resp_headers']['Server']) && preg_match("/cloudinary/", $request['resp_headers']['Server']) ) {
+        } else if ( isset($request['resp_headers']['Server']) && preg_match("/cloudinary/i", $request['resp_headers']['Server']) ) {
             $server .= " (Cloudinary)";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
             $server .= " (GCS)";
@@ -783,7 +784,7 @@ function print_url_results($records) {
     # Try to identify CDNs    
     if ( $conf['cdn_detection'] ) {
 
-      if ( preg_match("/.*X-Served-By: (.*)\n/", $record['headers_string'], $out) ) {
+      if ( preg_match("/.*X-Served-By: (.*)\n/i", $record['headers_string'], $out) ) {
         $xservedby = $out[1];        
       } else {
         $xservedby = "NA";
