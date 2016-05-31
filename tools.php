@@ -331,7 +331,11 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "DOSarrest" ) {
             $server = "DOSarrest";
         } else if ( isset($request['resp_headers']['Server']) && preg_match("/keycdn/i", $request['resp_headers']['Server']) ) {
-            $server = "KeyCDN";
+           if ( isset($request['resp_headers']['X-Edge-Location']) ) {
+              $edge_location = " " .$request['resp_headers']['X-Edge-Location'];
+            } else {
+              $edge_location = "";
+            }
         } else if ( isset($request['resp_headers']['X-Via']) && preg_match("/1.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['X-Via'], $out ) ) {
             $server = "Quantil " .  $out[1];
         } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "EdgePrismSSL" ) {
