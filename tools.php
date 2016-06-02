@@ -368,6 +368,8 @@ function generate_waterfall($har) {
             $server .= " (Magento1)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/BIGipServer/i", $request['resp_headers']['Set-Cookie'] ) ) {
             $server .= " (F5)";
+        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['Set-Cookie'] ) ) {
+            $server .= " (NetScaler)";
         } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) ) {
             $server .= " (WebSphere)";
         } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/Demandware/i", $request['resp_headers']['Set-Cookie'] ) ) {
