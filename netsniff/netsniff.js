@@ -97,7 +97,7 @@ function createHAR(address, title, startTime, resources)
 
 var page = new WebPage(), output;
 page.viewportSize = { width: 800, height: 600 };
-page.settings.userAgent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36';
+page.settings.userAgent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.124 Safari/537.36';
 
 
 if (phantom.args.length === 0) {
