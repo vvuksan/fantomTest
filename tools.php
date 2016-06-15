@@ -96,9 +96,17 @@ function generate_waterfall($har) {
             $resp_headers[$header['name']] = $header['value'];
         }
             
-        $requests[] = array("url" => $url, "start_time" => $start_time,
-            "duration" => $request_duration, "size" => $resp_size, "resp_code" => $resp_code,
-            "req_headers" => $req_headers, "resp_headers" => $resp_headers );
+        $requests[] = array(
+            "url" => $url,
+            "start_time" => $start_time,
+            "wait_time" => $request['timings']['wait'] / 1000,
+            "download_time" => $request['timings']['receive'] / 1000,
+            "duration" => $request_duration,
+            "size" => $resp_size,
+            "resp_code" => $resp_code,
+            "req_headers" => $req_headers,
+            "resp_headers" => $resp_headers
+            );
 
         unset($req_headers, $resp_headers);
         
@@ -134,11 +142,13 @@ function generate_waterfall($har) {
     ;
     
     foreach ( $requests as $key => $request ) {
-    
+
         $time_offset = $request["start_time"] - $min_start_time;
 
         $white_space = round(($time_offset / $total_time) * 100);
-        $progress_bar = ceil(($request["duration"] / $total_time) * 100);
+        $wait_time_bar = ceil(($request["wait_time"] / $total_time) * 100);
+        $download_time_bar = ceil(($request["download_time"] / $total_time) * 100);
+
 
         $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>";
         $haroutput .= "<td>" . $key . "</td>";
@@ -416,7 +426,8 @@ function generate_waterfall($har) {
         <td align="right">' . htmlentities($request["size"]) . '</td>
         <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
-        '<span class="fill" style="background: #AAB2FF; width: ' . $progress_bar .  '%">&nbsp;</span>'.
+        '<span class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>'.
+        '<span class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>'.
         "</span></td></tr>";
 
     }
