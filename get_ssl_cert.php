@@ -16,11 +16,11 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 $host_name = trim($_REQUEST['hostname']);
 
 # Is it an IP 
-if(filter_var($host_name, FILTER_VALIDATE_IP)) {
-  $user['ip'] = $host_name;
-  $it_s_ip = true;
-} else if ( filter_var($host_name, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+if ( filter_var($host_name, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
   $user['ip'] = "[" . $host_name . "]";
+  $it_s_ip = true;
+} else if(filter_var($host_name, FILTER_VALIDATE_IP)) {
+  $user['ip'] = $host_name;
   $it_s_ip = true;
 } else {
   $user['ip'] = gethostbyname($host_name);
