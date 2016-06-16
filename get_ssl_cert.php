@@ -17,20 +17,20 @@ $host_name = trim($_REQUEST['hostname']);
 
 # Is it an IP 
 if(filter_var($host_name, FILTER_VALIDATE_IP)) {
-    $user['ip'] = $host_name;
-    $it_s_ip = true;
+  $user['ip'] = $host_name;
+  $it_s_ip = true;
+} else if ( filter_var($host_name, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+  $user['ip'] = "[" . $host_name . "]";
+  $it_s_ip = true;
 } else {
-    # Strip off any white spaces
-    $host_name = trim($_REQUEST['hostname']);
-    # 
-    $user['ip'] = gethostbyname($host_name);
-    # If we get the same thing that we started with name is not resolvable
-    if ( $user['ip'] == $host_name ) {
-        die("Address is not an IP and I can't resolve it. Doing nothing");
-    } else {
-        $it_s_ip = false;
-        $user['ip'] = trim($_REQUEST['hostname']);
-    }
+  $user['ip'] = gethostbyname($host_name);
+  # If we get the same thing that we started with name is not resolvable
+  if ( $user['ip'] == $host_name ) {
+    die("Address is not an IP and I can't resolve it. Doing nothing");
+  } else {
+    $it_s_ip = false;
+    $user['ip'] = trim($_REQUEST['hostname']);
+  }
 }
 
 if( isset($_REQUEST['sni_name']) && preg_match("/^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i", $_REQUEST['sni_name']) ) {
@@ -60,7 +60,12 @@ if ( $_REQUEST['site_id'] == -1 ) {
      Verify yourself with OpenSSL command:
 <div style="background-color: #DCDCDC">
     <pre>echo "HEAD / HTTP/1.1" |  openssl s_client -showcerts <?php if ( $sni_name != "" ) print "-servername " . htmlentities($sni_name); ?> -connect <?php print htmlentities($_REQUEST['hostname']) . ":" . $port; ?> | openssl x509  -noout  -text</pre>
-</div>    
+</div>
+     or gnutls-cli command:
+<div style="background-color: #DCDCDC">
+    <pre>echo -n | gnutls-cli --print-cert -p <?php print $port; ?> <?php print htmlentities($_REQUEST['hostname']); ?> | openssl x509  -noout  -text</pre>
+</div>
+
 <?php
 
   require_once("./tools_ssl.php");
