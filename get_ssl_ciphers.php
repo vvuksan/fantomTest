@@ -13,9 +13,13 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
+$host_name = trim($_REQUEST['hostname']);
+
 # Is it an IP 
-if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
-    $user['ip'] = $_REQUEST['hostname'];
+if(filter_var($host_name, FILTER_VALIDATE_IP)) {
+    $user['ip'] = $host_name;
+} else if ( filter_var($host_name, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+    $user['ip'] = $host_name;
 } else {
     $user['ip'] = gethostbyname($_REQUEST['hostname']);
     if ( $user['ip'] == $_REQUEST['hostname'] )
@@ -39,17 +43,30 @@ $conf['remote_exe'] = basename ( __FILE__ );
 ///////////////////////////////////////////////////////////////////////////////
 if ( $_REQUEST['site_id'] == -1 ) {
 
-?>
+  # First make sure nmap is available
+  if ( !is_executable($conf['nmap_bin']) ) {
+    die("NMAP is not executable. Current path is to to " . $conf['nmap_bin'] . " please set \$conf['nmap_bin'] in conf.php to proper path");
+  }
 
-    <h2>Ciphers</h2> 
+?>
+    <h2>Ciphers</h2>
+
+    Running <p> <div style="background-color: #EEEEEE">
+    <?php
+
+    if ( filter_var($user['ip'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+      $is_ipv6 = "-6";
+    } else {
+      $is_ipv6 = "";
+    }
+    $cmd = $conf['nmap_bin'] . " --script=ssl-enum-ciphers " . $is_ipv6 . " -p " . $port . " " . $user['ip'];
+    print " " . $cmd;
+    ?>
+    </div>
     <div style="background-color: #DCDCDC">
     <pre>
     <?php
-    # First make sure nmap is available
-    if ( !is_executable($conf['nmap_bin']) ) {
-      die("NMAP is not executable. Current path is to to " . $conf['nmap_bin'] . " please set \$conf['nmap_bin'] in conf.php to proper path");
-    }
-    passthru($conf['nmap_bin'] . " --script=ssl-enum-ciphers -p " . $port . " " . $user['ip']); 
+    passthru(escapeshellcmd($cmd));
     ?>
     </pre>
     </div>
