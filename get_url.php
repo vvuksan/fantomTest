@@ -24,7 +24,7 @@ if ( isset($_REQUEST['arbitrary_headers']) and $_REQUEST['arbitrary_headers'] !=
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers($_GET['url'], $optional_request_headers);
+    $record = get_curl_timings_with_headers(trim($_GET['url']), $optional_request_headers);
     
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');

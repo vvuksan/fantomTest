@@ -14,17 +14,19 @@ if ( ! $conf['pingmtr_enabled'] ) {
     die("Can't run PING/MTR as it has been disabled. Set pingmtr_enabled to true in conf.php");
 }
 
+$user['hostname'] = trim($_REQUEST['hostname']);
+
 ##################################################################
 # Since we are shelling out we need to make sure what we
 # are being supplied is an IP or a hostname that actually resolves
 # or it's an IP
 ##################################################################
-if(filter_var($_REQUEST['hostname'], FILTER_VALIDATE_IP)) {
-    $user['ip'] = $_REQUEST['hostname'];
+if(filter_var($user['hostname'], FILTER_VALIDATE_IP)) {
+    $user['ip'] = $user['hostname'];
 } else {
-    $user['ip'] = gethostbyname($_REQUEST['hostname']);
+    $user['ip'] = gethostbyname(trim($user['hostname']));
     # If resolution fails it just returns hostname back
-    if ( $user['ip'] == $_REQUEST['hostname'] )
+    if ( $user['ip'] == $user['hostname'] )
         die("Address is not an IP and I can't resolve it. Doing nothing");
 }
 
@@ -64,7 +66,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     <div style="background-color: #FAFAD2">
     <pre>
     <?php
-    passthru($conf['mtr_bin'] . " --report-wide -z --report-cycles=1 --report " . $_REQUEST['hostname']);
+    passthru($conf['mtr_bin'] . " --report-wide -z --report-cycles=1 --report " . $user['hostname']);
     ?>
     </pre>
     </div>
@@ -86,10 +88,10 @@ if ( $_REQUEST['site_id'] == -1 ) {
         print "<div id='mtrping_results_" . $index ."'>";
 
         #print (file_get_contents($conf['remotes'][$index]['base_url'] . "get_mtr.php?site_id=-1" .
-        #"&hostname=" . $_REQUEST['hostname'] ));
+        #"&hostname=" . $user['hostname'] ));
         print "<img src=\"img/spinner.gif\"></div>";
 
-        $args[] = 'hostname=' . htmlentities($_REQUEST['hostname']);
+        $args[] = 'hostname=' . htmlentities($user['hostname']);
         $args[] = 'ping_count=' . $ping_count;
 
         print '
@@ -110,7 +112,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     
     print "<div><h3>" .$conf['remotes'][$site_id]['name']. "</h3></div>";
     print "<div class=dns_results>";
-    $args[] = 'hostname=' . htmlentities($_REQUEST['hostname']);
+    $args[] = 'hostname=' . htmlentities($user['hostname']);
     $args[] = 'ping_count=' . $ping_count;
     $url = $conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?site_id=-1&" . join("&", $args);
     print (file_get_contents($url));

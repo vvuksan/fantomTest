@@ -10,7 +10,7 @@ require_once("./tools.php");
 
 if ( isset($_GET['url'])) {
 
-    $url = validate_url($_GET['url']);
+    $url = validate_url(trim($_GET['url']));
     
     if ( $url === FALSE ) {
         ?>
