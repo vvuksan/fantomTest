@@ -30,6 +30,9 @@ body{
 .compressed_none {
   background-color: blue;
 }
+.http2 {
+  background-color: orange;
+}
 
 .time_legend {
   text-align: center;

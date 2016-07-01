@@ -11,7 +11,9 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 }
 
 # Identify whether PhantomJS exists version
-if ( is_executable($conf['phantomjs_bin']) ) {
+if ( !isset($conf['phantomjs_exec']) )  {
+
+  if ( is_executable($conf['phantomjs_bin']) ) {
 
     if ( preg_match("/^2/", exec($conf['phantomjs_bin'] . " -v")) ) {
     $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff-v2.js";
@@ -21,10 +23,11 @@ if ( is_executable($conf['phantomjs_bin']) ) {
 
     $waterfall_output = true;
 
-} else {
+  } else {
 
     $waterfall_output = false;
 
+  }
 }
 
 if ( $conf['pingmtr_enabled'] and is_executable($conf['ping_bin']) and is_executable($conf['ping_bin']) ) {
@@ -93,9 +96,10 @@ function generate_waterfall($har) {
             $req_headers[$header['name']] = $header['value'];
         }        
         foreach ( $request['response']['headers'] as $index => $header ) {
-            $resp_headers[$header['name']] = $header['value'];
+            $header_name = strtolower($header['name']);
+            $resp_headers[$header_name] = $header['value'];
         }
-            
+
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
@@ -104,6 +108,7 @@ function generate_waterfall($har) {
             "duration" => $request_duration,
             "size" => $resp_size,
             "resp_code" => $resp_code,
+            "http_version" => $request['response']['httpVersion'],
             "req_headers" => $req_headers,
             "resp_headers" => $resp_headers
             );
@@ -177,6 +182,9 @@ function generate_waterfall($har) {
 
         $haroutput .= "</div>";
 
+        if ( preg_match("/HTTP\/2/i", $request['http_version']) )
+          $haroutput .= " <button title=\"HTTP2\" class=\"http2\">H2</button>";
+
         $compressable = false;
         if ( preg_match("/text\/html/i", $content_type_full ) ) {
           $content_type = "HTML";
@@ -240,11 +248,11 @@ function generate_waterfall($har) {
         # Let's check for questionable practices
         $questionable_practice = array();
         # Let's check for questionable practices
-        if ( isset($request['resp_headers']['Vary']) ) {
-          if ( preg_match("/User-Agent/i", $request['resp_headers']['Vary'] ) ) {
+        if ( isset($request['resp_headers']['vary']) ) {
+          if ( preg_match("/User-Agent/i", $request['resp_headers']['vary'] ) ) {
             $questionable_practice[] = "User-Agent used in Vary";
           }
-          if ( preg_match("/Cookie/i", $request['resp_headers']['Vary'] ) ) {
+          if ( preg_match("/Cookie/i", $request['resp_headers']['vary'] ) ) {
             $questionable_practice[] = "Cookie used in Vary";
           }
           
@@ -264,16 +272,16 @@ function generate_waterfall($har) {
         $hit_or_miss_css = "UNK";
 
         # Let's try to identify some CDNs. This is Fastly
-        if ( isset($request['resp_headers']['X-Served-By']) && preg_match("/^cache-/", $request['resp_headers']['X-Served-By']) ) {
-            $server = str_replace("cache-", "", $request['resp_headers']['X-Served-By']);
+        if ( isset($request['resp_headers']['x-served-by']) && preg_match("/^cache-/", $request['resp_headers']['x-served-by']) ) {
+            $server = str_replace("cache-", "", $request['resp_headers']['x-served-by']);
         }
 
         # Check if Server header provided. It's used by NetDNA and Edgecast
-          else if ( isset($request['resp_headers']['Server']) && preg_match("/^EC/", $request['resp_headers']['Server'])  ) {
-            $server = trim(str_replace("ECS", "Edgecast", $request['resp_headers']['Server']));
+          else if ( isset($request['resp_headers']['server']) && preg_match("/^EC/", $request['resp_headers']['server'])  ) {
+            $server = trim(str_replace("ECS", "Edgecast", $request['resp_headers']['server']));
 
-        } else if ( isset($request['resp_headers']['Server']) && preg_match("/^NetDNA/i", $request['resp_headers']['Server']) ) {
-            $server = trim($request['resp_headers']['Server']);
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/^NetDNA/i", $request['resp_headers']['server']) ) {
+            $server = trim($request['resp_headers']['server']);
         # CloudFront
         } 
         else if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/i", $request['resp_headers']['Via']) ) {
@@ -326,77 +334,77 @@ function generate_waterfall($har) {
             $server = "Facebook";
         } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
-        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/AWSELB/i", $request['resp_headers']['Set-Cookie'] ) ) {
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/AWSELB/i", $request['resp_headers']['set-cookie'] ) ) {
             $server = "AWS ELB";
         } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
             $server = "MS Bing";
         } else if ( preg_match("/(yahoo|ytimg)\.com\//i", $request["url"]) ) {
             $server = "Yahoo";
-        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
             $server = "Google Storage";
-        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Azion IMS" ) {
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Azion IMS" ) {
             $server = "AzionCDN";
-        } else if ( isset($request['resp_headers']['Server']) && preg_match("/leasewebcdn/i" , $request['resp_headers']['Server'] ) ) {
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/leasewebcdn/i" , $request['resp_headers']['server'] ) ) {
             $server = "LeaseWeb CDN";
-        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "DOSarrest" ) {
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "DOSarrest" ) {
             $server = "DOSarrest";
-        } else if ( isset($request['resp_headers']['Server']) && preg_match("/keycdn/i", $request['resp_headers']['Server']) ) {
-           if ( isset($request['resp_headers']['X-Edge-Location']) ) {
-              $edge_location = " " .$request['resp_headers']['X-Edge-Location'];
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/keycdn/i", $request['resp_headers']['server']) ) {
+           if ( isset($request['resp_headers']['x-edge-location']) ) {
+              $edge_location = " " .$request['resp_headers']['x-edge-location'];
             } else {
               $edge_location = "";
             }
-        } else if ( isset($request['resp_headers']['X-Via']) && preg_match("/1.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['X-Via'], $out ) ) {
+        } else if ( isset($request['resp_headers']['x-via']) && preg_match("/1.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['x-via'], $out ) ) {
             $server = "Quantil " .  $out[1];
-        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "EdgePrismSSL" ) {
-            if ( isset($request['resp_headers']['X-Server-Name']) )
-              $cache_node = $request['resp_headers']['X-Server-Name'];
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "EdgePrismSSL" ) {
+            if ( isset($request['resp_headers']['x-server-name']) )
+              $cache_node = $request['resp_headers']['x-server-name'];
             else
               $cache_node = "";
             $server = "Limelight " . $cache_node;
-        } else if ( isset($request['resp_headers']['X-Distil-CS'])  ) {
+        } else if ( isset($request['resp_headers']['x-distil-cs'])  ) {
             $server = "Distill";
-            $hit_or_miss = $request['resp_headers']['X-Distil-CS'];
-        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "CDN77-Turbo" ) {
-            $edge_location = isset($request['resp_headers']['X-Edge-Location']) ? " " . htmlentities($request['resp_headers']['X-Edge-Location']) : "";
+            $hit_or_miss = $request['resp_headers']['x-distil-cs'];
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "CDN77-Turbo" ) {
+            $edge_location = isset($request['resp_headers']['x-edge-location']) ? " " . htmlentities($request['resp_headers']['x-edge-location']) : "";
             $server = "CDN77" . $edge_location;
-        } else if ( isset($request['resp_headers']['X-Varnish']) || isset($request['resp_headers']['Via']) && preg_match("/varnish/i", $request['resp_headers']['Via']) ) {
+        } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
             $server = "Varnish";
         }
 
         ##############################################################################################
         # Figure out if a specific CMS or backend storage is being used
-        if ( isset($request['resp_headers']['X-AH-Environment']) ) {
+        if ( isset($request['resp_headers']['x-ah-environment']) ) {
             $server .= " (Acquia)";
-        } else if ( isset($request['resp_headers']['X-Drupal-Cache']) ) {
+        } else if ( isset($request['resp_headers']['x-drupal-cache']) ) {
             $server .= " (Drupal)";
         # Magento version 1
-        } else if ( isset($request['resp_headers']['WP-Super-Cache']) || isset($request['resp_headers']['X-Pingback'])
-                   || (isset($request['resp_headers']['Link']) && preg_match("/wp-json|wp\.me/i", $request['resp_headers']['Link']))) {
+        } else if ( isset($request['resp_headers']['wp-super-cache']) || isset($request['resp_headers']['x-pingback'])
+                   || (isset($request['resp_headers']['Link']) && preg_match("/wp-json|wp\.me/i", $request['resp_headers']['link']))) {
             $server .= " (Wordpress)";
-        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/frontend=/i", $request['resp_headers']['Set-Cookie'] ) ) {
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/frontend=/i", $request['resp_headers']['set-cookie'] ) ) {
             $server .= " (Magento1)";
-        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/BIGipServer/i", $request['resp_headers']['Set-Cookie'] ) ) {
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer/i", $request['resp_headers']['set-cookie'] ) ) {
             $server .= " (F5)";
-        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['Set-Cookie'] ) ) {
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
             $server .= " (NetScaler)";
         } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) ) {
             $server .= " (WebSphere)";
-        } else if ( isset($request['resp_headers']['Set-Cookie']) && preg_match("/Demandware/i", $request['resp_headers']['Set-Cookie'] ) ) {
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/Demandware/i", $request['resp_headers']['set-cookie'] ) ) {
             $server .= " (Demandware)";
         # Let's see if the request was in some form or shape backed by S3 ie. it was served by a CDN but storage was actually
         # S3. Append only if server was determined not to be AWS S3 since we don't need double output
         } else if ( isset($request['resp_headers']['x-amz-id-2']) && $server != "AWS S3" ) {
             $server .= " (S3)";
         # Same with Google Cloud Storage (GCS)
-        } else if ( isset($request['resp_headers']['Server']) && preg_match("/cloudinary/i", $request['resp_headers']['Server']) ) {
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/cloudinary/i", $request['resp_headers']['server']) ) {
             $server .= " (Cloudinary)";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
             $server .= " (GCS)";
-        } else if ( isset($request['resp_headers']['Server']) && $request['resp_headers']['Server'] == "Cowboy" && preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy" && preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
             $server .= " (Heroku)";
         # Yottaa may be using other CDNs for their static delivery
-        } else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) and $server != "Yottaa" ) {
+        } else if ( isset($request['resp_headers']['x-yottaa-optimizations']) and $server != "Yottaa" ) {
             $server .= " (Yottaa)";
         }
   
@@ -404,11 +412,11 @@ function generate_waterfall($har) {
             $server = "Unknown";
 
         # Let's see if we can find any Cache headers and can identify whether request was a HIT or a MISS
-        if ( isset($request['resp_headers']['X-Cache']) && $hit_or_miss == "UNK" ) {
+        if ( isset($request['resp_headers']['x-cache']) && $hit_or_miss == "UNK" ) {
           # We already figured out for Akamai whether's it's a hit or miss so don't do anything
           if ( $server == "Akamai")
             continue;
-          $hit_or_miss = $request['resp_headers']['X-Cache'];
+          $hit_or_miss = $request['resp_headers']['x-cache'];
         }
 
         if ( $hit_or_miss != "UNK" ) {
