@@ -100,6 +100,7 @@ function generate_waterfall($har) {
             $resp_headers[$header_name] = $header['value'];
         }
 
+        ksort($resp_headers);
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
@@ -284,26 +285,26 @@ function generate_waterfall($har) {
             $server = trim($request['resp_headers']['server']);
         # CloudFront
         } 
-        else if ( isset($request['resp_headers']['Via']) && preg_match("/CloudFront/i", $request['resp_headers']['Via']) ) {
+        else if ( isset($request['resp_headers']['via']) && preg_match("/CloudFront/i", $request['resp_headers']['via']) ) {
             $server = "CloudFront";
         # ChinaCache
         } 
-        else if ( isset($request['resp_headers']['Powered-By-ChinaCache']) ) {
+        else if ( isset($request['resp_headers']['powered-by-chinacache']) ) {
             $server = "ChinaCache";
         # Incapsula
         }
-        else if ( isset($request['resp_headers']['X-Instart-Request-ID']) ) {
+        else if ( isset($request['resp_headers']['x-instart-request-id']) ) {
             $server = "Instart";
         }
-        else if ( isset($request['resp_headers']['X-CDN']) and $request['resp_headers']['X-CDN'] == "Incapsula" ) {
+        else if ( isset($request['resp_headers']['x-cdn']) and $request['resp_headers']['x-cdn'] == "Incapsula" ) {
             $server = "Incapsula";
         }
-        else if ( isset($request['resp_headers']['X-Yottaa-Optimizations']) or isset($request['resp_headers']['X-Yottaa-Metrics']) ) {
+        else if ( isset($request['resp_headers']['X-yottaa-optimizations']) or isset($request['resp_headers']['x-yottaa-metrics']) ) {
             $server = "Yottaa";
         }
         # CD Networks
-        else if ( isset($request['resp_headers']['X-Px']) ) {
-            if ( preg_match("/.*\.(.*)\.cdngp.net/i", $request['resp_headers']['X-Px'], $out )) {
+        else if ( isset($request['resp_headers']['x-px']) ) {
+            if ( preg_match("/.*\.(.*)\.cdngp.net/i", $request['resp_headers']['x-px'], $out )) {
               $edge_location = " " .$out[1];
             } else {
               $edge_location = "";
@@ -311,19 +312,19 @@ function generate_waterfall($har) {
             $server = "CDNetworks" . $edge_location;
         }
         # Cloudflare
-        else if ( isset($request['resp_headers']['CF-RAY']) ) {
-            $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['CF-RAY']);
-            if ( isset($request['resp_headers']['CF-Cache-Status'])) {
-              $hit_or_miss_css = $request['resp_headers']['CF-Cache-Status'];
-              $hit_or_miss = $request['resp_headers']['CF-Cache-Status'];
+        else if ( isset($request['resp_headers']['cf-ray']) ) {
+            $server = "CF: " . preg_replace('/^(.*)-/', '', $request['resp_headers']['cf-ray']);
+            if ( isset($request['resp_headers']['cf-cache-status'])) {
+              $hit_or_miss_css = $request['resp_headers']['cf-cache-status'];
+              $hit_or_miss = $request['resp_headers']['cf-cache-status'];
             }
         }
         # Highwinds
-        else if ( isset($request['resp_headers']['X-HW']) ) {
-            $server = "HW " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['X-HW']);
+        else if ( isset($request['resp_headers']['x-hw']) ) {
+            $server = "HW " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['x-hw']);
         }
         # Match Akamai headers
-        else if ( isset($request['resp_headers']['X-Cache']) && preg_match("/(\w+) from.*akamai/i", $request['resp_headers']['X-Cache'], $out) ) {
+        else if ( isset($request['resp_headers']['x-cache']) && preg_match("/(\w+) from.*akamai/i", $request['resp_headers']['x-cache'], $out) ) {
             $server = "Akamai";
             $hit_or_miss = $out[1];
         # Not exhaustive way to identify Google
