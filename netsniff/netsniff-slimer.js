@@ -76,9 +76,8 @@ function createHAR(address, title, startTime, resources)
         log: {
             version: '1.2',
             creator: {
-                name: "PhantomJS",
-                version: phantom.version.major + '.' + phantom.version.minor +
-                    '.' + phantom.version.patch
+                name: "SlimerJS",
+                version: "0.10"
             },
             pages: [{
                 startedDateTime: startTime.toISOString(),
