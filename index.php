@@ -15,6 +15,7 @@ include_once("./tools.php");
 <html>
 <head>
 <title>FantomTest Tools</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 <link type="text/css" href="<?php print $conf['jqueryui_css_path']; ?>" rel="stylesheet" />
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
 <script type="text/javascript" src="<?php print $conf['jquery_js_path']; ?>"></script>
