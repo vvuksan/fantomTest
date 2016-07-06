@@ -275,7 +275,7 @@ function generate_waterfall($har) {
 
         # Let's try to identify some CDNs. This is Fastly
         if ( isset($request['resp_headers']['x-served-by']) && preg_match("/^cache-/", $request['resp_headers']['x-served-by']) ) {
-            $server = str_replace("cache-", "", $request['resp_headers']['x-served-by']);
+            $server = "Fastly " . str_replace("cache-", "", $request['resp_headers']['x-served-by']);
         }
 
         # Check if Server header provided. It's used by NetDNA and Edgecast
@@ -358,6 +358,8 @@ function generate_waterfall($har) {
             }
         } else if ( isset($request['resp_headers']['x-via']) && preg_match("/1.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['x-via'], $out ) ) {
             $server = "Quantil " .  $out[1];
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/myracloud/i", $request['resp_headers']['server'] )) {
+            $server = "MyraCloud";
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "EdgePrismSSL" ) {
             if ( isset($request['resp_headers']['x-server-name']) )
               $cache_node = $request['resp_headers']['x-server-name'];
@@ -370,8 +372,6 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "CDN77-Turbo" ) {
             $edge_location = isset($request['resp_headers']['x-edge-location']) ? " " . htmlentities($request['resp_headers']['x-edge-location']) : "";
             $server = "CDN77" . $edge_location;
-        } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
-            $server = "Varnish";
         }
 
         ##############################################################################################
@@ -380,6 +380,9 @@ function generate_waterfall($har) {
             $server .= " (Acquia)";
         } else if ( isset($request['resp_headers']['x-drupal-cache']) ) {
             $server .= " (Drupal)";
+        } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
+          if ( !preg_match("/fastly/i", $server) ) 
+            $server .= " (Varnish)";
         # Magento version 1
         } else if ( isset($request['resp_headers']['wp-super-cache']) || isset($request['resp_headers']['x-pingback'])
                    || (isset($request['resp_headers']['Link']) && preg_match("/wp-json|wp\.me/i", $request['resp_headers']['link']))) {
@@ -403,7 +406,7 @@ function generate_waterfall($har) {
             $server .= " (Cloudinary)";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
             $server .= " (GCS)";
-        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy" && preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
+        } else if ( (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy") || preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
             $server .= " (Heroku)";
         # Yottaa may be using other CDNs for their static delivery
         } else if ( isset($request['resp_headers']['x-yottaa-optimizations']) and $server != "Yottaa" ) {
