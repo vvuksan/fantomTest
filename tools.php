@@ -408,7 +408,7 @@ function generate_waterfall($har) {
             $server .= " (Cloudinary)";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
             $server .= " (GCS)";
-        } else if ( (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy") || preg_match("/vegur/i", $request['resp_headers']['Via']) ) {
+        } else if ( (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy") || (isset($request['resp_headers']['via']) && preg_match("/vegur/i", $request['resp_headers']['via']) )) {
             $server .= " (Heroku)";
         # Yottaa may be using other CDNs for their static delivery
         } else if ( isset($request['resp_headers']['x-yottaa-optimizations']) and $server != "Yottaa" ) {
