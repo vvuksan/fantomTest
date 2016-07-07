@@ -372,6 +372,8 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "CDN77-Turbo" ) {
             $edge_location = isset($request['resp_headers']['x-edge-location']) ? " " . htmlentities($request['resp_headers']['x-edge-location']) : "";
             $server = "CDN77" . $edge_location;
+        } else if ( isset($request['resp_headers']['x-shopid'] )) {
+            $server = "Shopify";
         }
 
         ##############################################################################################
