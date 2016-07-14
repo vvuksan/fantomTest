@@ -356,8 +356,10 @@ function generate_waterfall($har) {
             } else {
               $edge_location = "";
             }
-        } else if ( isset($request['resp_headers']['x-via']) && preg_match("/1.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['x-via'], $out ) ) {
+        } else if ( isset($request['resp_headers']['x-via']) && preg_match("/1\.1 (.*) \(Cdn Cache Server/i", $request['resp_headers']['x-via'], $out ) ) {
             $server = "Quantil " .  $out[1];
+        } else if ( isset($request['resp_headers']['via']) && preg_match("/1\.1 (.*)squid/i", $request['resp_headers']['via'], $out ) ) {
+            $server = "Squid";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/myracloud/i", $request['resp_headers']['server'] )) {
             $server = "MyraCloud";
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "EdgePrismSSL" ) {
