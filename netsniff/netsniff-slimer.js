@@ -102,6 +102,11 @@ if (system.args.length === 1) {
 
     page.address = system.args[1];
     page.resources = [];
+    // Set request headers to get additional debug info
+    page.customHeaders = {
+        "Pragma": "akamai-x-cache-on, akamai-x-cache-remote-on, akamai-x-serial-no"
+    };
+
 
     page.onLoadStarted = function () {
         page.startTime = new Date();
