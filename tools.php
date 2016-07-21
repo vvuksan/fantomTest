@@ -300,6 +300,9 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['x-cdn']) and $request['resp_headers']['x-cdn'] == "Incapsula" ) {
             $server = "Incapsula";
         }
+        else if ( isset($request['resp_headers']['server']) && preg_match("/^Footprint Distributor/i", $request['resp_headers']['server']) ) {
+            $server = "Level3";
+        }
         else if ( isset($request['resp_headers']['X-yottaa-optimizations']) or isset($request['resp_headers']['x-yottaa-metrics']) ) {
             $server = "Yottaa";
         }
