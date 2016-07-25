@@ -670,7 +670,7 @@ function print_dns_results($results) {
             $record_output = format_ip_address($record['ip']);
             break;
           case "AAAA":
-            $record_output = $record['ipv6'];
+            $record_output = format_ip_address($record['ipv6']);
             break;
           case "CNAME":
             $record_output = $record['target'];
