@@ -381,45 +381,53 @@ function generate_waterfall($har) {
             $server = "Shopify";
         }
 
+        $cms = array();
         ##############################################################################################
         # Figure out if a specific CMS or backend storage is being used
         if ( isset($request['resp_headers']['x-ah-environment']) ) {
-            $server .= " (Acquia)";
+            $cms[] = "Acquia";
         } else if ( isset($request['resp_headers']['x-drupal-cache']) ) {
-            $server .= " (Drupal)";
+            $cms[] = "Drupal";
         } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
           if ( !preg_match("/fastly/i", $server) ) 
-            $server .= " (Varnish)";
+            $cms[] = "Varnish";
         # Magento version 1
-        } else if ( isset($request['resp_headers']['wp-super-cache']) || isset($request['resp_headers']['x-pingback'])
-                   || (isset($request['resp_headers']['Link']) && preg_match("/wp-json|wp\.me/i", $request['resp_headers']['link']))) {
-            $server .= " (Wordpress)";
+        } else if ( isset($request['resp_headers']['wp-super-cache']) || isset($request['resp_headers']['x-pingback']) || preg_match("/\/wp-content\//i", $request["url"] )
+                   || (isset($request['resp_headers']['link']) && preg_match("/wp-json|wp\.me/i", $request['resp_headers']['link']))) {
+            $cms[] = "Wordpress";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/frontend=/i", $request['resp_headers']['set-cookie'] ) ) {
-            $server .= " (Magento1)";
-        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer/i", $request['resp_headers']['set-cookie'] ) ) {
-            $server .= " (F5)";
-        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
-            $server .= " (NetScaler)";
+            $cms[] = "Magento1";
         } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) ) {
-            $server .= " (WebSphere)";
+            $cms[] = "WebSphere";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/Demandware/i", $request['resp_headers']['set-cookie'] ) ) {
-            $server .= " (Demandware)";
+            $cms[] = "Demandware";
         # Let's see if the request was in some form or shape backed by S3 ie. it was served by a CDN but storage was actually
         # S3. Append only if server was determined not to be AWS S3 since we don't need double output
         } else if ( isset($request['resp_headers']['x-amz-id-2']) && $server != "AWS S3" ) {
-            $server .= " (S3)";
+            $cms[] = "S3";
         # Same with Google Cloud Storage (GCS)
         } else if ( isset($request['resp_headers']['server']) && preg_match("/cloudinary/i", $request['resp_headers']['server']) ) {
-            $server .= " (Cloudinary)";
+            $cms[] = "Cloudinary";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
-            $server .= " (GCS)";
+            $cms[] = "GCS";
         } else if ( (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy") || (isset($request['resp_headers']['via']) && preg_match("/vegur/i", $request['resp_headers']['via']) )) {
-            $server .= " (Heroku)";
+            $cms[] = "Heroku";
         # Yottaa may be using other CDNs for their static delivery
         } else if ( isset($request['resp_headers']['x-yottaa-optimizations']) and $server != "Yottaa" ) {
-            $server .= " (Yottaa)";
+            $cms[] = "Yottaa";
         }
-  
+
+        if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer/i", $request['resp_headers']['set-cookie'] ) ) {
+            $cms[] = "F5";
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
+            $cms[] = "NetScaler";
+        }
+
+        if ( count($cms) > 0 ) {
+            $server .= "(" . join(",", $cms) . ")";
+        }
+        unset($cms);
+
         if ( $server == "" )
             $server = "Unknown";
 
