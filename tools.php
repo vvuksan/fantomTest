@@ -331,6 +331,8 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['x-cache']) && preg_match("/(\w+) from.*akamai/i", $request['resp_headers']['x-cache'], $out) ) {
             $server = "Akamai";
             $hit_or_miss = $out[1];
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/^CDNNet/i", $request['resp_headers']['server']) ) {
+            $server = "CDN.Net";
         # Not exhaustive way to identify Google
         } else if ( preg_match("/(youtube|gstatic|doubleclick|google).*\.(com|net)\//i", $request["url"]) ) {
             $server = "Google";
