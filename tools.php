@@ -399,7 +399,7 @@ function generate_waterfall($har) {
             $cms[] = "Wordpress";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/frontend=/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "Magento1";
-        } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) ) {
+        } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) || (isset($request['resp_headers']['server']) && preg_match("/websphere/i", $request['resp_headers']['server'] ) ) ) {
             $cms[] = "WebSphere";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/Demandware/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "Demandware";
