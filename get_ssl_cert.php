@@ -95,7 +95,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     print "<div id=\"ssl_cert_results\" class=\"ssl-cert-invalid\">";
     print "<h2><font color=red>This certificate is invalid</font></h2>";
     print "Possible reasons (not exhaustive):<br>";
-    print $results["message"];
+    print htmlentities($results["message"]);
 
   }
 
@@ -111,15 +111,15 @@ if ( $_REQUEST['site_id'] == -1 ) {
         # Convert UNIX dates into human readable
         if ( preg_match("/^VALID(.*)_T$/i", $key) )
           $parts = date('r', $parts);
-        print "<tr><th>" . strtoupper($key) . "</th>";
+        print "<tr><th>" . htmlentities(strtoupper($key)) . "</th>";
         if ( is_array($parts) ) {
           print "<td><table border=1 class=\"tablesorter\">";
           foreach ( $parts as $subkey => $value ) {
-            print "<tr><th>" . strtoupper($subkey) . "</th><td>" . $value ."</td></tr>";
+            print "<tr><th>" . htmlentities(strtoupper($subkey)) . "</th><td>" . htmlentities($value) ."</td></tr>";
           }
           print "</table></td></tr>";
         } else {
-          print "<td colspan=2>" . $parts . "</td></tr>";
+          print "<td colspan=2>" . htmlentities($parts) . "</td></tr>";
         }
       }
       
