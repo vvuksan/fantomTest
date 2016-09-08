@@ -683,19 +683,19 @@ function print_dns_results($results) {
             $record_output = format_ip_address($record['ipv6']);
             break;
           case "CNAME":
-            $record_output = $record['target'];
+            $record_output = htmlentities($record['target']);
             break;
           case "TXT":
-            $record_output = $record['txt'];
+            $record_output = htmlentities($record['txt']);
             break;
           case "MX":
-            $record_output = $record['pri'] . " " . $record['target'];
+            $record_output = $record['pri'] . " " . htmlentities($record['target']);
             break;
           case "SOA":
-            $record_output = $record['mname'] . " <i>" . $record['rname']
-              . "</i> Serial: " . $record['serial'] . " Rfrsh: " . $record['refresh']
-              . " Retry/NegTTL: " . $record['retry'] . " Expire: " . $record['expire']
-              . " MinTTL: " . $record['minimum-ttl'];
+            $record_output = htmlentities($record['mname']) . " <i>" . htmlentities($record['rname'])
+              . "</i> Serial: " . htmlentities($record['serial']) . " Rfrsh: " . htmlentities($record['refresh'])
+              . " Retry/NegTTL: " . htmlentities($record['retry']) . " Expire: " . htmlentities($record['expire'])
+              . " MinTTL: " . htmlentities($record['minimum-ttl']);
             break;
           default:
             $record_output = "No data. Maybe query type is unknown";
