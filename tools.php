@@ -258,6 +258,12 @@ function generate_waterfall($har) {
           }
           
         }
+
+        if ( sizeof($questionable_practice) > 0 ) {
+          $haroutput .= "<img title=\"" . join(",", $questionable_practice) . "\" width=20 src=\"img/attention.svg\">";
+
+        }
+
         unset($questionable_practice);
 
         # Identify requests that Set Cookies
