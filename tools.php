@@ -603,7 +603,7 @@ function get_dns_record_with_timing($dns_name, $query_type = "A") {
   # Calculate query time
   $query_time = microtime(TRUE) - $start_time;
   
-  $resolver_ip_record = dns_get_record("whoami.akamai.net", DNS_A);
+  $resolver_ip_record = dns_get_record("whoami.fastly.net", DNS_A);
   $resolver_ip = isset($resolver_ip_record[0]['ip']) ? $resolver_ip_record[0]['ip'] : "Unknown";
   
   return array( "records" => $result,
