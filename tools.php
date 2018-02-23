@@ -16,7 +16,7 @@ if ( !isset($conf['phantomjs_exec']) )  {
   if ( is_executable($conf['phantomjs_bin']) ) {
 
     if ( preg_match("/^2/", exec($conf['phantomjs_bin'] . " -v")) ) {
-    $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff-v2.js";
+    $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " --ignore-ssl-errors=true " . __DIR__ . "/netsniff/netsniff-v2.js";
     } else {
     $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff.js";
     }
