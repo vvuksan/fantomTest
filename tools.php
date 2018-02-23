@@ -268,9 +268,12 @@ function generate_waterfall($har) {
 
         # Identify requests that Set Cookies
         if ( isset($request['resp_headers']['set-cookie']) ) {
-            $haroutput .= "<img title=\"Contains Set Cookie\" width=18 src=\"img/cookie.png\">";
+          $haroutput .= "<img title=\"Contains Set Cookie\" width=18 src=\"img/cookie.png\">";
         }
 
+        if ( preg_match("/\?.*=?1[4-7][0-9]{8}\&?/i", $request["url"] ) ){
+          $haroutput .= "<img title=\"URL may have cache busting query arguments\" width=28 src=\"img/speed-limit-20.png\">";
+        }
 
         $haroutput .= "</td>";
 
