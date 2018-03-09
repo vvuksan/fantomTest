@@ -50,12 +50,25 @@ if( file_exists( $base_dir . "/override_functions.php" ) ) {
 
 // Let's make sure there is http at the front of a URL
 function validate_url($url) {
-    if ( !preg_match("/^http/", $url) )
-        $url = "http://" . $url;
  
-    $validated_url = filter_var($url, FILTER_VALIDATE_URL);
-    return $validated_url;
+  $validated_url = filter_var($url, FILTER_VALIDATE_URL);
     
+  # Do another validation by verifying that http/https are specified since URL with junky schemes can be validated
+  if ( $validated_url ) {
+    $parsed_url = parse_url($validated_url);
+
+    if ( isset($parsed_url['scheme'] ) ) {
+      # We only support http and https.
+      if ( ! ($parsed_url['scheme'] == "http" || $parsed_url['scheme'] == "https" ) )
+        return FALSE;
+    } else {
+      return FALSE;
+    }
+
+  }
+
+  return $validated_url;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -268,12 +281,9 @@ function generate_waterfall($har) {
 
         # Identify requests that Set Cookies
         if ( isset($request['resp_headers']['set-cookie']) ) {
-          $haroutput .= "<img title=\"Contains Set Cookie\" width=18 src=\"img/cookie.png\">";
+            $haroutput .= "<img title=\"Contains Set Cookie\" width=18 src=\"img/cookie.png\">";
         }
 
-        if ( preg_match("/\?.*=?1[4-7][0-9]{8}\&?/i", $request["url"] ) ){
-          $haroutput .= "<img title=\"URL may have cache busting query arguments\" width=28 src=\"img/speed-limit-20.png\">";
-        }
 
         $haroutput .= "</td>";
 
