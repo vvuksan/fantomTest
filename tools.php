@@ -374,6 +374,8 @@ function generate_waterfall($har) {
             $server = "AzionCDN";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/leasewebcdn/i" , $request['resp_headers']['server'] ) ) {
             $server = "LeaseWeb CDN";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/bunnycdn/i" , $request['resp_headers']['server'] ) ) {
+            $server = "BunnyCDN";
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "DOSarrest" ) {
             $server = "DOSarrest";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/keycdn/i", $request['resp_headers']['server']) ) {
