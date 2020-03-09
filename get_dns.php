@@ -112,9 +112,9 @@ if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
   print_dns_results($results);
 
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
-
+  $sslOptions=array("ssl"=>array("verify_peer"=>false,"verify_peer_name"=>false));
   $content = file_get_contents($conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?json=1&site_id=-1" .
-    "&hostname=" . htmlentities($_REQUEST['hostname'] ) . "&query_type=" . $query_type) ;
+    "&hostname=" . htmlentities($_REQUEST['hostname'] ) . "&query_type=" . $query_type, FALSE, stream_context_create($sslOptions)) ;
 
   $results[$site_id] = json_decode($content, TRUE);
   

@@ -99,11 +99,11 @@ if ( $_REQUEST['site_id'] == -1 ) {
     }
 
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
-    
+    $sslOptions=array("ssl"=>array("verify_peer"=>false,"verify_peer_name"=>false));
     print "<div><h3>" .$conf['remotes'][$site_id]['name']. "</h3></div>";
     print "<div class=dns_results>";
     print (file_get_contents($conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?site_id=-1" .
-        "&hostname=" . $_REQUEST['hostname'] . "&port=" . $port ));
+        "&hostname=" . $_REQUEST['hostname'] . "&port=" . $port, FALSE, stream_context_create($sslOptions) ));
     print "</div>";
     
     
