@@ -107,8 +107,9 @@ if ( $_REQUEST['site_id'] == -1 ) {
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
     
     $url = $conf['remotes'][$site_id]['base_url'] . "get_url.php?json=1&site_id=-1&url=" . htmlentities($_REQUEST['url']);
+    $sslOptions=array("ssl"=>array("verify_peer"=>false,"verify_peer_name"=>false));
 
-    $results[$site_id] = json_decode( file_get_contents($url) , TRUE );
+    $results[$site_id] = json_decode( file_get_contents($url, FALSE, stream_context_create($sslOptions)) , TRUE );
     print_url_results($results);
     
 } else {

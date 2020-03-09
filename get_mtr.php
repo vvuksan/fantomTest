@@ -115,7 +115,8 @@ if ( $_REQUEST['site_id'] == -1 ) {
     $args[] = 'hostname=' . htmlentities($user['hostname']);
     $args[] = 'ping_count=' . $ping_count;
     $url = $conf['remotes'][$site_id]['base_url'] . $conf['remote_exe'] . "?site_id=-1&" . join("&", $args);
-    print (file_get_contents($url));
+    $sslOptions=array("ssl"=>array("verify_peer"=>false,"verify_peer_name"=>false));
+    print (file_get_contents($url, FALSE, stream_context_create($sslOptions)));
     print "</div>";
     
     
