@@ -298,8 +298,8 @@ function generate_waterfall($har) {
         }
 
         # Check if Server header provided. It's used by NetDNA and Edgecast
-          else if ( isset($request['resp_headers']['server']) && preg_match("/^EC/", $request['resp_headers']['server'])  ) {
-            $server = trim(str_replace("ECS", "Edgecast", $request['resp_headers']['server']));
+          else if ( isset($request['resp_headers']['server']) && preg_match("/^EC[A-Z]/", $request['resp_headers']['server'])  ) {
+            $server = trim(preg_replace("/^EC[A-Z]/", "Edgecast", $request['resp_headers']['server']));
 
         } else if ( isset($request['resp_headers']['server']) && preg_match("/^NetDNA/i", $request['resp_headers']['server']) ) {
             $server = trim($request['resp_headers']['server']);
@@ -372,6 +372,8 @@ function generate_waterfall($har) {
             $server = "Google Storage";
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Azion IMS" ) {
             $server = "AzionCDN";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/^NWS/i" , $request['resp_headers']['server'] ) ) {
+            $server = "Tencent";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/leasewebcdn/i" , $request['resp_headers']['server'] ) ) {
             $server = "LeaseWeb CDN";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/bunnycdn/i" , $request['resp_headers']['server'] ) ) {
@@ -397,7 +399,7 @@ function generate_waterfall($har) {
               $cache_node = "";
             $server = "Limelight " . $cache_node;
         } else if ( isset($request['resp_headers']['x-distil-cs'])  ) {
-            $server = "Distill";
+            $server = "Distil";
             $hit_or_miss = $request['resp_headers']['x-distil-cs'];
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "CDN77-Turbo" ) {
             $edge_location = isset($request['resp_headers']['x-edge-location']) ? " " . htmlentities($request['resp_headers']['x-edge-location']) : "";
