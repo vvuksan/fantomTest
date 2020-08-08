@@ -344,7 +344,7 @@ function generate_waterfall($har) {
         }
         # Highwinds
         else if ( isset($request['resp_headers']['x-hw']) ) {
-            $server = substr("HW " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['x-hw']), 0, 16);
+            $server = substr("Stackpath " . preg_replace("/\d+\.(.*),\d+\.(.*)/", "$1, $2", $request['resp_headers']['x-hw']), 0, 16);
         }
         # Match Akamai headers
         else if ( isset($request['resp_headers']['x-cache']) && preg_match("/(\w+) from.*akamai/i", $request['resp_headers']['x-cache'], $out) ) {
