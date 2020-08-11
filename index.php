@@ -395,7 +395,7 @@ if ( $tlsciphers_enabled ) {
   ?>
   Host name <input id="hostname" name="hostname" size=100>
   Port <input id="port" name="port" value=443 size=6>
-  <button class="query_buttons" id="ssl_querybutton" onclick="getTLSCiphers(); return false;">Get TLS ciphers</button>
+  <button class="query_buttons" id="tls_ciphers_querybutton" onclick="getTLSCiphers(); return false;">Get TLS ciphers</button>
   <br />
   </form>
   </div>
