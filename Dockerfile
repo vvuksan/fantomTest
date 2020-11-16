@@ -1,5 +1,4 @@
 FROM php:apache
-MAINTAINER Vladimir Vuksan
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y mtr-tiny nmap libfontconfig
@@ -17,3 +16,5 @@ COPY *.php /var/www/html/fantomtest/
 ADD css /var/www/html/fantomtest/css
 ADD img /var/www/html/fantomtest/img
 ADD netsniff /var/www/html/fantomtest/netsniff
+CMD /usr/sbin/apache2ctl -D FOREGROUND
+EXPOSE 80
