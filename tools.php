@@ -30,6 +30,11 @@ if ( !isset($conf['phantomjs_exec']) )  {
   }
 }
 
+
+if ( isset($conf['harrr_server_url']) ) {
+  $waterfall_output = true;  
+}
+
 if ( $conf['pingmtr_enabled'] and is_executable($conf['ping_bin']) and is_executable($conf['ping_bin']) ) {
     $pingmtr_enabled = true;
 } else {
@@ -117,6 +122,7 @@ function generate_waterfall($har) {
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
+            "dns_time" => $request['timings']['dns'] < 0 ? 0 : $request['timings']['dns'] / 1000,
             "wait_time" => $request['timings']['wait'] / 1000,
             "download_time" => $request['timings']['receive'] / 1000,
             "duration" => $request_duration,
@@ -165,6 +171,7 @@ function generate_waterfall($har) {
         $time_offset = $request["start_time"] - $min_start_time;
 
         $white_space = round(($time_offset / $total_time) * 100);
+        $dns_time_bar = ceil(($request["dns_time"] / $total_time) * 100);
         $wait_time_bar = ceil(($request["wait_time"] / $total_time) * 100);
         $download_time_bar = ceil(($request["download_time"] / $total_time) * 100);
 
@@ -185,6 +192,8 @@ function generate_waterfall($har) {
         foreach ( $request['resp_headers'] as $key => $value ) {
           if ( strtolower($key) == "content-type" ) {
             $content_type_full = $value;
+          } else {
+            $content_type_full = "Unknown";            
           }
 
           if ( strtolower($key) == "content-encoding" ) {
@@ -481,6 +490,7 @@ function generate_waterfall($har) {
         <td align="right">' . htmlentities($request["size"]) . '</td>
         <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
+        '<span class="fill" style="background: #FFCC00; width: ' . $dns_time_bar .  '%">&nbsp;</span>'.
         '<span class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>'.
         '<span class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>'.
         "</span></td></tr>";

@@ -15,6 +15,10 @@ $conf['ssl_peer_verify'] = false;
 # Try to detect CDNs used
 $conf['cdn_detection'] = true;
 
+# HARrr server https://github.com/bbutkovic/HARrrr
+# If you want to use HARrr server instead of PhantomJS uncomment below. Overrides any PhantomJS settings
+#$conf['harrr_server_url'] = "http://<full_path>/har";
+
 # These are the headers that can be used in the URL test. If you are finding you are using the
 # the same headers all the time you can set them here to default to a value
 # For example Accept-Language:es || User-Agent:Mozilla

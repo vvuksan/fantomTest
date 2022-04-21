@@ -34,7 +34,14 @@ if ( isset($_GET['url'])) {
         $results = json_decode($json, TRUE);
     } else {
 	isset($_REQUEST['include_image']) ? $include_image = true : $include_image = false;
-        $results = get_har_using_phantomjs($url, $include_image);        
+        if ( isset($conf['harrr_server_url']) ) {
+            $results = array();
+            $results['har'] = json_decode(file_get_contents($conf['harrr_server_url'] . "?url=" . $url), TRUE);
+            #print "<PLAINTEXT>"; print_r($results);
+        } else {
+            $results = get_har_using_phantomjs($url, $include_image);
+            
+        }
     }
     
     // Check whether phantomjs succeeded

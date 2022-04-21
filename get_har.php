@@ -28,7 +28,11 @@ if ( isset($_GET['url'])) {
 
     isset($_REQUEST['harviewer']) && $_REQUEST['harviewer'] == 1 ?  $harviewer = true : $harviewer = false;
     
-    $results = get_har_using_phantomjs($url, $include_image, $harviewer );
+    if ( isset($conf['harrr_server_url']) ) {
+      $results = file_get_contents($conf['harrr_server_url'] . "?url=" . $url);
+    } else {
+      $results = get_har_using_phantomjs($url, $include_image, $harviewer );
+    }
 
     if ( $harviewer )
       print "onInputData(";
