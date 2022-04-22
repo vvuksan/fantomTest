@@ -110,9 +110,10 @@ function generate_waterfall($har) {
         if ( $end_time > $max_end_time )
             $max_end_time = $end_time;
 
+        $resp_headers = array();
         foreach ( $request['request']['headers'] as $index => $header ) {
             $req_headers[$header['name']] = $header['value'];
-        }        
+        }
         foreach ( $request['response']['headers'] as $index => $header ) {
             $header_name = strtolower($header['name']);
             $resp_headers[$header_name] = $header['value'];
@@ -260,8 +261,13 @@ function generate_waterfall($har) {
             $addl = "title=\"Not compressed however should be compressable\"";
           }
         } else {
-          $compressed = "none";
-          $addl = "title=\"Not compressable\"";
+          if ( $content_encoding ) {
+            $compressed = "yes";
+            $addl = "title=\"Compressed\"";
+          } else {
+            $compressed = "none";
+            $addl = "title=\"Not compressable\"";
+          }
         }
 
         if ( $content_type != "" )
