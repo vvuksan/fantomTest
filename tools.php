@@ -122,7 +122,9 @@ function generate_waterfall($har) {
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
-            "dns_time" => $request['timings']['dns'] < 0 ? 0 : $request['timings']['dns'] / 1000,
+            "dns_time" => $request['timings']['dns'] <= 0 ? 0 : $request['timings']['dns'] / 1000,
+            "connect_time" => $request['timings']['connect'] <= 0 ? 0 : $request['timings']['connect'] / 1000,
+            "ssl_time" => $request['timings']['ssl'] <= 0 ? 0 : $request['timings']['ssl'] / 1000,
             "wait_time" => $request['timings']['wait'] / 1000,
             "download_time" => $request['timings']['receive'] / 1000,
             "duration" => $request_duration,
@@ -172,6 +174,8 @@ function generate_waterfall($har) {
 
         $white_space = round(($time_offset / $total_time) * 100);
         $dns_time_bar = ceil(($request["dns_time"] / $total_time) * 100);
+        $connect_time_bar = ceil(($request["connect_time"] / $total_time) * 100);
+        $ssl_time_bar = ceil(($request["ssl_time"] / $total_time) * 100);
         $wait_time_bar = ceil(($request["wait_time"] / $total_time) * 100);
         $download_time_bar = ceil(($request["download_time"] / $total_time) * 100);
 
@@ -189,11 +193,10 @@ function generate_waterfall($har) {
         $haroutput .= '
         <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
         <div class="http_headers" style="display: none;" id="item_' . $key .'">';
+        $content_type_full = "Unknown";
         foreach ( $request['resp_headers'] as $key => $value ) {
           if ( strtolower($key) == "content-type" ) {
             $content_type_full = $value;
-          } else {
-            $content_type_full = "Unknown";            
           }
 
           if ( strtolower($key) == "content-encoding" ) {
@@ -209,6 +212,7 @@ function generate_waterfall($har) {
           $haroutput .= " <button title=\"HTTP2\" class=\"http2\">H2</button>";
 
         $compressable = false;
+
         if ( preg_match("/text\/html/i", $content_type_full ) ) {
           $content_type = "HTML";
           $compressable = true;
@@ -218,17 +222,12 @@ function generate_waterfall($har) {
         } else if ( preg_match("/javascript|text\/js/i", $content_type_full ) ){
           $content_type = "JS";
           $compressable = true;
-        } else if ( preg_match("/image\/gif/i", $content_type_full ) ) {
-          $content_type = "GIF";
-        } else if ( preg_match("/image\/png/i", $content_type_full ) ) {
-          $content_type = "PNG";
-        } else if ( preg_match("/image\/jpeg/i", $content_type_full ) ) {
-          $content_type = "JPG";
+        } else if ( preg_match("/image\/(gif|png|jpeg|avif|webp)/i", $content_type_full, $out ) ) {
+          $content_type = strtoupper($out[1]);
+          unset($out);
         } else if ( preg_match("/json/i", $content_type_full ) ) {
           $content_type = "JSON";
           $compressable = true;
-        } else if ( preg_match("/image\/webp/i", $content_type_full ) ) {
-          $content_type = "WEBP";
         } else if ( preg_match("/svg/i", $content_type_full ) ) {
           $content_type = "SVG";
           $compressable = true;
@@ -363,6 +362,10 @@ function generate_waterfall($har) {
             $server = "CDN.Net";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/keycdn/i", $request['resp_headers']['server']) ) {
             $server = "KeyCDN";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/vercel/i", $request['resp_headers']['server']) ) {
+            $server = "Vercel";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/netlify/i", $request['resp_headers']['server']) ) {
+            $server = "Netlify";
         # Not exhaustive way to identify Google
         } else if ( preg_match("/(youtube|gstatic|doubleclick|google).*\.(com|net)\//i", $request["url"]) ) {
             $server = "Google";
@@ -424,6 +427,8 @@ function generate_waterfall($har) {
             $cms[] = "Acquia";
         } else if ( isset($request['resp_headers']['x-drupal-cache']) ) {
             $cms[] = "Drupal";
+        } else if ( preg_match("/\/_next\//i", $request["url"] ) ) {
+            $cms[] = "Next.js";
         } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
           if ( !preg_match("/fastly/i", $server) ) 
             $cms[] = "Varnish";
@@ -489,11 +494,20 @@ function generate_waterfall($har) {
         <td align="right">' . number_format($request["duration"], 3) . '</td>
         <td align="right">' . htmlentities($request["size"]) . '</td>
         <td class="timeline-data"><span class="bar">' .
-        '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>'.
-        '<span class="fill" style="background: #FFCC00; width: ' . $dns_time_bar .  '%">&nbsp;</span>'.
-        '<span class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>'.
-        '<span class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>'.
-        "</span></td></tr>";
+        '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>';
+
+        if ( $dns_time_bar > 0 )
+          $haroutput .= '<span class="fill" style="background: #FFCC00; width: ' . $dns_time_bar .  '%">&nbsp;</span>';
+        if ( $connect_time_bar > 0 )
+          $haroutput .= '<span class="fill" style="background: #FF3366; width: ' . $connect_time_bar .  '%">&nbsp;</span>';
+        if ( $ssl_time_bar > 0 )
+          $haroutput .= '<span class="fill" style="background: #663399; width: ' . $ssl_time_bar .  '%">&nbsp;</span>';
+        if ( $wait_time_bar > 0 )
+          $haroutput .= '<span class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>';
+        if ( $download_time_bar > 0 )
+          $haroutput .= '<span class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>';
+
+        $haroutput .= "</span></td></tr>";
 
     }
     
@@ -899,7 +913,7 @@ function print_url_results($records) {
 
     print "</td>";
 
-    $gzip = preg_match("/Content-Encoding: gzip/i", $record['headers_string']) ? "Yes" : "No";
+    $gzip = preg_match("/Content-Encoding: (gzip|br)/i", $record['headers_string']) ? "Yes" : "No";
 
     $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
 
