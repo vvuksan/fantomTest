@@ -444,6 +444,8 @@ function generate_waterfall($har) {
             $cms[] = "Wordpress";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/frontend=/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "Magento1";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/squarespace/i", $request['resp_headers']['server'] ) ) {
+            $cms[] = "Squarespace";
         } else if ( preg_match("/\/wcsstore\//i", $request["url"] ) || (isset($request['resp_headers']['server']) && preg_match("/websphere/i", $request['resp_headers']['server'] ) ) ) {
             $cms[] = "WebSphere";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/Demandware/i", $request['resp_headers']['set-cookie'] ) ) {
@@ -503,15 +505,15 @@ function generate_waterfall($har) {
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>';
 
         if ( $dns_time_bar > 0 )
-          $haroutput .= '<span class="fill" style="background: #FFCC00; width: ' . $dns_time_bar .  '%">&nbsp;</span>';
+          $haroutput .= '<span title="DNS wait time" class="fill" style="background: #FFCC00; width: ' . $dns_time_bar .  '%">&nbsp;</span>';
         if ( $connect_time_bar > 0 )
-          $haroutput .= '<span class="fill" style="background: #FF3366; width: ' . $connect_time_bar .  '%">&nbsp;</span>';
+          $haroutput .= '<span title="TCP connect time" class="fill" style="background: #FF3366; width: ' . $connect_time_bar .  '%">&nbsp;</span>';
         if ( $ssl_time_bar > 0 )
-          $haroutput .= '<span class="fill" style="background: #663399; width: ' . $ssl_time_bar .  '%">&nbsp;</span>';
+          $haroutput .= '<span title="TLS establishment time" class="fill" style="background: #663399; width: ' . $ssl_time_bar .  '%">&nbsp;</span>';
         if ( $wait_time_bar > 0 )
-          $haroutput .= '<span class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>';
+          $haroutput .= '<span title="Wait time (TTFB)" class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>';
         if ( $download_time_bar > 0 )
-          $haroutput .= '<span class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>';
+          $haroutput .= '<span title="Download time" class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>';
 
         $haroutput .= "</span></td></tr>";
 
