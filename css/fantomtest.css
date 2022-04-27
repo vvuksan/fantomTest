@@ -34,6 +34,11 @@ body{
   background-color: orange;
 }
 
+.http3 {
+  background-color: lightcoral;
+}
+
+
 .time_legend {
   text-align: center;
   color: white;

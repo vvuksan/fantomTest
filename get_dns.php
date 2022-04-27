@@ -34,7 +34,7 @@ if ( isset($_REQUEST['query_type']) and in_array($_REQUEST['query_type'], $conf[
 # Test needs to be executed locally
 if ( !isset($_REQUEST['site_id']) || $_REQUEST['site_id'] == -1 ) {
 
-  $results = get_dns_record_with_timing(trim($_REQUEST['hostname']), $query_type);
+  $results = get_dns_record(trim($_REQUEST['hostname']), $query_type, true, true);
   
   # Return JSON response
   if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {    

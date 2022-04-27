@@ -81,8 +81,18 @@ function validate_url($url) {
 //////////////////////////////////////////////////////////////////////////////
 function generate_waterfall($har) {
 
+    global $conf;
     # This variable will keep the start time of the whole request chain.
     $min_start_time = 10000000000;
+  
+    # Read the cache file
+    if( isset($conf['cache_file']) && is_readable($conf['cache_file']) && filesize($conf['cache_file']) > 20 ) {
+      $cache_age = time() - filemtime($conf['cache_file']);
+      if ( $cache_age < $conf['cache_time'] )
+        $ip_to_as_cache = json_decode(file_get_contents($conf['cache_file']), TRUE);
+    } else {
+      $ip_to_as_cache = array();
+    }
     
     # When did the page load finish
     $max_end_time = 0;
@@ -132,6 +142,7 @@ function generate_waterfall($har) {
             "size" => $resp_size,
             "resp_code" => $resp_code,
             "http_version" => $request['response']['httpVersion'],
+            "server_ip" => $request['serverIPAddress'],
             "req_headers" => $req_headers,
             "resp_headers" => $resp_headers
             );
@@ -160,6 +171,7 @@ function generate_waterfall($har) {
         <tr>
             <th>#</th>
             <th width=50%>URL</th>
+            <th>IP</th>
             <th>Server</th>
             <th>Hit?</th>
             <th>Resp Code</th>
@@ -170,7 +182,6 @@ function generate_waterfall($har) {
     ;
     
     foreach ( $requests as $key => $request ) {
-
         $time_offset = $request["start_time"] - $min_start_time;
 
         $white_space = round(($time_offset / $total_time) * 100);
@@ -209,8 +220,9 @@ function generate_waterfall($har) {
 
         $haroutput .= "</div>";
 
-        if ( preg_match("/HTTP\/2/i", $request['http_version']) )
-          $haroutput .= " <button title=\"HTTP2\" class=\"http2\">H2</button>";
+        # If response is HTTP/2 or HTTP/3 put a nice button to identify it
+        if ( preg_match("/h([2-3])/i", $request['http_version'], $out) )
+          $haroutput .= " <button title=\"HTTP" . $out[1] . "\" class=\"http" . $out[1] . "\">H" . $out[1] . "</button>";
 
         $compressable = false;
 
@@ -273,6 +285,7 @@ function generate_waterfall($har) {
         if ( $content_type != "" )
           $haroutput .= " <button $addl class=\"compressed_" . $compressed ."\">". $content_type . "</button>";
 
+        ###############################################################################################################
         # Let's check for questionable practices
         $questionable_practice = array();
         # Let's check for questionable practices
@@ -293,15 +306,30 @@ function generate_waterfall($har) {
 
         unset($questionable_practice);
 
+        ###############################################################################################################
         # Identify requests that Set Cookies
         if ( isset($request['resp_headers']['set-cookie']) ) {
             $haroutput .= "<img title=\"Contains Set Cookie\" width=18 src=\"img/cookie.png\">";
         }
 
-
         $haroutput .= "</td>";
 
-        # 
+        ################################################################################################################
+        ############################################# Server IP ########################################################
+        ################################################################################################################
+        # Let's determine the AS number and details
+        $ip_parts = explode(".", $request['server_ip']);
+        array_pop($ip_parts);
+        $ip_prefix = join(".", $ip_parts);
+        if ( !isset($ip_to_as_cache[$ip_prefix]) ) {
+          $ip_details = ip_to_as_info($request['server_ip']);
+          $ip_to_as_cache[$ip_prefix] = array( "as_number" => $ip_details["as_number"], "as_name" => $ip_details["as_name"]);
+        }
+        $haroutput .= "<td>" . $ip_to_as_cache[$ip_prefix]["as_name"] . " " .$request['server_ip'] . "</td>";
+
+        ################################################################################################################
+        ############################################# Identify CDN #####################################################
+        ################################################################################################################
         $server = "";
         $hit_or_miss = "UNK";
         $hit_or_miss_css = "UNK";
@@ -530,6 +558,11 @@ function generate_waterfall($har) {
     });
     ';
 
+    # If we should cache the IP to AS info persist it to disk
+    if ( isset($conf["cache_file"]) ) {
+      file_put_contents($conf["cache_file"], json_encode($ip_to_as_cache));
+    }
+
     return $haroutput;
 
 } // end of function generate_waterfall()
@@ -621,7 +654,7 @@ function get_har_using_phantomjs($original_url, $include_image = true) {
 #############################################################################################
 # Get DNS record
 #############################################################################################
-function get_dns_record_with_timing($dns_name, $query_type = "A") {
+function get_dns_record($dns_name, $query_type = "A", $include_timing = false, $include_resolver = false) {
 
   $start_time = microtime(TRUE);
   switch ( $query_type ) {
@@ -652,12 +685,21 @@ function get_dns_record_with_timing($dns_name, $query_type = "A") {
   # Calculate query time
   $query_time = microtime(TRUE) - $start_time;
   
-  $resolver_ip_record = dns_get_record("whoami.fastly.net", DNS_A);
-  $resolver_ip = isset($resolver_ip_record[0]['ip']) ? $resolver_ip_record[0]['ip'] : "Unknown";
+  $response = array();
   
-  return array( "records" => $result,
-    "query_time" => $query_time,
-    "resolver_ip" => $resolver_ip );
+  $response["records"] = $result;
+
+  # Find out what is the IP address of my DNS resolve. We can obtain that by whoami.fastly.net
+  if ( $include_resolver ) {
+    $resolver_ip_record = dns_get_record("whoami.fastly.net", DNS_A);
+    $response["resolver_ip"] = isset($resolver_ip_record[0]['ip']) ? $resolver_ip_record[0]['ip'] : "Unknown";
+  }
+
+  if ( $include_timing ) {
+    $response["query_time"] = $query_time;
+  }
+
+  return $response;
 
 }
 
@@ -783,6 +825,34 @@ function print_dns_results($results) {
 
   }
   
+}
+
+
+#############################################################################################
+# IP to AS info
+#############################################################################################
+function ip_to_as_info($ip) {
+
+  # Reverse the IP address and drop the last octet
+  $ip_parts = explode(".", $ip);
+  array_pop($ip_parts);
+  $reversed_ip = array_reverse($ip_parts);
+  $dns_response = get_dns_record(join(".", $reversed_ip) . ".origin.asn.cymru.com", "TXT");
+  $response = array();
+  if ( preg_match("/^(\d+) \|/", $dns_response["records"][0]["txt"], $out ) ) {
+    $response["as_number"] = "AS" . $out[1];
+  } else {
+    $response["as_number"] = "ASUNK";
+  }
+  unset($dns_response);
+  if ( !$response["as_number"] != "ASUNK" ) {
+    $dns_response = get_dns_record($response["as_number"] . ".asn.cymru.com", "TXT");
+    if ( isset($dns_response["records"][0]["txt"]) && preg_match("/^\d+ \| \w+ \| \w+ \| [0-9\-]{10} \| (.*)/", $dns_response["records"][0]["txt"], $out ) ) {
+      $response["as_name"] = $out[1];
+    }
+  }
+
+  return($response);
 }
 
 #############################################################################################
