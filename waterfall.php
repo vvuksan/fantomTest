@@ -34,9 +34,9 @@ if ( isset($_GET['url'])) {
         $results = json_decode($json, TRUE);
     } else {
 	isset($_REQUEST['include_image']) ? $include_image = true : $include_image = false;
-        if ( isset($conf['harrr_server_url']) ) {
+        if ( isset($conf['prerender_server_url']) ) {
             $results = array();
-            $results['har'] = json_decode(file_get_contents($conf['harrr_server_url'] . "?url=" . $url), TRUE);
+            $results['har'] = json_decode(file_get_contents($conf['prerender_server_url'] . $url), TRUE);
             #print "<PLAINTEXT>"; print_r($results);
         } else {
             $results = get_har_using_phantomjs($url, $include_image);

@@ -15,9 +15,9 @@ $conf['ssl_peer_verify'] = false;
 # Try to detect CDNs used
 $conf['cdn_detection'] = true;
 
-# HARrr server https://github.com/bbutkovic/HARrrr
+# Prerender server https://github.com/prerender/prerender
 # If you want to use HARrr server instead of PhantomJS uncomment below. Overrides any PhantomJS settings
-#$conf['harrr_server_url'] = "http://<full_path>/har";
+#$conf['prerender_server_url'] = "http://<full_path>/har";
 
 # For IP to AS resolution use local file-based cache. If following defined use the file as the cache file
 #$conf['cache_file'] = "/var/www/cache/cache.json";

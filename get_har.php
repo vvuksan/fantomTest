@@ -28,8 +28,14 @@ if ( isset($_GET['url'])) {
 
     isset($_REQUEST['harviewer']) && $_REQUEST['harviewer'] == 1 ?  $harviewer = true : $harviewer = false;
     
-    if ( isset($conf['harrr_server_url']) ) {
-      $results = file_get_contents($conf['harrr_server_url'] . "?url=" . $url);
+    if ( isset($conf['prerender_server_url']) ) {
+
+      $query_args = array (
+        "url" => $url,
+        "followRedirects" => true,
+        "renderType" => "har"
+      );
+      $results = file_get_contents($conf['prerender_server_url'] . "?" . http_build_query($query_args));
     } else {
       $results = get_har_using_phantomjs($url, $include_image, $harviewer );
     }

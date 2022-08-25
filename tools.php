@@ -31,7 +31,7 @@ if ( !isset($conf['phantomjs_exec']) )  {
 }
 
 
-if ( isset($conf['harrr_server_url']) ) {
+if ( isset($conf['prerender_server_url']) ) {
   $waterfall_output = true;  
 }
 
