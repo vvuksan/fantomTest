@@ -207,10 +207,7 @@ if ( $waterfall_output ) {
 ?>
 
 <div id="tab-waterfall">
-  <div id="large_screenshot">
-  </div>
   <div id=header>
-  
   <form id="query_form">
   <?php
   // If we define remotes create a select box
@@ -226,8 +223,6 @@ if ( $waterfall_output ) {
   ?>
   URL <input id="checked_url" name="url" size=100>
   <button class="query_buttons" id="query_button" onclick="getTimings(); return false;">Get waterfall</button>
-  <br />
-  <input type="checkbox" name="include_image">Include page screenshot<br>
   </form>
   </div>
   <div id=results>

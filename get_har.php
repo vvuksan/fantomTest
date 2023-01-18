@@ -27,15 +27,35 @@ if ( isset($_GET['url'])) {
     isset($_REQUEST['include_image']) && $_REQUEST['include_image'] == 1 ?  $include_image = true : $include_image = false;
 
     isset($_REQUEST['harviewer']) && $_REQUEST['harviewer'] == 1 ?  $harviewer = true : $harviewer = false;
-    
+
     if ( isset($conf['prerender_server_url']) ) {
 
       $query_args = array (
         "url" => $url,
         "followRedirects" => true,
+        "pageLoadTimeout" => 50000,
         "renderType" => "har"
       );
-      $results = file_get_contents($conf['prerender_server_url'] . "?" . http_build_query($query_args));
+      $results = array();
+      $results['har'] = json_decode(file_get_contents($conf['prerender_server_url'] . "?" . http_build_query($query_args)), TRUE);
+
+    } else if ( isset($conf['harrr_server_url']) ) {
+      $payload = array (
+          "url" => $url,
+          "waitForDuration" => 25000
+      );
+
+      $opts = array(
+          'http' => array(
+          'method' => "POST",
+          'header' => "Content-Type: application/json\r\n",
+          'content' => json_encode($payload)
+          )
+      );
+      $context = stream_context_create($opts);
+
+      $results['har'] = json_decode(@file_get_contents($conf['harrr_server_url'], false, $context), TRUE);
+
     } else {
       $results = get_har_using_phantomjs($url, $include_image, $harviewer );
     }

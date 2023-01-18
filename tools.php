@@ -31,7 +31,7 @@ if ( !isset($conf['phantomjs_exec']) )  {
 }
 
 
-if ( isset($conf['prerender_server_url']) ) {
+if ( isset($conf['prerender_server_url']) || isset($conf['harrr_server_url']) ) {
   $waterfall_output = true;  
 }
 
@@ -130,6 +130,13 @@ function generate_waterfall($har) {
         }
 
         ksort($resp_headers);
+
+        if ( isset($request['serverIPAddress']) ) { 
+          $server_ip = $request['serverIPAddress'];
+        } else {
+          $server_ip = false;
+        }
+
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
@@ -142,7 +149,7 @@ function generate_waterfall($har) {
             "size" => $resp_size,
             "resp_code" => $resp_code,
             "http_version" => $request['response']['httpVersion'],
-            "server_ip" => $request['serverIPAddress'],
+            "server_ip" =>  $server_ip,
             "req_headers" => $req_headers,
             "resp_headers" => $resp_headers
             );
@@ -318,14 +325,42 @@ function generate_waterfall($har) {
         ############################################# Server IP ########################################################
         ################################################################################################################
         # Let's determine the AS number and details
-        $ip_parts = explode(".", $request['server_ip']);
-        array_pop($ip_parts);
-        $ip_prefix = join(".", $ip_parts);
-        if ( !isset($ip_to_as_cache[$ip_prefix]) ) {
-          $ip_details = ip_to_as_info($request['server_ip']);
-          $ip_to_as_cache[$ip_prefix] = array( "as_number" => $ip_details["as_number"], "as_name" => $ip_details["as_name"]);
+        if ($request['server_ip']) {
+          $ip_parts = explode(".", $request['server_ip']);
+          array_pop($ip_parts);
+          $ip_prefix = join(".", $ip_parts);
+          if ( !isset($ip_to_as_cache[$ip_prefix]) ) {
+            $ip_details = ip_to_as_info($request['server_ip']);
+            $ip_to_as_cache[$ip_prefix] = array( "as_number" => $ip_details["as_number"], "as_name" => $ip_details["as_name"]);
+          }
+          # Instead of showing text for some of the most common AS let's use an image
+          if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16509" ) {
+            $img_or_as_name = '<img src="img/aws.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15169" ) {
+            $img_or_as_name = '<img src="img/google.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS20940" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16625" ) {
+            $img_or_as_name = '<img src="img/akamai.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS54113" ) {
+            $img_or_as_name = '<img src="img/fastly.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS8068" ) {
+            $img_or_as_name = '<img src="img/microsoft.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS8075" ) {
+            $img_or_as_name = '<img src="img/azure.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS32934" ) {
+            $img_or_as_name = '<img src="img/facebook.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS13335" ) {
+            $img_or_as_name = '<img src="img/cloudflare.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS396982" ) {
+            $img_or_as_name = '<img src="img/gcp.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15133" ) {
+            $img_or_as_name = '<img src="img/edgecast.svg" class="vendor_img">';
+          } else {
+            $img_or_as_name = $ip_to_as_cache[$ip_prefix]["as_name"];
+          }
+          $haroutput .= "<td>" . $img_or_as_name . " " .$request['server_ip'] . "</td>";
+        } else {
+          $haroutput .= "<td>&nbsp;</td>";
         }
-        $haroutput .= "<td>" . $ip_to_as_cache[$ip_prefix]["as_name"] . " " .$request['server_ip'] . "</td>";
 
         ################################################################################################################
         ############################################# Identify CDN #####################################################
@@ -335,12 +370,12 @@ function generate_waterfall($har) {
         $hit_or_miss_css = "UNK";
 
         # Let's try to identify some CDNs. This is Fastly
-        if ( isset($request['resp_headers']['x-served-by']) && preg_match("/^cache-/", $request['resp_headers']['x-served-by']) ) {
+        if ( isset($request['resp_headers']['server']) && preg_match("/^imgix/i", $request['resp_headers']['server']) ) {
+            $server = "ImgIX";
+        } else if ( isset($request['resp_headers']['x-served-by']) && preg_match("/^cache-/", $request['resp_headers']['x-served-by']) ) {
             $server = "Fastly " . str_replace("cache-", "", $request['resp_headers']['x-served-by']);
-        }
-
         # Check if Server header provided. It's used by NetDNA and Edgecast
-          else if ( isset($request['resp_headers']['server']) && preg_match("/^EC[A-Z]/", $request['resp_headers']['server'])  ) {
+        }  else if ( isset($request['resp_headers']['server']) && preg_match("/^EC[A-Z]/", $request['resp_headers']['server'])  ) {
             $server = trim(preg_replace("/^EC[A-Z]/", "Edgecast", $request['resp_headers']['server']));
 
         } else if ( isset($request['resp_headers']['server']) && preg_match("/^NetDNA/i", $request['resp_headers']['server']) ) {
@@ -363,6 +398,9 @@ function generate_waterfall($har) {
         }
         else if ( isset($request['resp_headers']['server']) && preg_match("/^Footprint Distributor/i", $request['resp_headers']['server']) ) {
             $server = "Level3";
+        }
+        else if ( isset($request['resp_headers']['server']) && preg_match("/^Windows-Azure-Blob/i", $request['resp_headers']['server']) ) {
+            $server = "Azure Blob Storage";
         }
         else if ( isset($request['resp_headers']['X-yottaa-optimizations']) or isset($request['resp_headers']['x-yottaa-metrics']) ) {
             $server = "Yottaa";

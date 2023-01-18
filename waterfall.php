@@ -33,17 +33,41 @@ if ( isset($_GET['url'])) {
         $json = file_get_contents($base_url . "/get_har.php?url=" . $url . "&include_image=" . $include_image );
         $results = json_decode($json, TRUE);
     } else {
-	isset($_REQUEST['include_image']) ? $include_image = true : $include_image = false;
+        isset($_REQUEST['include_image']) ? $include_image = true : $include_image = false;
+        # Prefer prerender, then HARrr then localh PhantomJS
         if ( isset($conf['prerender_server_url']) ) {
+            $query_args = array (
+                "url" => $url,
+                "followRedirects" => true,
+                "waitAfterLastRequest" => 2000,
+                "pageDoneCheckInterval" => 1500,
+                "pageLoadTimeout" => 50000,
+                "renderType" => "har"
+            );
             $results = array();
-            $results['har'] = json_decode(file_get_contents($conf['prerender_server_url'] . $url), TRUE);
-            #print "<PLAINTEXT>"; print_r($results);
+            $results['har'] = json_decode(file_get_contents($conf['prerender_server_url'] . "?" . http_build_query($query_args)), TRUE);
+        } else if ( isset($conf['harrr_server_url']) ) {
+            $payload = array ( 
+                "url" => $url
+                #,                "waitForDuration" => 25000
+            );
+
+            $opts = array(
+                'http' => array(
+                'method' => "POST",
+                'header' => "Content-Type: application/json\r\n",
+                'content' => json_encode($payload)
+                )
+            );
+            $context = stream_context_create($opts);
+
+            $results['har'] = json_decode(file_get_contents($conf['harrr_server_url'], false, $context), TRUE);
+
         } else {
-            $results = get_har_using_phantomjs($url, $include_image);
-            
+            $results = get_har_using_phantomjs($url, $include_image, $harviewer );
         }
+
     }
-    
     // Check whether phantomjs succeeded
     if ( isset( $results['success']) and $results['success'] == 0 ) {
         ?>
@@ -54,17 +78,15 @@ if ( isset($_GET['url'])) {
 	    </div>
         </div>        
          <?php
-        exit(1);       
+        exit(1);
     }
 
-    // Include a screenshot if it exists
-    if ( isset( $results['screenshot']) && isset($_REQUEST['include_image']) ) {
-        print "<script>
-        var largeimage='" . $results['screenshot'] . "';
-        </script>";
-        echo '<center><a href="#" onClick="showLargeImage(); return false;">
-        <img width=150px src="data:image/png;base64,' . $results['screenshot'] . '" />
-        </a></center>';
+    # If Debug is turned on in conf save all the HAR files for later inspection
+    if ( isset($conf['debug']) && $conf['debug'] ) {
+      $cache_file = $conf['cache_dir'] . "/fantomtest-har-" . sha1($_GET['url']) . ".json";
+      if ( file_put_contents($cache_file, json_encode($results))  === FALSE ) {
+        print "WARNING: Couldn't write cache file\n";
+      }
     }
 
     print generate_waterfall($results['har']);
