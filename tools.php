@@ -97,6 +97,11 @@ function generate_waterfall($har) {
     # When did the page load finish
     $max_end_time = 0;
     
+    if ( !isset($har['log']['entries']) ) {
+      print "Couldn't retrieve the HTTP Archive";
+      exit;
+    }
+
     foreach ( $har['log']['entries'] as $key => $request ) {
         
         $started_time = $request['startedDateTime'];
@@ -334,7 +339,7 @@ function generate_waterfall($har) {
             $ip_to_as_cache[$ip_prefix] = array( "as_number" => $ip_details["as_number"], "as_name" => $ip_details["as_name"]);
           }
           # Instead of showing text for some of the most common AS let's use an image
-          if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16509" ) {
+          if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16509" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS14618" ) {
             $img_or_as_name = '<img src="img/aws.svg" class="vendor_img">';
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15169" ) {
             $img_or_as_name = '<img src="img/google.svg" class="vendor_img">';
@@ -536,6 +541,12 @@ function generate_waterfall($har) {
             $cms[] = "F5";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "NetScaler";
+        }
+
+        # If URL was delivered by Human/PerimeterX we don't really care what CMS it came from.
+        if ( preg_match("/px\-(translator|cloud|client)/", $request['url'] ) ) {
+            unset($cms);
+            $cms[] = "Human/PX";
         }
 
         if ( count($cms) > 0 ) {
