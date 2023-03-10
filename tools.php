@@ -108,12 +108,15 @@ function generate_waterfall($har) {
         $request_duration = $request['time'] / 1000;
         $url = $request['request']['url'];
         $resp_code = intval($request['response']['status']);
-        $resp_size = floatval($request['response']['content']['size']);
+        $resp_size = isset($request['response']['content']['size']) ? floatval($request['response']['content']['size']) : 0;
         
         // Extract the milliseconds since strtotime doesn't seem to retain it
-        preg_match("/(.*)T(.*)\.(.*)(Z)/", $started_time, $out);
-        $milli = $out[3];
-    
+        if ( preg_match("/(.*)T(.*)\.(.*)(Z)/", $started_time, $out) ) {
+          $milli = $out[3];
+        } else {
+          $milli = 0;
+        }
+
         $start_time = floatval(strtotime($started_time) . "." . $milli);
         $end_time = $start_time + $request_duration;
     
@@ -145,11 +148,11 @@ function generate_waterfall($har) {
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
-            "dns_time" => $request['timings']['dns'] <= 0 ? 0 : $request['timings']['dns'] / 1000,
-            "connect_time" => $request['timings']['connect'] <= 0 ? 0 : $request['timings']['connect'] / 1000,
-            "ssl_time" => $request['timings']['ssl'] <= 0 ? 0 : $request['timings']['ssl'] / 1000,
-            "wait_time" => $request['timings']['wait'] / 1000,
-            "download_time" => $request['timings']['receive'] / 1000,
+            "dns_time" => !isset($request['timings']['dns']) || $request['timings']['dns'] <= 0 ? 0 : $request['timings']['dns'] / 1000,
+            "connect_time" => !isset($request['timings']['connect']) || $request['timings']['connect'] <= 0 ? 0 : $request['timings']['connect'] / 1000,
+            "ssl_time" => !isset($request['timings']['ssl']) || $request['timings']['ssl'] <= 0 ? 0 : $request['timings']['ssl'] / 1000,
+            "wait_time" => !isset($request['timings']['wait']) ? 0 : $request['timings']['wait'] / 1000,
+            "download_time" => !isset($request['timings']['receive']) ? 0 : $request['timings']['receive'] / 1000,
             "duration" => $request_duration,
             "size" => $resp_size,
             "resp_code" => $resp_code,
@@ -407,7 +410,7 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['server']) && preg_match("/^Windows-Azure-Blob/i", $request['resp_headers']['server']) ) {
             $server = "Azure Blob Storage";
         }
-        else if ( isset($request['resp_headers']['X-yottaa-optimizations']) or isset($request['resp_headers']['x-yottaa-metrics']) ) {
+        else if ( isset($request['resp_headers']['x-yottaa-optimizations']) or isset($request['resp_headers']['x-yottaa-metrics']) ) {
             $server = "Yottaa";
         }
         # CD Networks
@@ -435,6 +438,8 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['x-cache']) && preg_match("/(\w+) from.*akamai/i", $request['resp_headers']['x-cache'], $out) ) {
             $server = "Akamai";
             $hit_or_miss = $out[1];
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/^Akamai/i", $request['resp_headers']['server']) ) {
+            $server = $request['resp_headers']['server'];
         } else if ( isset($request['resp_headers']['server']) && preg_match("/^CDNNet/i", $request['resp_headers']['server']) ) {
             $server = "CDN.Net";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/keycdn/i", $request['resp_headers']['server']) ) {
@@ -443,6 +448,8 @@ function generate_waterfall($har) {
             $server = "Vercel";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/netlify/i", $request['resp_headers']['server']) ) {
             $server = "Netlify";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/envoy/i", $request['resp_headers']['server']) ) {
+            $server = "Istio Envoy";
         # Not exhaustive way to identify Google
         } else if ( preg_match("/(youtube|gstatic|doubleclick|google).*\.(com|net)\//i", $request["url"]) ) {
             $server = "Google";
@@ -457,7 +464,7 @@ function generate_waterfall($har) {
             $server = "MS Bing";
         } else if ( preg_match("/(yahoo|ytimg)\.com\//i", $request["url"]) ) {
             $server = "Yahoo";
-        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "UploadServer" && $request['resp_headers']['x-goog-storage-class'] ) {
+        } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "UploadServer" &&  isset($request['resp_headers']['x-goog-storage-class']) ) {
             $server = "Google Storage";
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Azion IMS" ) {
             $server = "AzionCDN";
@@ -577,7 +584,7 @@ function generate_waterfall($har) {
         '<td class="x-cache-' . $hit_or_miss_css . '">' . htmlentities($hit_or_miss) . '</td>' .
         '<td>' . htmlentities($request["resp_code"]) . '</td>
         <td align="right">' . number_format($request["duration"], 3) . '</td>
-        <td align="right">' . htmlentities($request["size"]) . '</td>
+        <td align="right">' . number_format($request["size"]) . '</td>
         <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>';
 
