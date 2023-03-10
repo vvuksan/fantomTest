@@ -8,9 +8,9 @@ function showLargeImage() {
 
 require_once("./tools.php");
 
-if ( isset($_GET['url'])) {
+if ( isset($_REQUEST['url']) && trim($_REQUEST['url']) != "" ) {
 
-    $url = validate_url(trim($_GET['url']));
+    $url = validate_url(trim($_REQUEST['url']));
     
     if ( $url === FALSE ) {
         ?>
@@ -25,8 +25,8 @@ if ( isset($_GET['url'])) {
     }
     
     // Check for site ID where to execute actual query. If Site ID is -1 it means local
-    if ( isset($_GET['site_id']) &&  $_GET['site_id'] != -1 ) {
-        $site_id = $_GET['site_id'];
+    if ( isset($_REQUEST['site_id']) &&  $_REQUEST['site_id'] != -1 ) {
+        $site_id = $_REQUEST['site_id'];
         # Make sure Remote URL doesn't have any trailing slashes
         $base_url = rtrim($conf['remotes'][$site_id]['base_url'], '/');
 	isset($_REQUEST['include_image']) ? $include_image = 1 : $include_image = 0;
@@ -76,14 +76,14 @@ if ( isset($_GET['url'])) {
 	    	<p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span> 
 	        <strong>Alert:</strong> <?php print $results['error_message']; ?></p>
 	    </div>
-        </div>        
+        </div>
          <?php
         exit(1);
     }
 
     # If Debug is turned on in conf save all the HAR files for later inspection
     if ( isset($conf['debug']) && $conf['debug'] ) {
-      $cache_file = $conf['cache_dir'] . "/fantomtest-har-" . sha1($_GET['url']) . ".json";
+      $cache_file = $conf['cache_dir'] . "/fantomtest-har-" . sha1($_REQUEST['url']) . ".json";
       if ( file_put_contents($cache_file, json_encode($results))  === FALSE ) {
         print "WARNING: Couldn't write cache file\n";
       }
@@ -91,9 +91,31 @@ if ( isset($_GET['url'])) {
 
     print generate_waterfall($results['har']);
 
+} else if ( isset($_FILES['har_file']) ) {
+
+    # There was an error with the file upload
+    if ( $_FILES['har_file']['error'] || $_FILES['har_file'] <= 0 ) {
+    ?>
+    <div class="ui-widget">
+        <div class="ui-state-error ui-corner-all" style="padding: 0 .7em;">
+        <p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+        <strong>There was an error uploading the HAR. Please check the size.</strong></p>
+    </div>
+    </div>
+
+    <?php    }
+    $results['har'] = json_decode(file_get_contents($_FILES['har_file']['tmp_name']), TRUE);
+    print generate_waterfall($results['har']);
+
 } else {
 ?>
-  No URL supplied
+    <div class="ui-widget">
+        <div class="ui-state-error ui-corner-all" style="padding: 0 .7em;">
+        <p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+        <strong>No URL or HAR supplied</strong></p>
+    </div>
+    </div>
+
 <?php
 }
 ?>

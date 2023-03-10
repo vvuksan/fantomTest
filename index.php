@@ -100,11 +100,25 @@ function buildTimeTicks(totalTime) {
 function getTimings() {
     window.location.hash = $("#checked_url").val();
     $("#results").html('<img src="img/spinner.gif">');
-    $.get('waterfall.php', $("#query_form").serialize(), function(data) {
-	$("#results").html(data);
+    var form = $("#query_form").closest("form");
+    var formData = new FormData(form[0]);
+    $.ajax({
+      url: "waterfall.php",
+      method: "POST",
+      processData: false,
+      contentType: false,
+      data: formData,
+      success: function (data) {
+        $("#results").html(data);
         var totalTime = parseInt(parseFloat($('#total-time').text()) * 1000);
         buildTimeTicks(totalTime);
-    });
+      },
+      error: function (e) {
+          //error
+      }
+  });
+
+
 }
 
 <?php
@@ -223,6 +237,10 @@ if ( $waterfall_output ) {
   ?>
   URL <input id="checked_url" name="url" size=100>
   <button class="query_buttons" id="query_button" onclick="getTimings(); return false;">Get waterfall</button>
+  <p />
+  or upload a <a target="_blank" href="https://support.zendesk.com/hc/en-us/articles/4408828867098-Generating-a-HAR-file-for-troubleshooting" title="How go generate a HAR file">HAR (HTTP archive)</a>  <input type="file" id="har_file" name="har_file">
+
+  <button class="query_buttons" onclick="$('#query_form')[0].reset(); return(false)">Reset Form</button>
   </form>
   </div>
   <div id=results>
@@ -405,11 +423,9 @@ if ( $tlsciphers_enabled ) {
 $(function(){
     $("#tabs").tabs();
     $(".query_buttons").button();
+    $("#har_file").button();
 
-    $('#large_screenshot').dialog({
-      title: "Large Picture",
-      autoOpen: false,
-      width: 800 });   
+    $( document ).tooltip();
 
 });
 var myhash = window.location.hash;
