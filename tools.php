@@ -389,9 +389,12 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['server']) && preg_match("/^NetDNA/i", $request['resp_headers']['server']) ) {
             $server = trim($request['resp_headers']['server']);
         # CloudFront
-        } 
+        }
         else if ( isset($request['resp_headers']['via']) && preg_match("/CloudFront/i", $request['resp_headers']['via']) ) {
             $server = "CloudFront";
+            if ( isset($request['resp_headers']['x-amz-cf-pop']) ) {
+              $server .= " " . $request['resp_headers']['x-amz-cf-pop'];
+            }
         # ChinaCache
         } 
         else if ( isset($request['resp_headers']['powered-by-chinacache']) ) {
@@ -513,6 +516,8 @@ function generate_waterfall($har) {
             $cms[] = "Drupal";
         } else if ( preg_match("/\/_next\//i", $request["url"] ) ) {
             $cms[] = "Next.js";
+        } else if ( isset($request['resp_headers']['server']) && preg_match("/Contentful/i", $request['resp_headers']['server'] ) ) {
+            $cms[] = "Contentful";
         } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
           if ( !preg_match("/fastly/i", $server) ) 
             $cms[] = "Varnish";
