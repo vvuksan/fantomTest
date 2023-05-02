@@ -575,7 +575,7 @@ function generate_waterfall($har) {
             $cms[] = "Yottaa";
         }
 
-        if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer|MRHSession|/i", $request['resp_headers']['set-cookie'] ) ) {
+        if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer|MRHSession/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "F5 BIGIP";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "NetScaler";
