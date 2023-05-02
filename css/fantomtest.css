@@ -38,6 +38,9 @@ body{
   background-color: lightcoral;
 }
 
+.websockets {
+  background-color: lightblue;
+}
 
 .time_legend {
   text-align: center;
@@ -93,6 +96,10 @@ body{
 }
 .error {
   background: #FF9786;
+}
+
+.response_101 {
+  background: #BDF0EB;
 }
 
 .response_200 {

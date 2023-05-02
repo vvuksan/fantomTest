@@ -38,25 +38,25 @@ if ( isset($_REQUEST['url']) && trim($_REQUEST['url']) != "" ) {
         if ( isset($conf['prerender_server_url']) ) {
             $query_args = array (
                 "url" => $url,
-                "followRedirects" => true,
-                "waitAfterLastRequest" => 2000,
+                "followRedirects"       => true,
+                "waitAfterLastRequest"  => 2000,
                 "pageDoneCheckInterval" => 1500,
-                "pageLoadTimeout" => 50000,
-                "renderType" => "har"
+                "pageLoadTimeout"       => 50000,
+                "renderType"            => "har"
             );
             $results = array();
             $results['har'] = json_decode(file_get_contents($conf['prerender_server_url'] . "?" . http_build_query($query_args)), TRUE);
         } else if ( isset($conf['harrr_server_url']) ) {
             $payload = array ( 
-                "url" => $url
+                "url"       => $url,
                 #,                "waitForDuration" => 25000
             );
 
             $opts = array(
-                'http' => array(
-                'method' => "POST",
-                'header' => "Content-Type: application/json\r\n",
-                'content' => json_encode($payload)
+                'http'      => array(
+                'method'    => "POST",
+                'header'    => "Content-Type: application/json\r\n",
+                'content'   => json_encode($payload)
                 )
             );
             $context = stream_context_create($opts);

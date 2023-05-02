@@ -129,6 +129,7 @@ function generate_waterfall($har) {
             $max_end_time = $end_time;
 
         $resp_headers = array();
+        $req_headers = array();
         foreach ( $request['request']['headers'] as $index => $header ) {
             $req_headers[$header['name']] = $header['value'];
         }
@@ -155,7 +156,7 @@ function generate_waterfall($har) {
             "download_time" => !isset($request['timings']['receive']) ? 0 : $request['timings']['receive'] / 1000,
             "duration" => $request_duration,
             "size" => $resp_size,
-            "resp_code" => $resp_code,
+            "resp_code" => intval($resp_code),
             "http_version" => $request['response']['httpVersion'],
             "server_ip" =>  $server_ip,
             "req_headers" => $req_headers,
@@ -176,13 +177,11 @@ function generate_waterfall($har) {
     
     # Total time to fetch the page and all resources
     $total_time = $max_end_time - $min_start_time;
-
     
+    $content_breakdown = array( "html" => 0,  "images" => 0, "js" => 0, "json" => 0, "css" => 0, "fonts" => 0);
+    $websockets_anchors = array();
     
-    $haroutput = '
-    <button class="header_button" id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
-    Total time for a fully downloaded page is <span id="total-time">' . sprintf("%.3f", $total_time) . '</span> sec
-    <table class="harview">
+    $haroutput = '<table class="harview">
         <tr>
             <th>#</th>
             <th width=50%>URL</th>
@@ -195,7 +194,7 @@ function generate_waterfall($har) {
             <th></th>
         </tr>'
     ;
-    
+
     foreach ( $requests as $key => $request ) {
         $time_offset = $request["start_time"] - $min_start_time;
 
@@ -206,9 +205,13 @@ function generate_waterfall($har) {
         $wait_time_bar = ceil(($request["wait_time"] / $total_time) * 100);
         $download_time_bar = ceil(($request["download_time"] / $total_time) * 100);
 
-
         $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>";
-        $haroutput .= "<td>" . $key . "</td>";
+        if ( $request["resp_code"] == 101 ) {
+          $haroutput .= "<td><em id=ws" . $key . ">" . $key . "</em></td>";
+          $websockets_anchors[] = "ws" . $key;
+        } else {
+          $haroutput .= "<td>" . $key . "</td>";
+        }
 
         # Output the request url but shrink the screen output to 50 characters
         $haroutput .= "<td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . "</a>";
@@ -218,9 +221,17 @@ function generate_waterfall($har) {
 
         # Add button that toggles response headers
         $haroutput .= '
-        <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">hdrs</button>
+        <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">more</button>
         <div class="http_headers" style="display: none;" id="item_' . $key .'">';
         $content_type_full = "Unknown";
+
+        $haroutput .= "Browser timing (sec): DNS:" . number_format($request["dns_time"],3) . 
+           " CNCT: " . number_format($request["connect_time"], 3) . 
+           " TLS: " . number_format($request["ssl_time"], 3) .
+           " WAIT: " . number_format($request["wait_time"], 3) . 
+           " DNLD: " . number_format($request["download_time"], 3) .
+           "<br />";
+
         foreach ( $request['resp_headers'] as $key => $value ) {
           if ( strtolower($key) == "content-type" ) {
             $content_type_full = $value;
@@ -244,26 +255,34 @@ function generate_waterfall($har) {
         if ( preg_match("/text\/html/i", $content_type_full ) ) {
           $content_type = "HTML";
           $compressable = true;
+          $content_breakdown["html"] += $request["size"];
         } else if ( preg_match("/text\/css/i", $content_type_full ) ){
           $content_type = "CSS";
           $compressable = true;
+          $content_breakdown["css"] += $request["size"];
         } else if ( preg_match("/javascript|text\/js/i", $content_type_full ) ){
           $content_type = "JS";
           $compressable = true;
+          $content_breakdown["js"] += $request["size"];
         } else if ( preg_match("/image\/(gif|png|jpeg|avif|webp)/i", $content_type_full, $out ) ) {
           $content_type = strtoupper($out[1]);
+          $content_breakdown["images"] += $request["size"];
           unset($out);
         } else if ( preg_match("/json/i", $content_type_full ) ) {
           $content_type = "JSON";
+          $content_breakdown["json"] += $request["size"];
           $compressable = true;
         } else if ( preg_match("/svg/i", $content_type_full ) ) {
           $content_type = "SVG";
+          $content_breakdown["images"] += $request["size"];
           $compressable = true;
         # WOFF is already compressed https://developers.googleblog.com/2015/02/smaller-fonts-with-woff-20-and-unicode.html
         } else if ( preg_match("/woff/i", $content_type_full ) ){
           $content_type = "FONT";
+          $content_breakdown["fonts"] += $request["size"];
         } else if ( preg_match("/font/i", $content_type_full ) ){
           $content_type = "FONT";
+          $content_breakdown["fonts"] += $request["size"];
           $compressable = true;
         } else if ( preg_match("/text\/plain/i", $content_type_full ) ){
           $content_type = "TXT";
@@ -311,7 +330,6 @@ function generate_waterfall($har) {
           if ( preg_match("/Cookie/i", $request['resp_headers']['vary'] ) ) {
             $questionable_practice[] = "Cookie used in Vary";
           }
-          
         }
 
         if ( sizeof($questionable_practice) > 0 ) {
@@ -362,6 +380,8 @@ function generate_waterfall($har) {
             $img_or_as_name = '<img src="img/gcp.svg" class="vendor_img">';
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15133" ) {
             $img_or_as_name = '<img src="img/edgecast.svg" class="vendor_img">';
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS19551" ) {
+            $img_or_as_name = '<img src="img/incapsula.png" class="vendor_img">';
           } else {
             $img_or_as_name = $ip_to_as_cache[$ip_prefix]["as_name"];
           }
@@ -451,7 +471,7 @@ function generate_waterfall($har) {
             $server = "Vercel";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/netlify/i", $request['resp_headers']['server']) ) {
             $server = "Netlify";
-        } else if ( isset($request['resp_headers']['server']) && preg_match("/envoy/i", $request['resp_headers']['server']) ) {
+        } else if ( (isset($request['resp_headers']['server']) && preg_match("/envoy/i", $request['resp_headers']['server'])) || isset($request['resp_headers']['x-envoy-upstream-service-time']) ) {
             $server = "Istio Envoy";
         # Not exhaustive way to identify Google
         } else if ( preg_match("/(youtube|gstatic|doubleclick|google).*\.(com|net)\//i", $request["url"]) ) {
@@ -503,8 +523,10 @@ function generate_waterfall($har) {
         } else if ( isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "CDN77-Turbo" ) {
             $edge_location = isset($request['resp_headers']['x-edge-location']) ? " " . htmlentities($request['resp_headers']['x-edge-location']) : "";
             $server = "CDN77" . $edge_location;
-        } else if ( isset($request['resp_headers']['x-shopid'] )) {
-            $server = "Shopify";
+        } else if ( isset($request['resp_headers']['x-li-pop']) ) {
+            $server = "LinkedIn";
+        } else if ( preg_match("/^wss:\/\//", $request["url"]) ) {
+            $server = "WebSockets";
         }
 
         $cms = array();
@@ -516,6 +538,8 @@ function generate_waterfall($har) {
             $cms[] = "Drupal";
         } else if ( preg_match("/\/_next\//i", $request["url"] ) ) {
             $cms[] = "Next.js";
+        } else if ( isset($request['resp_headers']['x-shopid']) || preg_match("/shopify/", $request["url"]) ) {
+            $cms[] = "Shopify";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/Contentful/i", $request['resp_headers']['server'] ) ) {
             $cms[] = "Contentful";
         } else if ( isset($request['resp_headers']['x-varnish']) || isset($request['resp_headers']['via']) && preg_match("/varnish/i", $request['resp_headers']['via']) ) {
@@ -535,13 +559,15 @@ function generate_waterfall($har) {
             $cms[] = "Demandware";
         # Let's see if the request was in some form or shape backed by S3 ie. it was served by a CDN but storage was actually
         # S3. Append only if server was determined not to be AWS S3 since we don't need double output
-        } else if ( isset($request['resp_headers']['x-amz-id-2']) && $server != "AWS S3" ) {
+        } else if ( ( isset($request['resp_headers']['x-amz-id-2']) || (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "AmazonS3")  ) && $server != "AWS S3" ) {
             $cms[] = "S3";
         # Same with Google Cloud Storage (GCS)
         } else if ( isset($request['resp_headers']['server']) && preg_match("/cloudinary/i", $request['resp_headers']['server']) ) {
             $cms[] = "Cloudinary";
         } else if ( isset($request['resp_headers']['x-goog-generation']) && $server != "Google Storage" ) {
             $cms[] = "GCS";
+        } else if ( isset($request['resp_headers']['x-ms-blob-type']) ) {
+            $cms[] = "Azure BlobStorage";
         } else if ( (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "Cowboy") || (isset($request['resp_headers']['via']) && preg_match("/vegur/i", $request['resp_headers']['via']) )) {
             $cms[] = "Heroku";
         # Yottaa may be using other CDNs for their static delivery
@@ -549,20 +575,32 @@ function generate_waterfall($har) {
             $cms[] = "Yottaa";
         }
 
-        if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer/i", $request['resp_headers']['set-cookie'] ) ) {
-            $cms[] = "F5";
+        if ( isset($request['resp_headers']['set-cookie']) && preg_match("/BIGipServer|MRHSession|/i", $request['resp_headers']['set-cookie'] ) ) {
+            $cms[] = "F5 BIGIP";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "NetScaler";
         }
 
+        if ( isset($request['resp_headers']['via']) && preg_match("/google$/i", $request['resp_headers']['via']) ) {
+            $cms[] = "Google Cloud";
+        }
+
         # If URL was delivered by Human/PerimeterX we don't really care what CMS it came from.
-        if ( preg_match("/px\-(translator|cloud|client)/", $request['url'] ) ) {
+        if ( preg_match("/px\-(cdn|translator|cloud|client)/", $request['url'] ) ) {
             unset($cms);
             $cms[] = "Human/PX";
+        } else if ( preg_match("/datadome\.co/", $request['url'] ) ) {
+            unset($cms);
+            $cms[] = "Datadome";
+        }
+
+        if ( isset($request['resp_headers']['x-cache']) && preg_match("/function|LambdaGeneratedResponse/i", $request['resp_headers']['x-cache'] ) ) {
+            $cms[] = "Lambda@Edge";
+            $request['resp_headers']['x-cache'] = "Lambda";
         }
 
         if ( count($cms) > 0 ) {
-            $server .= "(" . join(",", $cms) . ")";
+            $server .= " (" . join(",", $cms) . ")";
         }
         unset($cms);
 
@@ -574,11 +612,11 @@ function generate_waterfall($har) {
           # We already figured out for Akamai whether's it's a hit or miss so don't do anything
           if ( $server == "Akamai")
             continue;
-          $hit_or_miss = $request['resp_headers']['x-cache'];
+          $hit_or_miss = strtoupper(preg_replace("/ from Cloudfront/i", "", $request['resp_headers']['x-cache']));
         }
 
         if ( $hit_or_miss != "UNK" ) {
-          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|Hit from Cloudfront|HIT$)/i", $hit_or_miss )) {
+          if ( preg_match("/(TCP_HIT|TCP_MEM_HIT|HIT$)/i", $hit_or_miss )) {
               $hit_or_miss_css = "HIT";
           } else {
               $hit_or_miss_css = "MISS";
@@ -589,7 +627,7 @@ function generate_waterfall($har) {
         '<td class="x-cache-' . $hit_or_miss_css . '">' . htmlentities($hit_or_miss) . '</td>' .
         '<td>' . htmlentities($request["resp_code"]) . '</td>
         <td align="right">' . number_format($request["duration"], 3) . '</td>
-        <td align="right">' . number_format($request["size"]) . '</td>
+        <td align="right"><i>' . number_format($request["size"]) . '</i></td>
         <td class="timeline-data"><span class="bar">' .
         '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>';
 
@@ -607,24 +645,40 @@ function generate_waterfall($har) {
         $haroutput .= "</span></td></tr>";
 
     }
-    
+
     unset($requests);
     unset($har);
-    
+
     $haroutput .= '</table>
     <script>
 
     $(function(){
       $(".header_button").button();
     });
+    </script>
     ';
+
+    $header = '<button class="header_button" id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
+    Page download time is <span id="total-time"><em>' . sprintf("%.3f", $total_time) . '</em></span>s. Content breakdown is ';
+    foreach ( $content_breakdown as $key => $value ) {
+      $header .= strtoupper($key) . "=" . number_format(intval($value/1000)) . "kB ";
+    }
+
+    # Add links to click to Websocket anchors
+    if ( count($websockets_anchors) > 0 ) {
+      $header .= "<em class=\"websockets\">Websockets</em> ";
+      foreach ( $websockets_anchors as $key => $value ) {
+        $plus1 = $key + 1;
+        $header .= " <a href=\"#" . $value . "\">" . $plus1 . "</a>";
+      }
+    }
 
     # If we should cache the IP to AS info persist it to disk
     if ( isset($conf["cache_file"]) ) {
       file_put_contents($conf["cache_file"], json_encode($ip_to_as_cache));
     }
 
-    return $haroutput;
+    return $header . $haroutput;
 
 } // end of function generate_waterfall()
 
@@ -900,7 +954,7 @@ function ip_to_as_info($ip) {
   $reversed_ip = array_reverse($ip_parts);
   $dns_response = get_dns_record(join(".", $reversed_ip) . ".origin.asn.cymru.com", "TXT");
   $response = array();
-  if ( preg_match("/^(\d+) \|/", $dns_response["records"][0]["txt"], $out ) ) {
+  if ( preg_match("/^(\d+)/", $dns_response["records"][0]["txt"], $out ) ) {
     $response["as_number"] = "AS" . $out[1];
   } else {
     $response["as_number"] = "ASUNK";
@@ -910,6 +964,8 @@ function ip_to_as_info($ip) {
     $dns_response = get_dns_record($response["as_number"] . ".asn.cymru.com", "TXT");
     if ( isset($dns_response["records"][0]["txt"]) && preg_match("/^\d+ \| \w+ \| \w+ \| [0-9\-]{10} \| (.*)/", $dns_response["records"][0]["txt"], $out ) ) {
       $response["as_name"] = $out[1];
+    } else {
+      $response["as_name"] = "ASUNK";
     }
   }
 

@@ -42,7 +42,7 @@ if ( isset($_GET['url'])) {
     } else if ( isset($conf['harrr_server_url']) ) {
       $payload = array (
           "url" => $url,
-          "waitForDuration" => 25000
+          "waitForDuration" => 25000,
       );
 
       $opts = array(

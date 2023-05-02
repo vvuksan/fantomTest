@@ -20,7 +20,6 @@ include_once("./tools.php");
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
 <script type="text/javascript" src="<?php print $conf['jquery_js_path']; ?>"></script>
 <script type="text/javascript" src="<?php print $conf['jqueryui_js_path']; ?>"></script>
-<script type="text/javascript" src="<?php print $conf['jquery_tablesorter']; ?>"></script>
 <script>
 
 <?php
@@ -238,7 +237,7 @@ if ( $waterfall_output ) {
   URL <input id="checked_url" name="url" size=100>
   <button class="query_buttons" id="query_button" onclick="getTimings(); return false;">Get waterfall</button>
   <p />
-  or upload a <a target="_blank" href="https://support.zendesk.com/hc/en-us/articles/4408828867098-Generating-a-HAR-file-for-troubleshooting" title="How go generate a HAR file">HAR (HTTP archive)</a>  <input type="file" id="har_file" name="har_file">
+  or upload a <a target="_blank" href="https://support.zendesk.com/hc/en-us/articles/4408828867098-Generating-a-HAR-file-for-troubleshooting" title="How go generate a HAR file">HAR (HTTP archive)</a>  <input type="file" id="har_file" name="har_file" onchange='$("#checked_url").val(""); getTimings(); return false;'>
 
   <button class="query_buttons" onclick="$('#query_form')[0].reset(); return(false)">Reset Form</button>
   </form>
@@ -423,13 +422,12 @@ if ( $tlsciphers_enabled ) {
 $(function(){
     $("#tabs").tabs();
     $(".query_buttons").button();
-    $("#har_file").button();
 
     $( document ).tooltip();
 
 });
 var myhash = window.location.hash;
-if ( myhash != "" ) {
+if ( myhash.indexOf("#http") == 0 ) {
   $("#checked_url").val(myhash.replace("#",""));
   getTimings();
 }
