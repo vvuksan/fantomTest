@@ -359,29 +359,41 @@ function generate_waterfall($har) {
             $ip_details = ip_to_as_info($request['server_ip']);
             $ip_to_as_cache[$ip_prefix] = array( "as_number" => $ip_details["as_number"], "as_name" => $ip_details["as_name"]);
           }
+          $frontend_ip_provider = "UNK";
           # Instead of showing text for some of the most common AS let's use an image
           if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16509" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS14618" ) {
             $img_or_as_name = '<img src="img/aws.svg" class="vendor_img">';
+            $frontend_ip_provider = "AWS";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15169" ) {
             $img_or_as_name = '<img src="img/google.svg" class="vendor_img">';
+            $frontend_ip_provider = "Google";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS20940" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16625" ) {
             $img_or_as_name = '<img src="img/akamai.svg" class="vendor_img">';
+            $frontend_ip_provider = "Akamai";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS54113" ) {
             $img_or_as_name = '<img src="img/fastly.svg" class="vendor_img">';
+            $frontend_ip_provider = "Fastly";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS8068" ) {
             $img_or_as_name = '<img src="img/microsoft.svg" class="vendor_img">';
+            $frontend_ip_provider = "Microsoft";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS8075" ) {
             $img_or_as_name = '<img src="img/azure.svg" class="vendor_img">';
+            $frontend_ip_provider = "Azure";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS32934" ) {
             $img_or_as_name = '<img src="img/facebook.svg" class="vendor_img">';
+            $frontend_ip_provider = "Facebook";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS13335" ) {
             $img_or_as_name = '<img src="img/cloudflare.svg" class="vendor_img">';
+            $frontend_ip_provider = "Cloudflare";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS396982" ) {
             $img_or_as_name = '<img src="img/gcp.svg" class="vendor_img">';
+            $frontend_ip_provider = "GCP";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15133" ) {
             $img_or_as_name = '<img src="img/edgecast.svg" class="vendor_img">';
+            $frontend_ip_provider = "Edgecast";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS19551" ) {
             $img_or_as_name = '<img src="img/incapsula.png" class="vendor_img">';
+            $frontend_ip_provider = "Incapsula";
           } else {
             $img_or_as_name = $ip_to_as_cache[$ip_prefix]["as_name"];
           }
@@ -481,8 +493,8 @@ function generate_waterfall($har) {
             $server = "Facebook";
         } else if ( preg_match("/s3.*amazonaws/i", $request["url"]) ) {
             $server = "AWS S3";
-        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/AWSELB/i", $request['resp_headers']['set-cookie'] ) ) {
-            $server = "AWS ELB";
+        } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/AWS(A|E)LB/i", $request['resp_headers']['set-cookie'], $out ) ) {
+            $server = "AWS " . $out[1] . "LB";
         } else if ( preg_match("/bing\.com\//i", $request["url"]) ) {
             $server = "MS Bing";
         } else if ( preg_match("/(yahoo|ytimg)\.com\//i", $request["url"]) ) {
@@ -536,8 +548,8 @@ function generate_waterfall($har) {
             $cms[] = "Acquia";
         } else if ( isset($request['resp_headers']['x-drupal-cache']) ) {
             $cms[] = "Drupal";
-        } else if ( preg_match("/\/_next\//i", $request["url"] ) ) {
-            $cms[] = "Next.js";
+        } else if ( isset($request['resp_headers']['x-amz-apigw-id']) ) {
+            $cms[] = "AWS API GW";
         } else if ( isset($request['resp_headers']['x-shopid']) || preg_match("/shopify/", $request["url"]) ) {
             $cms[] = "Shopify";
         } else if ( isset($request['resp_headers']['server']) && preg_match("/Contentful/i", $request['resp_headers']['server'] ) ) {
@@ -560,7 +572,9 @@ function generate_waterfall($har) {
         # Let's see if the request was in some form or shape backed by S3 ie. it was served by a CDN but storage was actually
         # S3. Append only if server was determined not to be AWS S3 since we don't need double output
         } else if ( ( isset($request['resp_headers']['x-amz-id-2']) || (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "AmazonS3")  ) && $server != "AWS S3" ) {
-            $cms[] = "S3";
+            $cms[] = "AWS";
+        } else if ( ( isset($request['resp_headers']['akamai-grn'])  && $frontend_ip_provider != "Akamai" ) ) {
+            $cms[] = "AKAM bcknd";
         # Same with Google Cloud Storage (GCS)
         } else if ( isset($request['resp_headers']['server']) && preg_match("/cloudinary/i", $request['resp_headers']['server']) ) {
             $cms[] = "Cloudinary";
@@ -579,12 +593,35 @@ function generate_waterfall($har) {
             $cms[] = "F5 BIGIP";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "NetScaler";
+        } else if ( isset($request['resp_headers']['cf-mitigated'])  ) {
+            $cms[] = "Bot Challenge";
+        } else if ( preg_match("/_Incapsula_Resource/", $request['url'] )  ) {
+            $cms[] = "Bot Challenge";
+        } else if ( isset($request['resp_headers']['x-yext-site'])  ) {
+            $cms[] = "Yext";
         }
 
         if ( isset($request['resp_headers']['via']) && preg_match("/google$/i", $request['resp_headers']['via']) ) {
             $cms[] = "Google Cloud";
         }
 
+        if ( preg_match("/\/_next\//i", $request["url"] ) ) {
+            $cms[] = "Next.js";
+        }
+
+        if ( isset($request['resp_headers']['x-dw-request-base-id']) || preg_match("/on\/demandware/i", $request['url']) ) {
+            $cms[] = "Salesforce Commerce";
+        }
+
+        if ( isset($request['resp_headers']['x-amz-apigw-id']) ) {
+            $cms[] = "AWS APIGW";
+        }
+
+	if ( isset($request['resp_headers']['x-akamai-transformed']) ||
+	  ( isset($request['resp_headers']['server-timing']) && preg_match("/^ak_/i", $request['resp_headers']['server-timing']) )
+           ) {
+            $cms[] = "Akamai FEO";
+        }
         # If URL was delivered by Human/PerimeterX we don't really care what CMS it came from.
         if ( preg_match("/px\-(cdn|translator|cloud|client)/", $request['url'] ) ) {
             unset($cms);
