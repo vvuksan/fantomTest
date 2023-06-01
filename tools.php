@@ -403,7 +403,7 @@ function generate_waterfall($har) {
           } else {
             $img_or_as_name = $ip_to_as_cache[$ip_prefix]["as_name"];
           }
-          $haroutput .= "<td>" . $img_or_as_name . " " .$request['server_ip'] . "</td>";
+          $haroutput .= "<td>" . $img_or_as_name . " " . $request['server_ip'] . "</td>";
         } else {
           $haroutput .= "<td>&nbsp;</td>";
         }
@@ -577,8 +577,8 @@ function generate_waterfall($har) {
             $cms[] = "Demandware";
         # Let's see if the request was in some form or shape backed by S3 ie. it was served by a CDN but storage was actually
         # S3. Append only if server was determined not to be AWS S3 since we don't need double output
-        } else if ( ( isset($request['resp_headers']['x-amz-id-2']) || (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "AmazonS3")  ) && $server != "AWS S3" ) {
-            $cms[] = "AWS";
+        } else if ( ( isset($request['resp_headers']['x-amz-id-2']) || isset($request['resp_headers']['x-amz-request-id']) || (isset($request['resp_headers']['server']) && $request['resp_headers']['server'] == "AmazonS3")  ) && $server != "AWS S3" ) {
+            $cms[] = "S3";
         } else if ( ( isset($request['resp_headers']['akamai-grn'])  && $frontend_ip_provider != "Akamai" ) ) {
             $cms[] = "AKAM bcknd";
         # Same with Google Cloud Storage (GCS)
