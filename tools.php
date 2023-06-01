@@ -391,6 +391,9 @@ function generate_waterfall($har) {
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS15133" ) {
             $img_or_as_name = '<img src="img/edgecast.svg" class="vendor_img">';
             $frontend_ip_provider = "Edgecast";
+          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS135340" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS133165" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS14061" ) {
+            $img_or_as_name = '<img src="img/digitalocean.png" class="vendor_img">';
+            $frontend_ip_provider = "Digital Ocean";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS19551" ) {
             $img_or_as_name = '<img src="img/incapsula.png" class="vendor_img">';
             $frontend_ip_provider = "Incapsula";
