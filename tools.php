@@ -623,16 +623,18 @@ function generate_waterfall($har) {
             $cms[] = "AWS APIGW";
         }
 
-	if ( isset($request['resp_headers']['x-akamai-transformed']) ||
-	  ( isset($request['resp_headers']['server-timing']) && preg_match("/^ak_/i", $request['resp_headers']['server-timing']) )
-           ) {
+        if ( isset($request['resp_headers']['x-akamai-transformed']) ||
+           ( isset($request['resp_headers']['server-timing']) && preg_match("/^ak_/i", $request['resp_headers']['server-timing']) ) ) {
             $cms[] = "Akamai FEO";
         }
+
         # If URL was delivered by Human/PerimeterX we don't really care what CMS it came from.
         if ( preg_match("/px\-(cdn|translator|cloud|client)/", $request['url'] ) ) {
             unset($cms);
             $cms[] = "Human/PX";
-        } else if ( preg_match("/datadome\.co/", $request['url'] ) ) {
+        }
+
+        if ( preg_match("/datadome\.co/", $request['url'] ) || ( isset($request['resp_headers']['set-cookie']) && preg_match("/datadome=/i", $request['resp_headers']['set-cookie'] ) ) ) {
             unset($cms);
             $cms[] = "Datadome";
         }
@@ -640,6 +642,11 @@ function generate_waterfall($har) {
         if ( isset($request['resp_headers']['x-cache']) && preg_match("/function|LambdaGeneratedResponse/i", $request['resp_headers']['x-cache'] ) ) {
             $cms[] = "Lambda@Edge";
             $request['resp_headers']['x-cache'] = "Lambda";
+        }
+
+        if ( ( isset($request['resp_headers']['content-type']) && preg_match("/image\/gif/i", $request['resp_headers']['content-type']) )
+          && intval($request['resp_headers']['content-length']) < 50 )  {
+            $cms[] = "Tracking pixel";
         }
 
         if ( count($cms) > 0 ) {
