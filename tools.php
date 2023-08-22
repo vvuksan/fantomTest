@@ -442,6 +442,17 @@ function generate_waterfall($har) {
         else if ( isset($request['resp_headers']['x-instart-request-id']) ) {
             $server = "Instart";
         }
+        else if ( isset($request['resp_headers']['quant-server']) ) {
+            $server = "QuantCDN";
+
+        }
+        else if ( isset($request['resp_headers']['section-io-id']) ) {
+            $server = "Section.io";
+            if ( isset($request['resp_headers']['section-io-cache'])) {
+              $hit_or_miss_css = $request['resp_headers']['section-io-cache'];
+              $hit_or_miss = $request['resp_headers']['section-io-cache'];
+            }            
+        }
         else if ( isset($request['resp_headers']['x-cdn']) and $request['resp_headers']['x-cdn'] == "Incapsula" ) {
             $server = "Incapsula";
         }
@@ -599,11 +610,26 @@ function generate_waterfall($har) {
             $cms[] = "F5 BIGIP";
         } else if ( isset($request['resp_headers']['set-cookie']) && preg_match("/NSC_Qspe/i", $request['resp_headers']['set-cookie'] ) ) {
             $cms[] = "NetScaler";
-        } else if ( isset($request['resp_headers']['cf-mitigated'])  ) {
+        }
+        
+        # Bot Challenge or WAF
+        if ( isset($request['resp_headers']['cf-mitigated'])  ) {
             $cms[] = "Bot Challenge";
         } else if ( preg_match("/_Incapsula_Resource/", $request['url'] )  ) {
             $cms[] = "Bot Challenge";
-        } else if ( isset($request['resp_headers']['x-yext-site'])  ) {
+        } else if (  isset($request['resp_headers']['x-amzn-waf-challenge-id'] ) || isset($request['resp_headers']['x-amzn-waf-action'])  ) {
+            $cms[] = "AWS WAF";
+        }
+
+        if ( preg_match("/px\-(cdn|translator|cloud|client)|perimeterx/", $request['url'] ) ) {
+            $cms[] = "Human/PX";
+        }
+
+        if ( preg_match("/datadome\.co/", $request['url'] ) || ( isset($request['resp_headers']['set-cookie']) && preg_match("/datadome=/i", $request['resp_headers']['set-cookie'] ) ) ) {
+            $cms[] = "Datadome";
+        }
+
+        if ( isset($request['resp_headers']['x-yext-site'])  ) {
             $cms[] = "Yext";
         }
 
@@ -628,26 +654,24 @@ function generate_waterfall($har) {
             $cms[] = "Akamai FEO";
         }
 
-        # If URL was delivered by Human/PerimeterX we don't really care what CMS it came from.
-        if ( preg_match("/px\-(cdn|translator|cloud|client)/", $request['url'] ) ) {
-            unset($cms);
-            $cms[] = "Human/PX";
-        }
 
-        if ( preg_match("/datadome\.co/", $request['url'] ) || ( isset($request['resp_headers']['set-cookie']) && preg_match("/datadome=/i", $request['resp_headers']['set-cookie'] ) ) ) {
-            unset($cms);
-            $cms[] = "Datadome";
-        }
 
         if ( isset($request['resp_headers']['x-cache']) && preg_match("/function|LambdaGeneratedResponse/i", $request['resp_headers']['x-cache'] ) ) {
             $cms[] = "Lambda@Edge";
             $request['resp_headers']['x-cache'] = "Lambda";
         }
 
+        # It's a tracking pixel or it's an ad
         if ( ( isset($request['resp_headers']['content-type']) && preg_match("/image\/gif/i", $request['resp_headers']['content-type']) )
           && intval($request['resp_headers']['content-length']) < 50 )  {
             $cms[] = "Tracking pixel";
+        } else if ( preg_match("/googleads|pagead/", $request['url'] ) ) {
+            $cms[] = "Ads";
+        # Or is it a font
+        } else if ( preg_match("/fonts\.googleapis\.com/", $request['url'] ) ) {
+            $cms[] = "Fonts";
         }
+
 
         if ( count($cms) > 0 ) {
             $server .= " (" . join(",", $cms) . ")";
@@ -663,6 +687,7 @@ function generate_waterfall($har) {
           if ( $server == "Akamai")
             continue;
           $hit_or_miss = strtoupper(preg_replace("/ from Cloudfront/i", "", $request['resp_headers']['x-cache']));
+
         }
 
         if ( $hit_or_miss != "UNK" ) {
