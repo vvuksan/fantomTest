@@ -62,6 +62,17 @@ if ( isset($_REQUEST['url']) && trim($_REQUEST['url']) != "" ) {
             $context = stream_context_create($opts);
 
             $results['har'] = json_decode(file_get_contents($conf['harrr_server_url'], false, $context), TRUE);
+        } else if ( isset($conf['harpoon_server_url']) ) {
+
+            $opts = array(
+                'http'      => array(
+                'method'    => "GET",
+                'header'    => "Content-Type: application/json\r\n",
+                )
+            );
+            $context = stream_context_create($opts);
+
+            $results = json_decode(file_get_contents($conf['harpoon_server_url'] . "?url=" . $url, false, $context), TRUE);
 
         } else {
             $results = get_har_using_phantomjs($url, $include_image, $harviewer );

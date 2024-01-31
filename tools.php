@@ -31,7 +31,7 @@ if ( !isset($conf['phantomjs_exec']) )  {
 }
 
 
-if ( isset($conf['prerender_server_url']) || isset($conf['harrr_server_url']) ) {
+if ( isset($conf['prerender_server_url']) || isset($conf['harrr_server_url']) ||isset($conf['harpoon_server_url'])  ) {
   $waterfall_output = true;  
 }
 
@@ -619,15 +619,26 @@ function generate_waterfall($har) {
             $cms[] = "Bot Challenge";
         } else if (  isset($request['resp_headers']['x-amzn-waf-challenge-id'] ) || isset($request['resp_headers']['x-amzn-waf-action'])  ) {
             $cms[] = "AWS WAF";
+        } else if ( preg_match("/sdk\.awswaf\.com/i", $request['url'] ) ) {
+          $cms[] = "AWS WAF";
         }
 
         if ( preg_match("/px\-(cdn|translator|cloud|client)|perimeterx/", $request['url'] ) ) {
             $cms[] = "Human/PX";
         }
 
+        if ( preg_match("/hyva/i", $request['url'] ) ) {
+          $cms[] = "Hyva";
+        }
+
         if ( preg_match("/datadome\.co/", $request['url'] ) || ( isset($request['resp_headers']['set-cookie']) && preg_match("/datadome=/i", $request['resp_headers']['set-cookie'] ) ) ) {
             $cms[] = "Datadome";
         }
+
+        if ( isset($request['resp_headers']['set-cookie']) && preg_match("/bm_sv=/i", $request['resp_headers']['set-cookie'] ) ) {
+          $cms[] = "Akamai Botman";
+      }
+
 
         if ( isset($request['resp_headers']['x-yext-site'])  ) {
             $cms[] = "Yext";
@@ -643,10 +654,6 @@ function generate_waterfall($har) {
 
         if ( isset($request['resp_headers']['x-dw-request-base-id']) || preg_match("/on\/demandware/i", $request['url']) ) {
             $cms[] = "Salesforce Commerce";
-        }
-
-        if ( isset($request['resp_headers']['x-amz-apigw-id']) ) {
-            $cms[] = "AWS APIGW";
         }
 
         if ( isset($request['resp_headers']['x-akamai-transformed']) ||
@@ -670,6 +677,10 @@ function generate_waterfall($har) {
         # Or is it a font
         } else if ( preg_match("/fonts\.googleapis\.com/", $request['url'] ) ) {
             $cms[] = "Fonts";
+        } else if ( preg_match("/www\.googletagmanager\.com/", $request['url'] ) ) {
+            $cms[] = "Tag Manager";
+        } else if ( preg_match("/(gstatic|google)\.com\/recaptcha/", $request['url'] ) ) {
+            $cms[] = "Recaptcha";
         }
 
 
