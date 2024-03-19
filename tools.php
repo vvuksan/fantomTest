@@ -247,8 +247,8 @@ function generate_waterfall($har) {
         $haroutput .= "</div>";
 
         # If response is HTTP/2 or HTTP/3 put a nice button to identify it
-        if ( preg_match("/h([2-3])/i", $request['http_version'], $out) )
-          $haroutput .= " <button title=\"HTTP" . $out[1] . "\" class=\"http" . $out[1] . "\">H" . $out[1] . "</button>";
+        if ( preg_match("/(h|http)\/+([2-3])/i", $request['http_version'], $out) )
+          $haroutput .= " <button title=\"HTTP" . $out[2] . "\" class=\"http" . $out[2] . "\">H" . $out[2] . "</button>";
 
         $compressable = false;
 
