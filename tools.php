@@ -247,7 +247,7 @@ function generate_waterfall($har) {
         $haroutput .= "</div>";
 
         # If response is HTTP/2 or HTTP/3 put a nice button to identify it
-        if ( preg_match("/(h|http)\/+([2-3])/i", $request['http_version'], $out) )
+        if ( preg_match("/(h|http)\/?([2-3])/i", $request['http_version'], $out) )
           $haroutput .= " <button title=\"HTTP" . $out[2] . "\" class=\"http" . $out[2] . "\">H" . $out[2] . "</button>";
 
         $compressable = false;
@@ -382,8 +382,10 @@ function generate_waterfall($har) {
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS32934" ) {
             $img_or_as_name = '<img src="img/facebook.svg" class="vendor_img">';
             $frontend_ip_provider = "Facebook";
-          } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS13335" ) {
+          } else if ( in_array($ip_to_as_cache[$ip_prefix]["as_number"], array("AS13335", "AS209242", "AS139242" ) ) ) {
             $img_or_as_name = '<img src="img/cloudflare.svg" class="vendor_img">';
+            if ( in_array($ip_to_as_cache[$ip_prefix]["as_number"], array("AS209242", "AS139242" ) ) )
+              $img_or_as_name .= " <b>BYOIP</b>";
             $frontend_ip_provider = "Cloudflare";
           } else if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS396982" ) {
             $img_or_as_name = '<img src="img/gcp.svg" class="vendor_img">';
@@ -563,6 +565,8 @@ function generate_waterfall($har) {
         # Figure out if a specific CMS or backend storage is being used
         if ( isset($request['resp_headers']['x-ah-environment']) ) {
             $cms[] = "Acquia";
+        } else if ( isset($request['resp_headers']['x-vtex-cache-status']) ) {
+            $cms[] = "VTEX";
         } else if ( isset($request['resp_headers']['x-drupal-cache']) ) {
             $cms[] = "Drupal";
         } else if ( isset($request['resp_headers']['x-amz-apigw-id']) ) {
