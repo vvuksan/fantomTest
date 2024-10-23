@@ -83,7 +83,7 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
   $ctx = stream_context_create( array("ssl" => $ssloptions) );
 
   # Let's establish a SSL connection
-  $fp = stream_socket_client("ssl://${hostname}:${port}", $errno, $errstr, 4, STREAM_CLIENT_CONNECT, $ctx);
+  $fp = stream_socket_client("ssl://{$hostname}:{$port}", $errno, $errstr, 4, STREAM_CLIENT_CONNECT, $ctx);
   # Grab the context parameters like certificate chain etc.
 
   $captured_certs = array();
