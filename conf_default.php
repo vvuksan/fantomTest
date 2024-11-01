@@ -13,7 +13,7 @@ $conf['debug'] = 0;
 $conf['ssl_peer_verify'] = false;
 
 # Try to detect CDNs used
-$conf['cdn_detection'] = true;
+$conf['cdn_detection'] = false;
 
 # Prerender server https://github.com/prerender/prerender
 # If you want to use HARrr server instead of PhantomJS uncomment below. Overrides any PhantomJS settings
@@ -37,6 +37,8 @@ $conf['allowed_dns_query_types'] = array (
     "MX",
     "SOA",
     "TXT",
+    "NS",
+    "CAA"
 );
 
 # Should ping/mtr be enabled

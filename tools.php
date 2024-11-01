@@ -1063,6 +1063,47 @@ function ip_to_as_info($ip) {
 }
 
 #############################################################################################
+# AS classification
+#############################################################################################
+function ip_to_as_image_or_text($ip) {
+
+  $ip_details = ip_to_as_info($ip);
+  # Instead of showing text for some of the most common AS let's use an image
+  if ( $ip_details["as_number"] == "AS16509" || $ip_details["as_number"] == "AS14618" ) {
+	$img_or_as_name = '<img src="img/aws.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS15169" ) {
+	$img_or_as_name = '<img src="img/google.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS20940" || $ip_details["as_number"] == "AS16625" ) {
+	$img_or_as_name = '<img src="img/akamai.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS54113" ) {
+	$img_or_as_name = '<img src="img/fastly.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS8068" ) {
+	$img_or_as_name = '<img src="img/microsoft.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS8075" ) {
+	$img_or_as_name = '<img src="img/azure.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS32934" ) {
+	$img_or_as_name = '<img src="img/facebook.svg" class="vendor_img">';
+  } else if ( in_array($ip_details["as_number"], array("AS13335", "AS209242", "AS139242" ) ) ) {
+	$img_or_as_name = '<img src="img/cloudflare.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS396982" ) {
+	$img_or_as_name = '<img src="img/gcp.svg" class="vendor_img">';
+ } else if ( $ip_details["as_number"] == "AS15133" ) {
+	$img_or_as_name = '<img src="img/edgecast.svg" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS135340" || $ip_details["as_number"] == "AS133165" || $ip_details["as_number"] == "AS14061" ) {
+	$img_or_as_name = '<img src="img/digitalocean.png" class="vendor_img">';
+  } else if ( $ip_details["as_number"] == "AS20446" ) {
+	$img_or_as_name = '<img src="img/stackpath.svg" class="vendor_img" title="StackPath">';
+  } else if ( $ip_details["as_number"] == "AS19551" ) {
+	$img_or_as_name = '<img src="img/incapsula.png" class="vendor_img">';
+  } else {
+	$img_or_as_name = $ip_details["as_name"];
+  }
+
+  return($img_or_as_name);
+
+}
+
+#############################################################################################
 # Get Curl timings
 #############################################################################################
 function get_curl_timings_with_headers($original_url, $request_headers = array(), $override_ip = "") {
@@ -1161,7 +1202,7 @@ function print_url_results($records) {
   }
   
   print "    <th>Gzip</th>
-      <th>HTTP code</th>
+      <th>Resp code</th>
       <th>Resp size</th>
       <th>Hdr size</th>
       <th>DNS time</th>
@@ -1208,7 +1249,7 @@ function print_url_results($records) {
 
     $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
 
-    print "<td rowspan=2>" . $record['primary_ip'] . "</td>";
+    print "<td rowspan=2><b>" . $record['primary_ip'] . "</b><br />" . ip_to_as_image_or_text($record['primary_ip']) . "</td>";
     if ( $conf['cdn_detection'] ) {
       print "<td rowspan=2 class=cache_servers>" . $xservedby . "</td>" .
         "<td rowspan=2 class='" . $cache_hit_styling . "'>" . $cache_hit . "</td>";
@@ -1242,5 +1283,3 @@ function print_url_results($records) {
   print "</tbody></table>";
 
 }
-
-?>

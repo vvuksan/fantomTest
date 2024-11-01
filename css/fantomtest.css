@@ -45,6 +45,7 @@ body{
 .time_legend {
   text-align: center;
   color: white;
+  position: absolute;
 }
 
 .dns_time {
