@@ -18,8 +18,6 @@ browser. PhantomJS will render a URL with all it's resources and produce HAR
 Installation
 ============
 
-* Download and install PhantomJS from http://www.phantomjs.org/. Install it
- in e.g. /opt/phantomjs. 
 * Install PHP scripts somewhere in the Web Server HTDOCS area e.g. /var/www/fantomtest
 * Configure conf.php. In most cases you will only need to configure the location of
 phantomjs binary e.g.
@@ -38,20 +36,6 @@ from a single interface by configuring URLs in conf.php. Simply add following to
 $conf['remotes'][] = array("name" => "US", "provider" => "http_get", "base_url" => "http://myurl.usa/fantomtest/");
 
 to add additional ones simply repeat the line with the new name and URL.
-
-
-SlimerJS
-========
-
-There is also gecko (firefox) based scriptable browser similar to PhantomJS called SlimjerJS. 
-It can be downloaded from
-
-http://slimerjs.org/
-
-To use it you need to install XVFB and use this in your conf.php
-
-    $conf['phantomjs_exec'] = "SLIMERJSLAUNCHER=/usr/bin/firefox DISPLAY=:1 xvfb-run /opt/slimerjs/slimerjs /var/www/fantomtest/phantomjs/netsniff-slimer.js ";
-
 
 License
 =======
