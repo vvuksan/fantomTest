@@ -22,9 +22,26 @@ if ( isset($_REQUEST['arbitrary_headers']) and $_REQUEST['arbitrary_headers'] !=
   $optional_request_headers = array();
 }
 
+# Default override IP to nothing
+$override_ip = "";
+
+if ( isset($_REQUEST['override_ip_or_hostname']) ) {
+  $ip_input = trim($_REQUEST['override_ip_or_hostname']);
+  if(filter_var($ip_input, FILTER_VALIDATE_IP)) {
+	$override_ip = $ip_input;
+  } else {
+	$override_ip = gethostbyname($ip_input);
+	# If resolution fails it just returns hostname back. Reset override_ip back
+	if ( $override_ip == $ip_input )
+	  $override_ip ="";
+  
+  }
+}
+
+
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers(trim($_GET['url']), $optional_request_headers);
+    $record = get_curl_timings_with_headers(trim($_GET['url']), $optional_request_headers, $override_ip);
     
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');
@@ -72,9 +89,9 @@ if ( $_REQUEST['site_id'] == -1 ) {
 
       # Disable SSL peer verify ie. don't check remote side SSL certificates
       if ( ! $conf['ssl_peer_verify'] ) {
-	curl_setopt($curly[$id], CURLOPT_SSL_VERIFYPEER, FALSE);
-	curl_setopt($curly[$id], CURLOPT_SSL_VERIFYHOST, FALSE); 
-	curl_setopt($curly[$id], CURLOPT_VERBOSE , TRUE);
+		curl_setopt($curly[$id], CURLOPT_SSL_VERIFYPEER, FALSE);
+		curl_setopt($curly[$id], CURLOPT_SSL_VERIFYHOST, FALSE); 
+		curl_setopt($curly[$id], CURLOPT_VERBOSE , TRUE);
       }
       curl_multi_add_handle($mh, $curly[$id]);
     }

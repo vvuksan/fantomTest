@@ -1065,7 +1065,7 @@ function ip_to_as_info($ip) {
 #############################################################################################
 # Get Curl timings
 #############################################################################################
-function get_curl_timings_with_headers($original_url, $request_headers = array()) {
+function get_curl_timings_with_headers($original_url, $request_headers = array(), $override_ip = "") {
 
     $url = validate_url($original_url);
     
@@ -1080,19 +1080,25 @@ function get_curl_timings_with_headers($original_url, $request_headers = array()
     curl_setopt($curly, CURLOPT_HEADER, 1);
     curl_setopt($curly, CURLOPT_TIMEOUT, 4);
     curl_setopt($curly, CURLOPT_RETURNTRANSFER, 1);
+    $dest_port = "443";
     switch ( $url_parts['scheme'] ) {
-	case "http":
-    	  curl_setopt($curly, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
-          curl_setopt($curly, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP);
-          break;
-        case "https":
-          curl_setopt($curly, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
-          curl_setopt($curly, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
-	  break;
-        default:
-          die("<h3>Invalid protocol supplied. You need either http:// or https://</h3>");
+	  case "http":
+        curl_setopt($curly, CURLOPT_PROTOCOLS, CURLPROTO_HTTP);
+        curl_setopt($curly, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP);
+        $dest_port = "80";
+        break;
+      case "https":
+        curl_setopt($curly, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
+        curl_setopt($curly, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+	    break;
+      default:
+        die("<h3>Invalid protocol supplied. You need either http:// or https://</h3>");
     } 
-    
+
+    if ( $override_ip != "" ) {
+	  $override_array[] = $url_parts["host"] . ":" . $dest_port . ":" . $override_ip;
+	  curl_setopt($curly, CURLOPT_RESOLVE, $override_array);
+	}
     curl_setopt($curly,CURLOPT_ENCODING , "gzip"); 
     curl_setopt($curly, CURLOPT_HTTPHEADER, $request_headers );
     curl_setopt($curly, CURLOPT_URL, $url);

@@ -273,6 +273,7 @@ if ( $waterfall_output ) {
   <button class="query_buttons" id="url_querybutton" onclick="getURL(); return false;">Get timings</button><p>
   Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es):
   <input name="arbitrary_headers" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
+  <p>Override IP/Hostname <input name="override_ip_or_hostname" size=50></p>
   </form>
   </div>
   <div id=url_results>
