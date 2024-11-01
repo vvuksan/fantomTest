@@ -44,6 +44,17 @@ $conf['allowed_dns_query_types'] = array (
     "CAA"
 );
 
+$conf['allowed_http_methods'] = array(
+  "GET",
+  "POST",
+  "HEAD",
+  "DELETE",
+  "OPTIONS",
+  "PURGE",
+  "PATCH",
+  "PUT"
+);
+
 # Should ping/mtr be enabled
 $conf['pingmtr_enabled'] = true;
 $conf['ping_bin'] = "/bin/ping";

@@ -1038,24 +1038,36 @@ function print_dns_results($results) {
 #############################################################################################
 function ip_to_as_info($ip) {
 
+  $response = array();
+
+  # Make sure the IP is not a private IP
+  if ( filter_var( $ip,	FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE |  FILTER_FLAG_NO_RES_RANGE ) === false ) {
+    $response["as_number"] = "ASUNK";
+    $response["as_name"] = "RFC1918 IP";
+    return($response);
+  }
+
   # Reverse the IP address and drop the last octet
   $ip_parts = explode(".", $ip);
   array_pop($ip_parts);
   $reversed_ip = array_reverse($ip_parts);
   $dns_response = get_dns_record(join(".", $reversed_ip) . ".origin.asn.cymru.com", "TXT");
-  $response = array();
-  if ( preg_match("/^(\d+)/", $dns_response["records"][0]["txt"], $out ) ) {
-    $response["as_number"] = "AS" . $out[1];
+  # No DNS results due to either a failure or because they are RFC1918
+  if ( count($dns_response["records"]) == 0 ) {
   } else {
-    $response["as_number"] = "ASUNK";
-  }
-  unset($dns_response);
-  if ( !$response["as_number"] != "ASUNK" ) {
-    $dns_response = get_dns_record($response["as_number"] . ".asn.cymru.com", "TXT");
-    if ( isset($dns_response["records"][0]["txt"]) && preg_match("/^\d+ \| \w+ \| \w+ \| [0-9\-]{10} \| (.*)/", $dns_response["records"][0]["txt"], $out ) ) {
-      $response["as_name"] = $out[1];
+    if ( preg_match("/^(\d+)/", $dns_response["records"][0]["txt"], $out ) ) {
+      $response["as_number"] = "AS" . $out[1];
     } else {
-      $response["as_name"] = "ASUNK";
+      $response["as_number"] = "ASUNK";
+    }
+    unset($dns_response);
+    if ( !$response["as_number"] != "ASUNK" ) {
+      $dns_response = get_dns_record($response["as_number"] . ".asn.cymru.com", "TXT");
+      if ( isset($dns_response["records"][0]["txt"]) && preg_match("/^\d+ \| \w+ \| \w+ \| [0-9\-]{10} \| (.*)/", $dns_response["records"][0]["txt"], $out ) ) {
+        $response["as_name"] = $out[1];
+      } else {
+        $response["as_name"] = "ASUNK";
+      }
     }
   }
 
@@ -1106,7 +1118,7 @@ function ip_to_as_image_or_text($ip) {
 #############################################################################################
 # Get Curl timings
 #############################################################################################
-function get_curl_timings_with_headers($original_url, $request_headers = array(), $override_ip = "") {
+function get_curl_timings_with_headers($method, $original_url, $request_headers = array(), $override_ip = "", $payload = "") {
 
     $url = validate_url($original_url);
     
@@ -1121,6 +1133,9 @@ function get_curl_timings_with_headers($original_url, $request_headers = array()
     curl_setopt($curly, CURLOPT_HEADER, 1);
     curl_setopt($curly, CURLOPT_TIMEOUT, 4);
     curl_setopt($curly, CURLOPT_RETURNTRANSFER, 1);
+    if ( $method != "GET" ) {
+      curl_setopt($curly, CURLOPT_CUSTOMREQUEST, $method);
+    }
     $dest_port = "443";
     switch ( $url_parts['scheme'] ) {
 	  case "http":
@@ -1136,18 +1151,28 @@ function get_curl_timings_with_headers($original_url, $request_headers = array()
         die("<h3>Invalid protocol supplied. You need either http:// or https://</h3>");
     } 
 
+    # Set the Resolve Flag if the override IP is set
     if ( $override_ip != "" ) {
 	  $override_array[] = $url_parts["host"] . ":" . $dest_port . ":" . $override_ip;
 	  curl_setopt($curly, CURLOPT_RESOLVE, $override_array);
 	}
+
+	if ( $payload != "" ) {
+	  curl_setopt($ch, CURLOPT_POSTFIELDS,$payload);
+    }
+
+    if ( !in_array($method, array("GET", "HEAD") ) ) {
+	  $request_headers[] = "content-length: " . strlen($payload);
+	}
+
     curl_setopt($curly,CURLOPT_ENCODING , "gzip"); 
     curl_setopt($curly, CURLOPT_HTTPHEADER, $request_headers );
     curl_setopt($curly, CURLOPT_URL, $url);
-    
+
     curl_exec($curly);
-    
+
     $response = curl_multi_getcontent($curly);
-    
+
     if(curl_errno($curly)) {
         $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($curly) );
     } else {
@@ -1155,26 +1180,27 @@ function get_curl_timings_with_headers($original_url, $request_headers = array()
       
       $info = curl_getinfo($curly);
       $results = array(
-	  "return_code" => $info['http_code'],
-	  "error_message" => "",
-	  "content_type" => $info['content_type'],
-	  "response_size" => $info['size_download'],
-	  "header_size" => $info['header_size'],
-	  "headers_string" => htmlentities($header),
-	  "md5" => md5($content),
-          "dns_lookuptime" => $info['namelookup_time'],
-	  "connect_time" => $info['connect_time'] - $info['namelookup_time'],
-	  "pretransfer_time" => $info['pretransfer_time'] - $info['connect_time'],
-	  "starttransfer_time" => $info['starttransfer_time'] - $info['pretransfer_time'],
-          "transfer_time" =>  $info['total_time'] - $info['starttransfer_time'],
-	  "total_time" => $info['total_time'],
-          "primary_ip" => isset($info['primary_ip']) ? $info['primary_ip']: "Not avail"
+	    "return_code" => $info['http_code'],
+	    "error_message" => "",
+	    "content_type" => $info['content_type'],
+	    "response_size" => $info['size_download'],
+	    "header_size" => $info['header_size'],
+	    "headers_string" => htmlentities($header),
+	    "response_body" => $content,
+	    "md5" => md5($content),
+        "dns_lookuptime" => $info['namelookup_time'],
+	    "connect_time" => $info['connect_time'] - $info['namelookup_time'],
+	    "pretransfer_time" => $info['pretransfer_time'] - $info['connect_time'],
+	    "starttransfer_time" => $info['starttransfer_time'] - $info['pretransfer_time'],
+        "transfer_time" =>  $info['total_time'] - $info['starttransfer_time'],
+	    "total_time" => $info['total_time'],
+        "primary_ip" => isset($info['primary_ip']) ? $info['primary_ip']: "Not avail"
 	  );
     }
-    
+
     curl_close($curly);
     return $results;
-  
+
 }
 
 #############################################################################################

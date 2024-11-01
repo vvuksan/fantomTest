@@ -270,6 +270,12 @@ if ( $waterfall_output ) {
   }
   ?>
   <p>
+  <select name="method" id="http-method">
+   <?php
+   foreach($conf['allowed_http_methods'] as $method) {
+	   print "<option>" . $method . "</option>";
+   }?>
+  </select>
   <input type="text" name="url" id="url" placeholder="URL" size=100 required=""/>
   Max time to wait for load <input id="timeout" name="timeout" type="number" value=60>
   </p>

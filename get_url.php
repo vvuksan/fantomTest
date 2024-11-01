@@ -22,7 +22,9 @@ if ( isset($_REQUEST['arbitrary_headers']) and $_REQUEST['arbitrary_headers'] !=
   $optional_request_headers = array();
 }
 
+######################################################################
 # Default override IP to nothing
+######################################################################
 $override_ip = "";
 
 if ( isset($_REQUEST['override_ip_or_hostname']) ) {
@@ -37,16 +39,32 @@ if ( isset($_REQUEST['override_ip_or_hostname']) ) {
   }
 }
 
+######################################################################
+# Check we got one of the allowable methods. Otherwise default to GET
+######################################################################
+if ( isset($_REQUEST['method']) && in_array($_REQUEST['method'], $conf['allowed_http_methods']) ) {
+  $method = $_REQUEST['method'];
+} else {
+  $method = "GET";
+}
+
+######################################################################
+# Check we got one of the allowable methods. Otherwise default to GET
+######################################################################
+if ( isset($_REQUEST['payload']) ) {
+  $payload = "";
+}
+
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers(trim($_GET['url']), $optional_request_headers, $override_ip);
-    
+    $record = get_curl_timings_with_headers($method, trim($_GET['url']), $optional_request_headers, $override_ip, $payload);
+
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');
       print json_encode($record);
       exit(1);
     }
-    
+
     $results = array();
     $results["-1"] = $record;
     print_url_results($results);    
