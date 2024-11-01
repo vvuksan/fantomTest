@@ -1,5 +1,7 @@
 <?php
 
+header("Cache-Control: private, s-maxage=2");
+
 $base_dir = dirname(__FILE__);
 
 # Load main config file.

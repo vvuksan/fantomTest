@@ -1,5 +1,7 @@
 <?php
 
+header("Cache-Control: private, s-maxage=2");
+
 #############################################################################
 # Use NMAP to discover what TLS ciphers remote server supports
 #############################################################################

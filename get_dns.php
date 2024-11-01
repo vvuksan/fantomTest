@@ -1,6 +1,6 @@
 <?php
 
-$base_dir = dirname(__FILE__);
+header("Cache-Control: private, s-maxage=2");
 
 # Load main config file.
 require_once $base_dir . "/conf_default.php";
