@@ -2,6 +2,8 @@
 
 header("Cache-Control: private, s-maxage=2");
 
+$base_dir = dirname(__FILE__);
+
 # Load main config file.
 require_once $base_dir . "/conf_default.php";
 require_once $base_dir . "/tools.php";
