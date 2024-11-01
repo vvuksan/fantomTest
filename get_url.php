@@ -34,10 +34,8 @@ if ( isset($_REQUEST['override_ip_or_hostname']) ) {
 	# If resolution fails it just returns hostname back. Reset override_ip back
 	if ( $override_ip == $ip_input )
 	  $override_ip ="";
-  
   }
 }
-
 
 if ( $_REQUEST['site_id'] == -1 ) {
 

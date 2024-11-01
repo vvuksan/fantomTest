@@ -20,6 +20,7 @@ include_once("./tools.php");
 <link type="text/css" href="css/fantomtest.css" rel="stylesheet" />
 <script type="text/javascript" src="<?php print $conf['jquery_js_path']; ?>"></script>
 <script type="text/javascript" src="<?php print $conf['jqueryui_js_path']; ?>"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css" integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous">
 <script>
 
 <?php
@@ -253,7 +254,7 @@ if ( $waterfall_output ) {
 <div id="tab-url">
   <div id=header>
   
-  <form id="url_form">
+  <form id="url_form" class="pure-form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
@@ -268,12 +269,17 @@ if ( $waterfall_output ) {
     print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
-  URL <input id="url" name="url" size=100>
-  Max time to wait for load <input id="timeout" name="timeout" size=5 value=60>
+  <p>
+  <input type="text" name="url" id="url" placeholder="URL" size=100 required=""/>
+  Max time to wait for load <input id="timeout" name="timeout" type="number" value=60>
+  </p>
+  <p>
+  <span class="pure-form-message">Optional: </span> <input name="arbitrary_headers" placeholder="Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es)" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
+  &nbsp;<input name="override_ip_or_hostname" placeholder="Override IP/Hostname" size=50>
+  </p>
+  <p><textarea class="pure-input-1-2" name="payload" placeholder="Optional Payload"></textarea>  
   <button class="query_buttons" id="url_querybutton" onclick="getURL(); return false;">Get timings</button><p>
-  Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es):
-  <input name="arbitrary_headers" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
-  <p>Override IP/Hostname <input name="override_ip_or_hostname" size=50></p>
+  </p>
   </form>
   </div>
   <div id=url_results>

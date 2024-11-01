@@ -1184,13 +1184,15 @@ function print_url_results($records) {
   
   global $conf;
   
-  print "<div class=\"time_legend\">";
-  print '<span class="fill dns_time" style="width: 10%">DNS time</span>';
-  print '<span class="fill conn_time" style="width: 10%">Conn Time</span>';
-  print '<span class="fill request_time" style="width: 10%">Request Sent</span>';
-  print '<span class="fill time_to_first_byte" style="width: 10%">TTFB wait</span>';
-  print '<span class="fill transfer_time" style="width: 10%">Transfer Time</span>';
-  print "</div><br />";
+  if ( $conf['show_url_timing_bar'] ) {
+	  print "<div class=\"time_legend\">";
+	  print '<span class="fill dns_time" style="width: 10%">DNS time</span>';
+	  print '<span class="fill conn_time" style="width: 10%">Conn Time</span>';
+	  print '<span class="fill request_time" style="width: 10%">Request Sent</span>';
+	  print '<span class="fill time_to_first_byte" style="width: 10%">TTFB wait</span>';
+	  print '<span class="fill transfer_time" style="width: 10%">Transfer Time</span>';
+	  print "</div><br />";
+  }
   
   print "<table border=1 class=tablesorter>
   <thead>
@@ -1201,7 +1203,7 @@ function print_url_results($records) {
       <th>Cache Hit?</th>";
   }
   
-  print "    <th>Gzip</th>
+  print "    <th>Compressed</th>
       <th>Resp code</th>
       <th>Resp size</th>
       <th>Hdr size</th>
@@ -1247,15 +1249,15 @@ function print_url_results($records) {
 
     $gzip = preg_match("/Content-Encoding: (gzip|br)/i", $record['headers_string']) ? "Yes" : "No";
 
-    $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
-
     print "<td rowspan=2><b>" . $record['primary_ip'] . "</b><br />" . ip_to_as_image_or_text($record['primary_ip']) . "</td>";
     if ( $conf['cdn_detection'] ) {
+      $cache_hit_styling = preg_match("/HIT$/", $cache_hit ) ? "x-cache-HIT" : "x-cache-MISS";
+
       print "<td rowspan=2 class=cache_servers>" . $xservedby . "</td>" .
         "<td rowspan=2 class='" . $cache_hit_styling . "'>" . $cache_hit . "</td>";
     }
     print "<td rowspan=2 class='" . strtolower($gzip) . "-gzip'>" . $gzip . "</td>" .
-        "<td rowspan=2>" . $record['return_code'] . "</td>" .
+        "<td rowspan=2 align=center>" . $record['return_code'] . "</td>" .
         "<td class=number>" . $record['response_size'] . "</td>" .
         "<td class=number>" . $record['header_size'] . "</td>" .
         "<td class=number>" . number_format($record['dns_lookuptime'],3) . "</td>" .
@@ -1267,14 +1269,16 @@ function print_url_results($records) {
         "</tr>";
 
     # Make the bar graph of response
-    print "<tr><td colspan=8>";
-    print "<span class=\"curl_bar\">";
-    print '<span class="fill dns_time" style="width: ' . floor(100 * $record['dns_lookuptime']/$record['total_time']) .  '%">&nbsp;</span>';
-    print '<span class="fill conn_time" style="width: ' . floor(100 * $record['connect_time']/$record['total_time']) .  '%">&nbsp;</span>';
-    print '<span class="fill request_time" style="width: ' . floor(100 * $record['pretransfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
-    print '<span class="fill time_to_first_byte" style="width: ' . floor(100 * $record['starttransfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
-    print '<span class="fill transfer_time" style="width: ' . floor(100 * $record['transfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
-    print "</span>";
+    if ( $conf['show_url_timing_bar'] ) {
+      print "<tr><td colspan=8>";
+      print "<span class=\"curl_bar\">";
+      print '<span class="fill dns_time" style="width: ' . floor(100 * $record['dns_lookuptime']/$record['total_time']) .  '%">&nbsp;</span>';
+      print '<span class="fill conn_time" style="width: ' . floor(100 * $record['connect_time']/$record['total_time']) .  '%">&nbsp;</span>';
+      print '<span class="fill request_time" style="width: ' . floor(100 * $record['pretransfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
+      print '<span class="fill time_to_first_byte" style="width: ' . floor(100 * $record['starttransfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
+      print '<span class="fill transfer_time" style="width: ' . floor(100 * $record['transfer_time']/$record['total_time']) .  '%">&nbsp;</span>';
+      print "</span>";
+    }
 
     print "</td></tr>";
     
