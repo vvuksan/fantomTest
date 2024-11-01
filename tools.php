@@ -981,7 +981,7 @@ function print_dns_results($results) {
       foreach( $result['records'] as $index => $record ) {
         switch ( $record['type'] ) {
           case "A":
-            $record_output = format_ip_address($record['ip']);
+            $record_output = format_ip_address($record['ip']) . " " . ip_to_as_image_or_text($record['ip']);
             break;
           case "AAAA":
             $record_output = format_ip_address($record['ipv6']);
@@ -1009,10 +1009,10 @@ function print_dns_results($results) {
         print "<tr>
           <td>" . $site_name . "</td>
           <td>" . $record['host'] . "</td>
-          <td>" . $resolver_ip . "</td>
+          <td>" . $resolver_ip . " " . ip_to_as_image_or_text($resolver_ip) ."</td>
           <td align=right>" . $record['ttl'] . "</td>
-          <td>" . $record['type'] . "</td>
-          <td>" . $record_output . "</td>
+          <td align=center>" . $record['type'] . "</td>
+          <td align=right>" . $record_output . "</td>
           ";
         print "<td><span class=\"curl_bar\">";
         print '<span class="fill dns_bar" style="width: ' . floor(100 * $result['query_time']/$max_time) .  '%">' .$query_time_in_ms .'</span>';
