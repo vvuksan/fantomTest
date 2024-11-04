@@ -12,11 +12,11 @@ $conf['debug'] = 0;
 # peer certs
 $conf['ssl_peer_verify'] = false;
 
-# Try to detect CDNs used
+# Try to detect CDNs used in URL Test
 $conf['cdn_detection'] = false;
 
-# 
-$conf['show_url_timing_bar'] = true;
+# Show timing for requests in URL Test
+$conf['show_url_timing_bar'] = false;
 
 # Prerender server https://github.com/prerender/prerender
 # If you want to use HARrr server instead of PhantomJS uncomment below. Overrides any PhantomJS settings
