@@ -1157,15 +1157,12 @@ function get_curl_timings_with_headers($method, $original_url, $request_headers 
 	  curl_setopt($curly, CURLOPT_RESOLVE, $override_array);
 	}
 
-	if ( $payload != "" ) {
-	  curl_setopt($ch, CURLOPT_POSTFIELDS,$payload);
-    }
-
     if ( !in_array($method, array("GET", "HEAD") ) ) {
 	  $request_headers[] = "content-length: " . strlen($payload);
+	  curl_setopt($curly, CURLOPT_POSTFIELDS, $payload);
 	}
 
-    curl_setopt($curly,CURLOPT_ENCODING , "gzip"); 
+    curl_setopt($curly, CURLOPT_ENCODING , "gzip");
     curl_setopt($curly, CURLOPT_HTTPHEADER, $request_headers );
     curl_setopt($curly, CURLOPT_URL, $url);
 

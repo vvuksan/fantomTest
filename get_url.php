@@ -51,11 +51,16 @@ if ( isset($_REQUEST['method']) && in_array($_REQUEST['method'], $conf['allowed_
 }
 
 ######################################################################
-# Check we got one of the allowable methods. Otherwise default to GET
+# Set the payload if it exists
 ######################################################################
 if ( isset($_REQUEST['payload']) ) {
-  $payload = "";
+  $payload = $_REQUEST['payload'];
 }
+
+if ( isset($_REQUEST['url-content-type']) ) {
+  $optional_request_headers[] = "Content-Type: " . $_REQUEST['url-content-type'];
+}
+
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
