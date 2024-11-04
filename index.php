@@ -12,6 +12,7 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
 include_once("./tools.php");
 
 ?>
+<!DOCTYPE html>
 <html>
 <head>
 <title>FantomTest Tools</title>
