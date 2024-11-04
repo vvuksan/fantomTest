@@ -18,6 +18,12 @@ $conf['remote_exe'] = basename ( __FILE__ );
 $site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
 $timeout = isset($_REQUEST['timeout']) && is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ? $_REQUEST['timeout'] : 60;
 
+if ( isset($_REQUEST['protocol']) && $_REQUEST['protocol'] == "http1.1" ) {
+  $protocol = "http1.1";
+} else {
+  $protocol = "http2";
+}
+
 if ( isset($_REQUEST['arbitrary_headers']) and $_REQUEST['arbitrary_headers'] != "" ) {
   $optional_request_headers = explode("||", htmlentities($_REQUEST['arbitrary_headers']));
 } else {
@@ -66,7 +72,7 @@ if ( isset($_REQUEST['url-content-type']) ) {
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers($method, trim($_REQUEST['url']), $optional_request_headers, $override_ip, $payload);
+    $record = get_curl_timings_with_headers($protocol, $method, $timeout, trim($_REQUEST['url']), $optional_request_headers, $override_ip, $payload);
 
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');

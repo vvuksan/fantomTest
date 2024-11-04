@@ -260,7 +260,13 @@ if ( $waterfall_output ) {
 <?php
 }
 ?>
+<?php 
 
+################################################################################################
+# URL Check
+################################################################################################
+
+?>
 <div id="tab-url">
   <div id=header>
 
@@ -283,6 +289,10 @@ if ( $waterfall_output ) {
   }
   ?>
   <p>
+  <select class="pure-input-rounded" name="protocol" id="http-protocol">
+     <option value="http2">HTTP 2</option>
+     <option value="http1.1">HTTP 1.1</option>
+  </select>
   <select class="pure-input-rounded" name="method" onChange="checkHTTPMethod()" id="http-method">
    <?php
    foreach($conf['allowed_http_methods'] as $method) {
@@ -328,8 +338,13 @@ if ( $waterfall_output ) {
   </div>
 
 </div>
+<?php 
 
+################################################################################################
+# DNS Check
+################################################################################################
 
+?>
 <div id="tab-dns">
   <div id=header>
   
