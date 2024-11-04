@@ -202,7 +202,7 @@ if ( $pingmtr_enabled ) {
 <?php
 }
 ?>
-	<li><a href="#tab-tls-cert">TLS certificate</a></li>
+	<li><a href="#tab-tls-cert">TLS certificates</a></li>
 <?php
 if ( $tlsciphers_enabled ) {
 ?>
@@ -270,7 +270,7 @@ if ( $waterfall_output ) {
   }
   ?>
   <p>
-  <select name="method" id="http-method">
+  <select name="method" onChange="checkHTTPMethod()" id="http-method">
    <?php
    foreach($conf['allowed_http_methods'] as $method) {
 	   print "<option>" . $method . "</option>";
@@ -297,7 +297,7 @@ if ( $waterfall_output ) {
 <div id="tab-dns">
   <div id=header>
   
-  <form id="dns_form">
+  <form id="dns_form" class="pure-form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and is_array($conf['remotes'] ) ) {
@@ -312,7 +312,7 @@ if ( $waterfall_output ) {
     print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
-  Host name <input id="hostname" name="hostname" size=100>
+  <input id="hostname" name="hostname" placeholder="Name to resolve" size=100>
   Query Type <select name="query_type">
   <?php
   
@@ -340,7 +340,7 @@ if ( $pingmtr_enabled ) {
 <div id="tab-pingmtr">
   <div id=header>
   
-  <form id="pingmtr_form">
+  <form id="pingmtr_form" class="pure-form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
@@ -355,7 +355,7 @@ if ( $pingmtr_enabled ) {
     print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
-  Host name <input id="hostname" name="hostname" size=80>
+  <input id="hostname" name="hostname" placeholder="Hostname or IP" size=80>
   # Pings <input id="ping_count" name="ping_count" value=5 size=4>
   <button class="query_buttons" id="ping_querybutton" onclick="getPingMtr(); return false;">Ping/MTR</button>
   <br />
@@ -370,7 +370,7 @@ if ( $pingmtr_enabled ) {
 
 <div id="tab-tls-cert">
   <div id=header>
-  <form id="tls_cert_form">
+  <form id="tls_cert_form" class="pure-form">
   <?php
   // If we define remotes create a select box
   if ( isset($conf['remotes']) and count($conf['remotes'] ) > 0 ) {
@@ -385,9 +385,10 @@ if ( $pingmtr_enabled ) {
     print "<input type=\"hidden\" name=\"site_id\" value=\"-1\">";
   }
   ?>
-  Host name <input id="hostname" name="hostname" size=100>
-  Port <input id="port" name="port" value=443 size=6> <p />
-  Optional SNI name (usually blank): <input id="sni_name" name="sni_name" size=60>
+  <p>
+  <input id="hostname" name="hostname" type="text" placeholder="Host name or IP" size=100>
+  Port <input id="port" name="port" type="number" value=443 size=2> <p />
+  <span class="pure-form-message">Optional: </span> <input id="sni_name" name="sni_name" placeholder="SNI Hostname" size=60>
   <button class="query_buttons" id="ssl_querybutton" onclick="getTLSCert(); return false;">Get certificate</button>
   <br />
   </form>
