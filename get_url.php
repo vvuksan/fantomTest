@@ -55,6 +55,8 @@ if ( isset($_REQUEST['method']) && in_array($_REQUEST['method'], $conf['allowed_
 ######################################################################
 if ( isset($_REQUEST['payload']) ) {
   $payload = $_REQUEST['payload'];
+} else {
+  $payload = "";
 }
 
 if ( isset($_REQUEST['url-content-type']) ) {
@@ -64,7 +66,7 @@ if ( isset($_REQUEST['url-content-type']) ) {
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers($method, trim($_GET['url']), $optional_request_headers, $override_ip, $payload);
+    $record = get_curl_timings_with_headers($method, trim($_REQUEST['url']), $optional_request_headers, $override_ip, $payload);
 
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');

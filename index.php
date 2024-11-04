@@ -135,7 +135,7 @@ function getDns() {
 }
 function getURL() {
     $("#url_results").html('<img src="img/spinner.gif">');
-    $.get('get_url.php', $("#url_form").serialize(), function(data) {
+    $.post('get_url.php', $("#url_form").serialize(), function(data) {
 	$("#url_results").html(data);
      });
 }
@@ -312,8 +312,8 @@ if ( $waterfall_output ) {
   <div>
 	<form class="pure-form">
       <span class="pure-form-message">Payload content Type: </span>
-      <textarea class="pure-input-1-2" name="json-" id="url-poweruser" 
-		rows="10" cols="220"  placeholder="Request JSON"></textarea>  
+      <textarea class="pure-input-19-24" name="json-" id="url-poweruser" 
+		rows="10" cols="150" placeholder="Request JSON"></textarea>  
 	  <button class="query_buttons" id="url_querybutton" onclick="getURLPowerUser(); return false;">Get timings</button><p>
 	</form>
   </div>

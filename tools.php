@@ -1182,7 +1182,7 @@ function get_curl_timings_with_headers($method, $original_url, $request_headers 
 	    "content_type" => $info['content_type'],
 	    "response_size" => $info['size_download'],
 	    "header_size" => $info['header_size'],
-	    "headers_string" => htmlentities($header),
+	    "headers_string" => $header,
 	    "response_body" => $content,
 	    "md5" => md5($content),
         "dns_lookuptime" => $info['namelookup_time'],
@@ -1217,9 +1217,13 @@ function print_url_results($records) {
 	  print "</div><br />";
   }
   
-  print "<table border=1 class=tablesorter>
+  print "<table border=1 class='pure-table pure-table-bordered'>
   <thead>
-  <tr><th>Remote</th><th>Resolved IP</th>";
+  <tr>
+    <th>Remote</th>
+    <th>Response headers</th>
+    <th>Response Body</th>
+    <th>Resolved IP</th>";
 
   if ( $conf['cdn_detection'] ) {
     print "  <th>X-Served-By</th>
@@ -1229,11 +1233,16 @@ function print_url_results($records) {
   print "    <th>Compressed</th>
       <th>Resp code</th>
       <th>Resp size</th>
-      <th>Hdr size</th>
-      <th>DNS time</th>
-      <th>Connect Time</th><th>Request Sent</th>
-      <th>Time to First Byte</th><th>Tx Time</th><th>Total Time</th></tr>
-  </thead><tbody>";
+      <th>Hdr size</th>";
+  if ( $conf['show_url_timing_bar'] ) {
+    print "      <th>DNS time</th>
+      <th>Connect Time</th>
+      <th>Request Sent</th>
+      <th>Time to First Byte</th>
+      <th>Tx Time</th>
+      <th>Total Time</th>";
+  }
+  print "</tr></thead><tbody>";
   
   foreach ( $records as $id => $record ) {
     # Try to identify CDNs    
@@ -1259,15 +1268,24 @@ function print_url_results($records) {
       $site_name = $conf['remotes'][$id]['name'];
 
     }
-    print "<tr><td rowspan=2>" . $site_name;
+    print "<tr><td>" . $site_name . "</td>";
 
-    print "<div id='remote_" . $id .  "' >".
-   "<button class=\"http_headers\" onClick='$(\"#url_results_" . $id .  "\").toggle(); return false;'>Headers</button></div>";
+    # Sort the response headers by name
+    $resp_headers = explode("\r\n", $record['headers_string']);
+    sort($resp_headers);
 
-    print "<div id='url_results_" . $id .  "' style=\"display: none;\">";
-    print "<pre>" . htmlentities($record['headers_string']) ;
+    print "<td><div id='header_results_" . $id .  "'>";
+    print "<pre style='font-size:0.75vw'>" . htmlentities(join("\n", $resp_headers)) ;
     print "</pre></div>";
+    print "</td>";
 
+    print "<td>";
+    print "<div id='body_" . $id .  "' >".
+   "<button class=\"http_headers\" onClick='$(\"#body_results_" . $id .  "\").toggle(); return false;'>Show Body</button></div>";
+
+    print "<div id='body_results_" . $id .  "' style=\"display: none;\">";
+    print "<pre>" . htmlentities($record['response_body']) ;
+    print "</pre></div>";
     print "</td>";
 
     $gzip = preg_match("/Content-Encoding: (gzip|br)/i", $record['headers_string']) ? "Yes" : "No";
@@ -1281,15 +1299,18 @@ function print_url_results($records) {
     }
     print "<td rowspan=2 class='" . strtolower($gzip) . "-gzip'>" . $gzip . "</td>" .
         "<td rowspan=2 align=center>" . $record['return_code'] . "</td>" .
-        "<td class=number>" . $record['response_size'] . "</td>" .
-        "<td class=number>" . $record['header_size'] . "</td>" .
+        "<td class=number>" . number_format($record['response_size']) . "</td>" .
+        "<td class=number>" . number_format($record['header_size']) . "</td>";
+
+    if ( $conf['show_url_timing_bar'] ) {
         "<td class=number>" . number_format($record['dns_lookuptime'],3) . "</td>" .
         "<td class=number>" . number_format($record['connect_time'],3) . "</td>" .
         "<td class=number>" . number_format($record['pretransfer_time'], 3) . "</td>" .
         "<td class=number>" . number_format($record['starttransfer_time'], 3) . "</td>" .
         "<td class=number>" . number_format($record['transfer_time'], 3) . "</td>" .
-        "<td class=number>" . number_format($record['total_time'], 3) . "</td>".
-        "</tr>";
+        "<td class=number>" . number_format($record['total_time'], 3) . "</td>";
+    }
+    print "</tr>";
 
     # Make the bar graph of response
     if ( $conf['show_url_timing_bar'] ) {
