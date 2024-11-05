@@ -1141,7 +1141,7 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
     }
     if ( $http_proxy != "" ) {
       curl_setopt($curly, CURLOPT_PROXY, $http_proxy);
-	}
+    }
     $dest_port = "443";
     switch ( $url_parts['scheme'] ) {
 	  case "http":
@@ -1159,14 +1159,14 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
 
     # Set the Resolve Flag if the override IP is set
     if ( $override_ip != "" ) {
-	  $override_array[] = $url_parts["host"] . ":" . $dest_port . ":" . $override_ip;
-	  curl_setopt($curly, CURLOPT_RESOLVE, $override_array);
-	}
+      $override_array[] = $url_parts["host"] . ":" . $dest_port . ":" . $override_ip;
+      curl_setopt($curly, CURLOPT_RESOLVE, $override_array);
+    }
 
     if ( !in_array($method, array("GET", "HEAD") ) ) {
-	  $request_headers[] = "content-length: " . strlen($payload);
-	  curl_setopt($curly, CURLOPT_POSTFIELDS, $payload);
-	}
+      $request_headers[] = "content-length: " . strlen($payload);
+      curl_setopt($curly, CURLOPT_POSTFIELDS, $payload);
+    }
 
     curl_setopt($curly, CURLOPT_ENCODING , "gzip");
     curl_setopt($curly, CURLOPT_HTTPHEADER, $request_headers );
@@ -1179,7 +1179,11 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
     if(curl_errno($curly)) {
         $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($curly) );
     } else {
-      list($header, $content) = explode("\r\n\r\n", $response);
+      if ( $http_proxy == "" ) {
+        list($header, $content) = explode("\r\n\r\n", $response);
+      } else {
+        list($proxy_header, $header, $content) = explode("\r\n\r\n", $response);
+      }
       
       $info = curl_getinfo($curly);
       $results = array(
