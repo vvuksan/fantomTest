@@ -306,6 +306,9 @@ if ( $waterfall_output ) {
   <p>
   <span class="pure-form-message">Optional: </span> <input name="arbitrary_headers" class="pure-input-rounded" placeholder="Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es)" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
   &nbsp;<input name="override_ip_or_hostname" class="pure-input-rounded" placeholder="Override IP/Hostname" size=50>
+  <?php if ( $conf['allow_proxy_for_url_check'] ) {
+  ?> <input name="http_proxy" class="pure-input-rounded" placeholder="HTTP proxy" size=50>
+  <?php } ?>
   </p>
   <p>
   <span class="pure-form-message">Payload content Type: </span>

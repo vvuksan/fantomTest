@@ -48,6 +48,15 @@ if ( isset($_REQUEST['override_ip_or_hostname']) ) {
 }
 
 ######################################################################
+# Default override IP to nothing
+######################################################################
+if ( $conf['allow_proxy_for_url_check'] && isset($_REQUEST['http_proxy']) ) {
+  $http_proxy = $_REQUEST['http_proxy'];
+} else {
+  $http_proxy = "";
+}
+
+######################################################################
 # Check we got one of the allowable methods. Otherwise default to GET
 ######################################################################
 if ( isset($_REQUEST['method']) && in_array($_REQUEST['method'], $conf['allowed_http_methods']) ) {
@@ -72,7 +81,7 @@ if ( isset($_REQUEST['url-content-type']) ) {
 
 if ( $_REQUEST['site_id'] == -1 ) {
 
-    $record = get_curl_timings_with_headers($protocol, $method, $timeout, trim($_REQUEST['url']), $optional_request_headers, $override_ip, $payload);
+    $record = get_curl_timings_with_headers($protocol, $method, $timeout, trim($_REQUEST['url']), $optional_request_headers, $override_ip, $http_proxy, $payload);
 
     if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
       header('Content-type: application/json');

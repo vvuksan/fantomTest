@@ -18,6 +18,9 @@ $conf['cdn_detection'] = false;
 # Show timing for requests in URL Test
 $conf['show_url_timing_bar'] = false;
 
+# Allow proxying requests in URL check
+$conf['allow_proxy_for_url_check'] = false;
+
 # Prerender server https://github.com/prerender/prerender
 # If you want to use HARrr server instead of PhantomJS uncomment below. Overrides any PhantomJS settings
 #$conf['prerender_server_url'] = "http://<full_path>/har";

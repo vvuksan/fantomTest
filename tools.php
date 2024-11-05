@@ -1118,7 +1118,7 @@ function ip_to_as_image_or_text($ip) {
 #############################################################################################
 # Get Curl timings
 #############################################################################################
-function get_curl_timings_with_headers($protocol, $method, $timeout, $original_url, $request_headers = array(), $override_ip = "", $payload = "") {
+function get_curl_timings_with_headers($protocol, $method, $timeout, $original_url, $request_headers = array(), $override_ip = "", $http_proxy = "", $payload = "") {
 
     $url = validate_url($original_url);
     
@@ -1139,6 +1139,9 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
     if ( $method != "GET" ) {
       curl_setopt($curly, CURLOPT_CUSTOMREQUEST, $method);
     }
+    if ( $http_proxy != "" ) {
+      curl_setopt($curly, CURLOPT_PROXY, $http_proxy);
+	}
     $dest_port = "443";
     switch ( $url_parts['scheme'] ) {
 	  case "http":
