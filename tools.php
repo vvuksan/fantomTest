@@ -1280,7 +1280,7 @@ function print_url_results($records) {
     }
     print "<tr><td>" . $site_name . "</td>";
 
-	if ( isset($record['error_message'] ) ) {
+	if ( $record['error_message'] != "" ) {
       print "<td><font color=red>" . $record['error_message']  . "</font></td>";
       print "<td></td>";
       print "<td></td>";
@@ -1295,13 +1295,15 @@ function print_url_results($records) {
       sort($resp_headers);
 
       print "<td><div id='header_results_" . $id .  "'>";
-      print "<pre style='font-size:0.75vw'>" . htmlentities(join("\n", $resp_headers)) ;
+      print "<button class=\"http_headers\" onClick='$(\"#headers_" . $id .  "\").toggle(); return false;'>Show/Hide Headers</button></div>";
+
+      print "<pre id=\"headers_" . $id . "\" style='font-size:0.75vw'>" . htmlentities(join("\n", $resp_headers)) ;
       print "</pre></div>";
       print "</td>";
 
       print "<td>";
       print "<div id='body_" . $id .  "' >".
-       "<button class=\"http_headers\" onClick='$(\"#body_results_" . $id .  "\").toggle(); return false;'>Show Body</button></div>";
+       "<button class=\"http_headers\" onClick='$(\"#body_results_" . $id .  "\").toggle(); return false;'>Show/Hide Body</button></div>";
 
       print "<div id='body_results_" . $id .  "' style=\"display: none;\">";
       print "<pre>" . htmlentities($record['response_body']) ;
