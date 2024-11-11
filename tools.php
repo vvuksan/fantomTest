@@ -96,7 +96,7 @@ function generate_waterfall($har) {
     
     # When did the page load finish
     $max_end_time = 0;
-    
+
     if ( !isset($har['log']['entries']) ) {
       print "Couldn't retrieve the HTTP Archive";
       exit;
@@ -887,6 +887,11 @@ function get_dns_record($dns_name, $query_type = "A", $include_timing = false, $
   }
 
   $result = dns_get_record($dns_name, $record_type);
+
+  if ( $result === false ) {
+    return array( "records" => array(), "resolver_ip" => "DNS resolution failure" );
+  }
+
   # Calculate query time
   $query_time = microtime(TRUE) - $start_time;
   
