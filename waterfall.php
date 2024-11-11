@@ -115,8 +115,12 @@ if ( isset($_REQUEST['url']) && trim($_REQUEST['url']) != "" ) {
     </div>
 
     <?php    }
-    $results['har'] = json_decode(file_get_contents($_FILES['har_file']['tmp_name']), TRUE);
-    print generate_waterfall($results['har']);
+    $results = json_decode(file_get_contents($_FILES['har_file']['tmp_name']), TRUE);
+    if ( isset($results['har']) ) {
+      print generate_waterfall($results['har']);
+    } else {
+      print generate_waterfall($results);
+	}
 
 } else {
 ?>
