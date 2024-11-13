@@ -117,8 +117,7 @@ function getTimings() {
       error: function (e) {
           //error
       }
-  });
-
+    });
 
 }
 
@@ -137,8 +136,25 @@ function getDns() {
 function getURL() {
     $("#url_results").html('<img src="img/spinner.gif">');
     $.post('get_url.php', $("#url_form").serialize(), function(data) {
-	$("#url_results").html(data);
-     });
+	  $("#url_results").html(data);
+    });
+}
+
+function getURLPowerUser() {
+    $("#url_results").html('<img src="img/spinner.gif">');
+    $.ajax({
+      url: "get_url.php",
+      method: "POST",
+	  data: $("#url_poweruser").val(),
+      dataType: "html",
+      contentType: "application/json",
+      success: function (data) {
+        $("#url_results").html(data);
+      },
+      error: function (e) {
+          //error
+      }
+    });
 }
 
 function checkHTTPMethod() {
@@ -305,8 +321,8 @@ if ( $waterfall_output ) {
   Max time to wait for load <input id="timeout" class="pure-input-rounded" name="timeout" type="number" value=60>
   </p>
   <p>
-  <span class="pure-form-message">Optional: </span> <input name="arbitrary_headers" class="pure-input-rounded" placeholder="Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es)" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
-  &nbsp;<input name="override_ip_or_hostname" class="pure-input-rounded" placeholder="Override IP/Hostname" size=50>
+  <span class="pure-form-message">Optional: </span> <input name="request_headers" class="pure-input-rounded" placeholder="Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es)" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
+  &nbsp;<input name="override_ip" class="pure-input-rounded" placeholder="Override IP/Hostname" size=50>
   <?php if ( $conf['allow_proxy_for_url_check'] ) {
   ?> <input name="http_proxy" class="pure-input-rounded" placeholder="HTTP proxy" size=50>
   <?php } ?>
@@ -323,13 +339,12 @@ if ( $waterfall_output ) {
   </p>
   </form>
   </div>
-	  <h3>Power user</h3>
+    <h3>Power user</h3>
   <div>
 	<form class="pure-form">
-      <span class="pure-form-message">Payload content Type: </span>
-      <textarea class="pure-input-19-24" name="json-" id="url-poweruser" 
+      <textarea class="pure-input-19-24" name="json-poweruser" id="url_poweruser" 
 		rows="10" cols="150" placeholder="Request JSON"></textarea>  
-	  <button class="query_buttons" id="url_querybutton" onclick="getURLPowerUser(); return false;">Get timings</button><p>
+	  <button class="query_buttons" id="url_poweruser_button" onclick="getURLPowerUser(); return false;">Get timings</button><p>
 	</form>
   </div>
   </div>

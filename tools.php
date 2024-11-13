@@ -1028,15 +1028,10 @@ function print_dns_results($results) {
 ?>
     </tbody>
   </table>
-  <script>
-    $("table").tablesorter();
-  </script>
 <?php
-
   }
-  
-}
 
+}
 
 #############################################################################################
 # IP to AS info
@@ -1123,9 +1118,9 @@ function ip_to_as_image_or_text($ip) {
 #############################################################################################
 # Get Curl timings
 #############################################################################################
-function get_curl_timings_with_headers($protocol, $method, $timeout, $original_url, $request_headers = array(), $override_ip = "", $http_proxy = "", $payload = "") {
+function get_curl_timings_with_headers(&$request) {
 
-    $url = validate_url($original_url);
+    $url = validate_url($request['url']);
     
     if ( $url === FALSE ) {
         print json_encode( array( "error" => "URL is not valid" ) );
@@ -1136,16 +1131,16 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
 
     $curly = curl_init();    
     curl_setopt($curly, CURLOPT_HEADER, 1);
-    curl_setopt($curly, CURLOPT_TIMEOUT, $timeout);
+    curl_setopt($curly, CURLOPT_TIMEOUT, $request['timeout']);
     curl_setopt($curly, CURLOPT_RETURNTRANSFER, 1);
-    if ( $protocol == "http1.1" ) {
+    if ( $request['protocol'] == "http1.1" ) {
 		curl_setopt($curly, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 	}
-    if ( $method != "GET" ) {
-      curl_setopt($curly, CURLOPT_CUSTOMREQUEST, $method);
+    if ( $request['method'] != "GET" ) {
+      curl_setopt($curly, CURLOPT_CUSTOMREQUEST, $request['method']);
     }
-    if ( $http_proxy != "" ) {
-      curl_setopt($curly, CURLOPT_PROXY, $http_proxy);
+    if ( isset($request['http_proxy']) ) {
+      curl_setopt($curly, CURLOPT_PROXY, $request['http_proxy']);
     }
     $dest_port = "443";
     switch ( $url_parts['scheme'] ) {
@@ -1163,18 +1158,18 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
     } 
 
     # Set the Resolve Flag if the override IP is set
-    if ( $override_ip != "" ) {
-      $override_array[] = $url_parts["host"] . ":" . $dest_port . ":" . $override_ip;
+    if ( isset($request['override_ip']) ) {
+      $override_array[] = $url_parts["host"] . ":" . $dest_port . ":" . $request['override_ip'];
       curl_setopt($curly, CURLOPT_RESOLVE, $override_array);
     }
 
-    if ( !in_array($method, array("GET", "HEAD") ) ) {
-      $request_headers[] = "content-length: " . strlen($payload);
-      curl_setopt($curly, CURLOPT_POSTFIELDS, $payload);
+    if ( !in_array($request['method'], array("GET", "HEAD") ) ) {
+      $request_headers[] = "content-length: " . strlen($request['payload']);
+      curl_setopt($curly, CURLOPT_POSTFIELDS, $request['payload']);
     }
 
     curl_setopt($curly, CURLOPT_ENCODING , "gzip");
-    curl_setopt($curly, CURLOPT_HTTPHEADER, $request_headers );
+    curl_setopt($curly, CURLOPT_HTTPHEADER, $request['request_headers'] );
     curl_setopt($curly, CURLOPT_URL, $url);
 
     curl_exec($curly);
@@ -1184,7 +1179,7 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
     if(curl_errno($curly)) {
         $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($curly) );
     } else {
-      if ( $http_proxy == "" ) {
+      if ( !isset($request['http_proxy']) ) {
         list($header, $content) = explode("\r\n\r\n", $response);
       } else {
         list($proxy_header, $header, $content) = explode("\r\n\r\n", $response);
@@ -1218,9 +1213,14 @@ function get_curl_timings_with_headers($protocol, $method, $timeout, $original_u
 #############################################################################################
 # Print cURL results
 #############################################################################################
-function print_url_results($records) {
+function print_url_results($records, $request = array()) {
   
   global $conf;
+
+  print '<div class="pure-g">
+    <div class="pure-u-1-12"><p>Power User Input</p></div>
+    <div class="pure-u-1-3"><textarea class="pure-input-1-2" rows="3" cols="150">' . json_encode($request) . '</textarea></div>
+    </div>';
   
   if ( $conf['show_url_timing_bar'] ) {
 	  print "<div class=\"time_legend\">";
@@ -1231,7 +1231,7 @@ function print_url_results($records) {
 	  print '<span class="fill transfer_time" style="width: 10%">Transfer Time</span>';
 	  print "</div><br />";
   }
-  
+
   print "<table border=1 class='pure-table pure-table-bordered'>
   <thead>
   <tr>

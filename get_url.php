@@ -13,77 +13,97 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
+$request = array();
+
 $conf['remote_exe'] = basename ( __FILE__ );
 
-$site_id = is_numeric($_REQUEST['site_id']) ?$_REQUEST['site_id'] : -1;
-$timeout = isset($_REQUEST['timeout']) && is_numeric($_REQUEST['timeout']) and $_REQUEST['timeout'] < 120  ? $_REQUEST['timeout'] : 60;
-
-if ( isset($_REQUEST['protocol']) && $_REQUEST['protocol'] == "http1.1" ) {
-  $protocol = "http1.1";
+# Was this supplied x-www-url-encoded
+if ( count($_REQUEST) == 0 ) {
+  $my_req = json_decode(file_get_contents('php://input'), TRUE);
 } else {
-  $protocol = "http2";
+  $my_req = $_REQUEST;
 }
 
-if ( isset($_REQUEST['arbitrary_headers']) and $_REQUEST['arbitrary_headers'] != "" ) {
-  $optional_request_headers = explode("||", htmlentities($_REQUEST['arbitrary_headers']));
-} else {
-  $optional_request_headers = array();
-}
+if ( count($my_req) ) {
 
-######################################################################
-# Default override IP to nothing
-######################################################################
-$override_ip = "";
-
-if ( isset($_REQUEST['override_ip_or_hostname']) ) {
-  $ip_input = trim($_REQUEST['override_ip_or_hostname']);
-  if(filter_var($ip_input, FILTER_VALIDATE_IP)) {
-	$override_ip = $ip_input;
+  $request['site_id'] = is_numeric($my_req['site_id']) ? $my_req['site_id'] : -1;
+  $site_id = $request['site_id'];
+  if ( isset($my_req['timeout']) && is_numeric($my_req['timeout']) and $my_req['timeout'] < 120 ) {
+    $request['timeout'] = $my_req['timeout'];
   } else {
-	$override_ip = gethostbyname($ip_input);
-	# If resolution fails it just returns hostname back. Reset override_ip back
-	if ( $override_ip == $ip_input )
-	  $override_ip ="";
+    $request['timeout'] = 60;
   }
+
+  if ( isset($my_req['protocol']) && $my_req['protocol'] == "http1.1" ) {
+    $request['protocol'] = "http1.1";
+  } else {
+    $request['protocol'] = "http2";
+  }
+
+  if ( isset($my_req['arbitrary_headers']) and $my_req['arbitrary_headers'] != "" ) {
+    $request['request_headers'] = explode("||", htmlentities($my_req['arbitrary_headers']));
+  } else {
+    $request['request_headers'] = array();
+  }
+
+  ######################################################################
+  # Default override IP to nothing
+  ######################################################################
+  $override_ip = "";
+
+  if ( isset($my_req['override_ip_or_hostname']) ) {
+    $ip_input = trim($my_req['override_ip_or_hostname']);
+    if(filter_var($ip_input, FILTER_VALIDATE_IP)) {
+      $override_ip = $ip_input;
+    } else {
+      $override_ip = gethostbyname($ip_input);
+      # If resolution fails it just returns hostname back. Reset override_ip back
+      if ( $override_ip == $ip_input )
+        $override_ip ="";
+      }
+  }
+
+  if ( $override_ip != "" ) {
+    $request['override_ip'] = $override_ip;
+  }
+
+  ######################################################################
+  # Default override IP to nothing
+  ######################################################################
+  if ( $conf['allow_proxy_for_url_check'] && isset($my_req['http_proxy']) ) {
+    $request['http_proxy'] = $my_req['http_proxy'];
+  }
+
+  ######################################################################
+  # Check we got one of the allowable methods. Otherwise default to GET
+  ######################################################################
+  if ( isset($my_req['method']) && in_array($my_req['method'], $conf['allowed_http_methods']) ) {
+    $request['method'] = $my_req['method'];
+  } else {
+    $request['method'] = "GET";
+  }
+
+  ######################################################################
+  # Set the payload if it exists
+  ######################################################################
+  if ( isset($my_req['payload']) ) {
+    $request['payload'] = $my_req['payload'];
+  } else {
+    $request['payload'] = "";
+  }
+
+  if ( isset($my_req['url-content-type']) ) {
+    $request['request_headers'][] = "Content-Type: " . $my_req['url-content-type'];
+  }
+
+  $request['url'] = trim($my_req['url']);
 }
 
-######################################################################
-# Default override IP to nothing
-######################################################################
-if ( $conf['allow_proxy_for_url_check'] && isset($_REQUEST['http_proxy']) ) {
-  $http_proxy = $_REQUEST['http_proxy'];
-} else {
-  $http_proxy = "";
-}
+if ( $request['site_id'] == -1 ) {
 
-######################################################################
-# Check we got one of the allowable methods. Otherwise default to GET
-######################################################################
-if ( isset($_REQUEST['method']) && in_array($_REQUEST['method'], $conf['allowed_http_methods']) ) {
-  $method = $_REQUEST['method'];
-} else {
-  $method = "GET";
-}
+    $record = get_curl_timings_with_headers($request);
 
-######################################################################
-# Set the payload if it exists
-######################################################################
-if ( isset($_REQUEST['payload']) ) {
-  $payload = $_REQUEST['payload'];
-} else {
-  $payload = "";
-}
-
-if ( isset($_REQUEST['url-content-type']) ) {
-  $optional_request_headers[] = "Content-Type: " . $_REQUEST['url-content-type'];
-}
-
-
-if ( $_REQUEST['site_id'] == -1 ) {
-
-    $record = get_curl_timings_with_headers($protocol, $method, $timeout, trim($_REQUEST['url']), $optional_request_headers, $override_ip, $http_proxy, $payload);
-
-    if ( isset($_REQUEST['json']) && $_REQUEST['json'] == 1 ) {
+    if ( isset($my_req['json']) && $my_req['json'] == 1 ) {
       header('Content-type: application/json');
       print json_encode($record);
       exit(1);
@@ -91,9 +111,9 @@ if ( $_REQUEST['site_id'] == -1 ) {
 
     $results = array();
     $results["-1"] = $record;
-    print_url_results($results);    
+    print_url_results($results, $request);
 
-} else if ( $site_id == -100 ) {
+} else if ( $request['site_id'] == -100 ) {
 
     $mh = curl_multi_init();
 
@@ -102,14 +122,14 @@ if ( $_REQUEST['site_id'] == -1 ) {
 
       $args[] = "json=1";
       $args[] = "site_id=-1";
-      $args[] = "url=" . htmlentities($_REQUEST['url']);
-      $args[] = "arbitrary_headers=" . htmlentities($_REQUEST['arbitrary_headers']);
+      $args[] = "url=" . htmlentities($my_req['url']);
+      $args[] = "arbitrary_headers=" . htmlentities($my_req['arbitrary_headers']);
 
       $url = $remote['base_url'] . $conf['remote_exe'] . "?" . join("&", $args);
       $url_parts = parse_url($url);
       $curly[$id] = curl_init();    
       curl_setopt($curly[$id], CURLOPT_HEADER, 1);
-      curl_setopt($curly[$id], CURLOPT_TIMEOUT, $timeout);
+      curl_setopt($curly[$id], CURLOPT_TIMEOUT, $request['timeout']);
       curl_setopt($curly[$id], CURLOPT_RETURNTRANSFER, 1);
       switch ( $url_parts['scheme'] ) {
           case "http":
@@ -163,7 +183,7 @@ if ( $_REQUEST['site_id'] == -1 ) {
     
 } else if ( isset($conf['remotes'][$site_id]['name'] ) ) {
     
-    $url = $conf['remotes'][$site_id]['base_url'] . "get_url.php?json=1&site_id=-1&url=" . htmlentities($_REQUEST['url']);
+    $url = $conf['remotes'][$site_id]['base_url'] . "get_url.php?json=1&site_id=-1&url=" . htmlentities($my_req['url']);
     $sslOptions=array("ssl"=>array("verify_peer"=>false,"verify_peer_name"=>false));
 
     $results[$site_id] = json_decode( file_get_contents($url, FALSE, stream_context_create($sslOptions)) , TRUE );
@@ -175,9 +195,6 @@ if ( $_REQUEST['site_id'] == -1 ) {
 ?>
 <script>
 $(function(){
-
     $(".http_headers").button();
-    $("table").tablesorter();
-
 });
 </script>
