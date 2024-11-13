@@ -96,8 +96,8 @@ if ( $_REQUEST['site_id'] == -1 ) {
   } else {
     print "<div id=\"ssl_cert_results\" class=\"ssl-cert-invalid\">";
     print "<h2><font color=red>This certificate is invalid</font></h2>";
-    print "Possible reasons (not exhaustive):<br>";
-    print htmlentities($results["message"]);
+    print "Possible reasons (not exhaustive):<br><div id=\"ssl-cert-invalid\">";
+    print htmlentities($results["message"]) . "</div>";
 
   }
 

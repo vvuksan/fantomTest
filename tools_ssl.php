@@ -23,11 +23,15 @@ function get_ca_certs($ca_certs_file = "/etc/ssl/certs/ca-certificates.crt") {
     
     if ( $cn_value == $issuer_value ) { 
         $ca_certs[$cn_value] = array ( 
-            "ca_cert" => 1 
+            "ca_cert" => 1,
+            "name" => $parsed_cert["name"],
+            "key_identifier" => $parsed_cert["extensions"]["subjectKeyIdentifier"]
         );
     }
   }
   
+  #print_r($ca_certs);
+
   return $ca_certs;
   
 }
@@ -43,14 +47,23 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
   # Get list of all certificates on the local machine
   $ca_certs = get_ca_certs();
   
-  # First we are gonna test whether certificate is good.
+  # First we are gonna test whether certificate is good based on our local CA store
   $ssloptions = array(
-      "capture_peer_cert_chain" => false, 
+      "capture_peer_cert_chain" => true,
       "allow_self_signed" => false,
       "verify_peer_name" => true,
       "verify_peer" => true,
-      );
-  
+  );
+
+  # Are we doing SNI requests
+  if ( $sni_hostname != "" ) {
+   $ssloptions["SNI_enabled"] = true;
+   # Need to figure out why this doesn't work
+   $ssloptions["SNI_server_name"] = $sni_hostname;
+  } else {
+   $ssloptions["SNI_enabled"] = false;
+  }
+
   $ctx = stream_context_create( array("ssl" => $ssloptions) );
 
   # Let's establish a SSL connection
@@ -58,78 +71,67 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
   if (!$fp) {
     $success = 0;
   } else {
-    fclose($fp);
     $success = 1;
-
   }
 
-  $ssloptions = array(
+  # If TLS connection failed let's try with loose connection rules
+  if ( $success == 0 ) {
+    $ssloptions = array(
       "capture_peer_cert_chain" => true, 
       "allow_self_signed"=> true,
       "verify_peer_name" => false,
       "verify_peer"=> false
-      );
-  
-  # Are we doing SNI requests
-  if ( $sni_hostname != "" ) {
-   $ssloptions["SNI_enabled"] = true;
-   # Need to figure out why this doesn't work
-   $ssloptions["SNI_server_name"] = $_REQUEST['sni_name'];
-  } else {
-   $ssloptions["SNI_enabled"] = false;
-  }
-  
-  # Set SSL stream context
-  $ctx = stream_context_create( array("ssl" => $ssloptions) );
+    );
 
-  # Let's establish a SSL connection
-  $fp = stream_socket_client("ssl://{$hostname}:{$port}", $errno, $errstr, 4, STREAM_CLIENT_CONNECT, $ctx);
+    # Set SSL stream context
+    $ctx = stream_context_create( array("ssl" => $ssloptions) );
+
+    # Let's establish a SSL connection
+    $fp = stream_socket_client("ssl://{$hostname}:{$port}", $errno, $errstr, 4, STREAM_CLIENT_CONNECT, $ctx);
+  }
+
   # Grab the context parameters like certificate chain etc.
-
   $captured_certs = array();
-  
-  $cont = stream_context_get_params($fp);
-  if (!$fp) {
-    echo "$errstr ($errno)<br />\n";
-  } else {
 
-    # Let's go through captured certificates
-    foreach($cont["options"]["ssl"]["peer_certificate_chain"] as $cert) {
-      $parsed_cert = openssl_x509_parse($cert);
-      $host_cert = isset($parsed_cert["extensions"]["basicConstraints"]) && $parsed_cert["extensions"]["basicConstraints"] == "CA:FALSE" ? 1 : 0;
-      if ( $host_cert ) {
-        $issuer_cn = $parsed_cert["issuer"]["CN"];
-      }
-
-      # Let's derive full ISSUER name
-      $issuer_name = "";      
-      if ( isset($parsed_cert["issuer"]) ) {
-        foreach ( $parsed_cert["issuer"] as $key => $value ) {
-            $issuer_name .= "/" . $key . "=" . $value;
-        }
-      }
-      
-      $parsed_cert["ISSUER_NAME"] = $issuer_name;
-      
-      ksort($parsed_cert);
-      $captured_certs[] = $parsed_cert;
-      
-      $subject_cn = $parsed_cert["subject"]["CN"];
-      $certificates[$subject_cn] = array( 
-        $parsed_cert["subject"]["CN"],
-        "issuer_cn" => $parsed_cert["issuer"]["CN"],
-        "host_cert" => $host_cert
-        );
-
-    }
+  if ( !$fp ) {
+	return(array("message" => $errstr));
   }
-  
+
+  $cont = stream_context_get_params($fp);
+
+  # Let's go through captured certificates
+  foreach($cont["options"]["ssl"]["peer_certificate_chain"] as $cert) {
+    $parsed_cert = openssl_x509_parse($cert);
+    $host_cert = isset($parsed_cert["extensions"]["basicConstraints"]) && $parsed_cert["extensions"]["basicConstraints"] == "CA:FALSE" ? 1 : 0;
+    if ( $host_cert ) {
+      $issuer_cn = $parsed_cert["issuer"]["CN"];
+    }
+    # Let's derive full ISSUER name
+    $issuer_name = "";
+    if ( isset($parsed_cert["issuer"]) ) {
+      foreach ( $parsed_cert["issuer"] as $key => $value ) {
+        $issuer_name .= "/" . $key . "=" . $value;
+      }
+    }
+
+    $parsed_cert["ISSUER_NAME"] = $issuer_name;
+
+    ksort($parsed_cert);
+    $captured_certs[] = $parsed_cert;
+
+    $subject_cn = $parsed_cert["subject"]["CN"];
+    $certificates[$subject_cn] = array(
+      $parsed_cert["subject"]["CN"],
+      "issuer_cn" => $parsed_cert["issuer"]["CN"],
+        "host_cert" => $host_cert
+      );
+  }
+
   $end = 1;
-  
+
   # Keep how many times we have gone through the chain to avoid an infinite loop
   # in case of an unforseen issue
   $count = 0;
-  
   ##################################################################################
   # Let's walk down the certificate chain
   ##################################################################################
@@ -137,7 +139,6 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
     while ( $end and $count < 6 ) {
 
       $count++;
-
       if ( isset($certificates[$issuer_cn] )) {
         if ( $debug ) print "Found " . $issuer_cn . " on the chain. Checking next\n";
           $issuer_cn = $certificates[$issuer_cn]["issuer_cn"];
@@ -152,12 +153,18 @@ function check_certificate_chain($hostname, $port, $sni_hostname, $debug = 0) {
       }
   }
 
+  if ( strtotime($parsed_cert["VALIDTO"]) < time() ) {
+    $failure_message = "Certificate expired";
+  } else {
+	$failure_message = "Issuer \"" . $issuer_cn . "\" not found in intermediates or CA store";
+  }
+
   fclose($fp);
 
   return(array(
     "certs" => $captured_certs,
     "success" => $success,
-    "message" => $success ? "" : "Issuer \"" . $issuer_cn . "\" not found in intermediates or CA store"
+    "message" => $success ? "" : $failure_message
     )
   );
   
