@@ -321,7 +321,7 @@ if ( $waterfall_output ) {
   Max time to wait for load <input id="timeout" class="pure-input-rounded" name="timeout" type="number" value=60>
   </p>
   <p>
-  <span class="pure-form-message">Optional: </span> <input name="request_headers" class="pure-input-rounded" placeholder="Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es)" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
+  <span class="pure-form-message">Optional: </span> <input name="arbitrary_headers" class="pure-input-rounded" placeholder="Arbitrary headers (multiple need to be || delimited e.g. Cookie: 1234 || Accept-Language: es)" <?php if ( isset($conf['arbitrary_headers']) ) print "value=\"" . htmlentities($conf['arbitrary_headers']) . "\""; ?> size=80>
   &nbsp;<input name="override_ip" class="pure-input-rounded" placeholder="Override IP/Hostname" size=50>
   <?php if ( $conf['allow_proxy_for_url_check'] ) {
   ?> <input name="http_proxy" class="pure-input-rounded" placeholder="HTTP proxy" size=50>
