@@ -41,7 +41,12 @@ if ( count($my_req) ) {
   }
 
   if ( isset($my_req['arbitrary_headers']) and $my_req['arbitrary_headers'] != "" ) {
-    $request['request_headers'] = explode("||", htmlentities($my_req['arbitrary_headers']));
+    # We need to make sure once we explode around || there are no spaces since that
+    # causes curl to barf
+    $temp_array = explode("||", htmlentities($my_req['arbitrary_headers']));
+    foreach ( $temp_array as $header ) {
+      $request['request_headers'][] = trim($header);
+    }
   } else if ( !isset($request['request_headers']) ) {
     $request['request_headers'] = array();
   }
