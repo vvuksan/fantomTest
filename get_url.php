@@ -24,7 +24,7 @@ if ( count($_REQUEST) == 0 ) {
   $my_req = $_REQUEST;
 }
 
-if ( count($my_req) ) {
+if ( count($my_req) > 0 ) {
 
   $request['site_id'] = is_numeric($my_req['site_id']) ? $my_req['site_id'] : -1;
   $site_id = $request['site_id'];
