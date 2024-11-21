@@ -51,8 +51,9 @@ if ( count($my_req) ) {
   ######################################################################
   $override_ip = "";
 
-  if ( isset($my_req['override_ip_or_hostname']) ) {
-    $ip_input = trim($my_req['override_ip_or_hostname']);
+  # Let's verify that the override IP is actually a resolvable DNS name or an IP
+  if ( isset($my_req['override_ip']) ) {
+    $ip_input = trim($my_req['override_ip']);
     if(filter_var($ip_input, FILTER_VALIDATE_IP)) {
       $override_ip = $ip_input;
     } else {
