@@ -47,7 +47,9 @@ if ( count($my_req) > 0 ) {
     foreach ( $temp_array as $header ) {
       $request['request_headers'][] = trim($header);
     }
-  } else if ( !isset($request['request_headers']) ) {
+  } else if ( isset($my_req['request_headers']) ) {
+    $request['request_headers'] = $my_req['request_headers'];
+  } else {
     $request['request_headers'] = array();
   }
 
