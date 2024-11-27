@@ -1178,6 +1178,8 @@ function ip_to_as_image_or_text($ip) {
 #############################################################################################
 function get_curl_timings_with_headers(&$request) {
 
+    global $conf;
+
     $url = validate_url($request['url']);
     
     if ( $url === FALSE ) {
