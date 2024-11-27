@@ -22,7 +22,7 @@ $request = array();
 $conf['remote_exe'] = basename ( __FILE__ );
 
 # Was this supplied x-www-url-encoded
-if ( count($_REQUEST) == 0 ) {
+if ( preg_match("/^application\/json/", $_SERVER["HTTP_CONTENT_TYPE"]) ) {
   $my_req = json_decode(file_get_contents('php://input'), TRUE);
 } else {
   $my_req = $_REQUEST;
