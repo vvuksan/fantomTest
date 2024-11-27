@@ -1,9 +1,6 @@
 <?php
 
 header("cache-control: private, s-maxage=2");
-if ( isset($conf['cors_headers_acao']) ) {
-  header($conf['cors_headers_acao']);
-}
 
 #############################################################################
 # Use NMAP to discover what SSL ciphers remote server supports
@@ -16,6 +13,10 @@ require_once $base_dir . "/conf_default.php";
 # Include user-defined overrides if they exist.
 if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
+}
+
+if ( isset($conf['cors_headers_acao']) ) {
+  header($conf['cors_headers_acao']);
 }
 
 $host_name = trim($_REQUEST['hostname']);

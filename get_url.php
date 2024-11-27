@@ -1,9 +1,6 @@
 <?php
 
 header("cache-control: private, s-maxage=2");
-if ( isset($conf['cors_headers_acao']) ) {
-  header($conf['cors_headers_acao']);
-}
 
 $base_dir = dirname(__FILE__);
 
@@ -14,6 +11,10 @@ require_once $base_dir . "/tools.php";
 # Include user-defined overrides if they exist.
 if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
+}
+
+if ( isset($conf['cors_headers_acao']) ) {
+  header($conf['cors_headers_acao']);
 }
 
 $request = array();
