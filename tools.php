@@ -1237,10 +1237,11 @@ function get_curl_timings_with_headers(&$request) {
     if(curl_errno($curly)) {
         $results = array("return_code" => 400, "response_size" => 0, "content_type" => "none", "error_message" =>  curl_error($curly) );
     } else {
+	  # If we are using a HTTP proxy there will be another entry
       if ( $conf['allow_proxy_for_url_check'] && isset($request['http_proxy']) && $request['http_proxy'] != "" ) {
-        list($header, $content) = explode("\r\n\r\n", $response);
-      } else {
         list($proxy_header, $header, $content) = explode("\r\n\r\n", $response);
+      } else {
+        list($header, $content) = explode("\r\n\r\n", $response);
       }
       
       $info = curl_getinfo($curly);

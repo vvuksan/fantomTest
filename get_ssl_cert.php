@@ -1,6 +1,9 @@
 <?php
 
-header("Cache-Control: private, s-maxage=2");
+header("cache-control: private, s-maxage=2");
+if ( isset($conf['cors_headers_acao']) ) {
+  header($conf['cors_headers_acao']);
+}
 
 #############################################################################
 # Use NMAP to discover what SSL ciphers remote server supports

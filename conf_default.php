@@ -21,6 +21,9 @@ $conf['show_url_timing_bar'] = false;
 # Allow proxying requests in URL check
 $conf['allow_proxy_for_url_check'] = false;
 
+# Set CORS headers. If not set they are not set
+#$conf["cors_headers_acao"] = "access-control-allow-origin: *";
+
 # Prerender server https://github.com/prerender/prerender
 # If you want to use HARrr server instead of PhantomJS uncomment below. Overrides any PhantomJS settings
 #$conf['prerender_server_url'] = "http://<full_path>/har";
