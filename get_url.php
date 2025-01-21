@@ -30,7 +30,7 @@ if ( preg_match("/^application\/json/", $_SERVER["HTTP_CONTENT_TYPE"]) || count(
 
 if ( count($my_req) > 0 ) {
 
-  $request['site_id'] = is_numeric($my_req['site_id']) ? $my_req['site_id'] : -1;
+  $request['site_id'] = isset($my_req['site_id']) && is_numeric($my_req['site_id']) ? $my_req['site_id'] : -1;
   $site_id = $request['site_id'];
   if ( isset($my_req['timeout']) && is_numeric($my_req['timeout']) and $my_req['timeout'] < 120 ) {
     $request['timeout'] = $my_req['timeout'];

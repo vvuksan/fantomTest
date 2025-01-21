@@ -51,7 +51,7 @@ if ( !isset($_REQUEST['port']) ) {
   $port = is_numeric($_REQUEST['port']) && $_REQUEST['port'] > 1 && $_REQUEST['port'] < 65536 ? $_REQUEST['port'] : 443;
 }
 
-$site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
+$site_id = isset($_REQUEST['site_id']) && is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 
 # Need name of this script so we can execute the same on remote nodes
 $conf['remote_exe'] = basename ( __FILE__ );

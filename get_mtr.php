@@ -39,7 +39,7 @@ if ( isset($_REQUEST['ping_count']) and is_numeric($_REQUEST['ping_count']) and 
     $ping_count = 10;
 }
 
-$site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
+$site_id = isset($_REQUEST['site_id']) && is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 
 $conf['remote_exe'] = "get_mtr.php";
 

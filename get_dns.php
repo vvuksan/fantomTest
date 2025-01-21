@@ -17,7 +17,7 @@ if ( isset($conf['cors_headers_acao']) ) {
   header($conf['cors_headers_acao']);
 }
 
-$site_id = is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
+$site_id = isset($_REQUEST['site_id']) && is_numeric($_REQUEST['site_id']) ? $_REQUEST['site_id'] : -1;
 
 if ( !isset($_REQUEST['hostname'])) {
     die("Need to supply hostname");
