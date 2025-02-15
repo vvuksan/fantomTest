@@ -33,6 +33,9 @@ $conf['allow_proxy_for_url_check'] = false;
 # Cache time
 #$conf['cache_time'] = 8640000;
 
+if ( isset($_ENV['HARPOON_URL']) ) {
+  $conf['harpoon_server_url'] = $_ENV['HARPOON_URL'];
+}
 
 # These are the headers that can be used in the URL test. If you are finding you are using the
 # the same headers all the time you can set them here to default to a value
