@@ -1,8 +1,5 @@
 <?php
 
-# Path to PhantomJS
-$conf['phantomjs_bin'] = "/opt/phantomjs/bin/phantomjs";
-
 $conf['debug'] = 0;
 
 # IMPORTANT 

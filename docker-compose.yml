@@ -1,0 +1,14 @@
+services:
+  har-poon:
+    image: doramatadora/har-poon
+    ports:
+      - '3000:3000'
+  fantomtest:
+    image: fantomtest
+    build: ./
+    ports:
+      - '8000:80'
+    environment:
+      - HARPOON_URL=http://har-poon:3000/throw
+    depends_on:
+      - har-poon
