@@ -20,9 +20,11 @@ Installation
 
 * Install PHP scripts somewhere in the Web Server HTDOCS area e.g. /var/www/fantomtest
 * Configure conf.php. In most cases you will only need to configure the location of
-phantomjs binary e.g.
+harpoon server (https://github.com/doramatadora/har-poon/) e.g.
 
-  $conf['phantomjs_bin'] = "/opt/phantomjs/phantomjs";
+<code>
+  $conf['harpoon_server_url'] = "http://har-poon:3000/throw"
+</code>
 
 * You can override any value in conf_default.php with the value in conf.php
 * Now open up fantomTest in your browser.
