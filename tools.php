@@ -10,27 +10,6 @@ if( file_exists( $base_dir . "/conf.php" ) ) {
   include_once $base_dir . "/conf.php";
 }
 
-# Identify whether PhantomJS exists version
-if ( !isset($conf['phantomjs_exec']) )  {
-
-  if ( is_executable($conf['phantomjs_bin']) ) {
-
-    if ( preg_match("/^2/", exec($conf['phantomjs_bin'] . " -v")) ) {
-    $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " --ignore-ssl-errors=true " . __DIR__ . "/netsniff/netsniff-v2.js";
-    } else {
-    $conf['phantomjs_exec'] = $conf['phantomjs_bin'] . " " . __DIR__ . "/netsniff/netsniff.js";
-    }
-
-    $waterfall_output = true;
-
-  } else {
-
-    $waterfall_output = false;
-
-  }
-}
-
-
 if ( isset($conf['prerender_server_url']) || isset($conf['harrr_server_url']) ||isset($conf['harpoon_server_url'])  ) {
   $waterfall_output = true;  
 }
@@ -132,6 +111,25 @@ function json_prettyprint($json) {
     }
 
     return $new_json;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Return Country HTML Emoji
+//////////////////////////////////////////////////////////////////////////////
+function getCountryFlag($countryCode) {
+    // Convert to uppercase and validate
+    $countryCode = strtoupper($countryCode);
+
+    // Check if it's a valid 2-letter code
+    if (strlen($countryCode) !== 2 || !ctype_alpha($countryCode)) {
+        return '';
+    }
+
+    // Convert each letter to its regional indicator symbol
+    $firstLetter = mb_chr(127462 + ord($countryCode[0]) - ord('A'));
+    $secondLetter = mb_chr(127462 + ord($countryCode[1]) - ord('A'));
+
+    return $firstLetter . $secondLetter;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -415,7 +413,7 @@ function generate_waterfall($har) {
           $ip_prefix = join(".", $ip_parts);
           if ( !isset($ip_to_as_cache[$ip_prefix]) ) {
             $ip_details = ip_to_as_info($request['server_ip']);
-            $ip_to_as_cache[$ip_prefix] = array( "as_number" => $ip_details["as_number"], "as_name" => $ip_details["as_name"]);
+            $ip_to_as_cache[$ip_prefix] = $ip_details;
           }
           $frontend_ip_provider = "UNK";
           # Instead of showing text for some of the most common AS let's use an image
@@ -463,7 +461,7 @@ function generate_waterfall($har) {
           } else {
             $img_or_as_name = $ip_to_as_cache[$ip_prefix]["as_name"];
           }
-          $haroutput .= "<td>" . $img_or_as_name . " " . $request['server_ip'] . "</td>";
+          $haroutput .= "<td>" . $img_or_as_name . getCountryFlag($ip_to_as_cache[$ip_prefix]["as_country"]) . " " . $request['server_ip'] . "</td>";
         } else {
           $haroutput .= "<td>&nbsp;</td>";
         }
@@ -1113,8 +1111,9 @@ function ip_to_as_info($ip) {
   # No DNS results due to either a failure or because they are RFC1918
   if ( count($dns_response["records"]) == 0 ) {
   } else {
-    if ( preg_match("/^(\d+)/", $dns_response["records"][0]["txt"], $out ) ) {
+    if ( preg_match("/^(\d+) \| [0-9.\/]+ \| (\w{2})/", $dns_response["records"][0]["txt"], $out ) ) {
       $response["as_number"] = "AS" . $out[1];
+      $response["as_country"] = $out[2];
     } else {
       $response["as_number"] = "ASUNK";
     }
