@@ -9,7 +9,7 @@ RUN touch /etc/ssl/openssl.cnf
 
 RUN mv /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
 RUN sed -i 's;upload_max_filesize = .*;upload_max_filesize = 96M;g' /usr/local/etc/php/php.ini
-
+RUN sed -i 's;post_max_size = .*;post_max_size = 96M;g' /usr/local/etc/php/php.ini
 
 RUN mkdir /var/www/html/fantomtest
 COPY *.php /var/www/html/fantomtest/
