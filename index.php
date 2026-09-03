@@ -43,12 +43,33 @@ function getTimings() {
       data: formData,
       success: function (data) {
         $("#results").html(data);
+        // Lighthouse runs as a second, slower request so the waterfall shows up right away
+        if ( $("#run_audits").is(":checked") && $("#checked_url").val() !== "" && $("#results .wf-summary").length ) {
+          getAudits();
+        }
       },
       error: function (e) {
           //error
       }
     });
 
+}
+
+function getAudits() {
+    var box = $('<div id="audits" class="lh-report lh-loading"><span class="stat-label">Lighthouse lab metrics</span>' +
+                '<div class="lh-wait"><img src="img/spinner.gif"> Running Lighthouse on a simulated mobile device. This usually takes 5 to 20 seconds.</div></div>');
+    $("#results .wf-summary").after(box);
+    $.ajax({
+      url: "get_audits.php",
+      method: "POST",
+      data: { url: $("#checked_url").val(), site_id: $("#query_form [name=site_id]").val() },
+      success: function (data) {
+        $("#audits").replaceWith(data);
+      },
+      error: function (e) {
+        $("#audits").removeClass("lh-loading").addClass("lh-error").find(".lh-wait").text("Lighthouse audits failed: " + (e.statusText || "request error"));
+      }
+    });
 }
 
 <?php
@@ -194,6 +215,9 @@ if ( $waterfall_output ) {
   ?>
   <input type="text" name="url" id="checked_url" class="pure-input-rounded" placeholder="URL" size=100 required=""/>
   <button class="query_buttons" id="query_button" onclick="getTimings(); return false;">Get waterfall</button>
+  <?php if ( isset($conf['harpoon_server_url']) ) { ?>
+  <label class="wf-check" title="Also run Lighthouse audits (simulated mobile) after the waterfall loads"><input type="checkbox" id="run_audits" name="run_audits" checked> Lighthouse audits</label>
+  <?php } ?>
   <p />
   or upload a <a target="_blank" href="https://support.zendesk.com/hc/en-us/articles/4408828867098-Generating-a-HAR-file-for-troubleshooting" title="How go generate a HAR file">HAR (HTTP archive)</a>
   <input type="file" id="har_file" name="har_file" class="pure-button" onchange='$("#checked_url").val(""); getTimings(); return false;'>

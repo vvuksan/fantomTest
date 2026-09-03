@@ -27,6 +27,9 @@ harpoon server (https://github.com/doramatadora/har-poon/) e.g.
 </code>
 
 * You can override any value in conf_default.php with the value in conf.php
+* With harpoon configured the waterfall tab can also run Lighthouse audits (lab metrics such as
+  FCP/LCP, image and code-weight opportunities) as a second, asynchronous request. The list of
+  audits is `$conf['lighthouse_audits']` in conf_default.php; any Lighthouse audit id works.
 * Now open up fantomTest in your browser.
 
 Configuration

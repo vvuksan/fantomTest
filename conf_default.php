@@ -34,6 +34,49 @@ if ( getenv('HARPOON_URL') !== false ) {
   $conf['harpoon_server_url'] = getenv('HARPOON_URL');
 }
 
+# Lighthouse audits requested from har-poon after the waterfall has loaded (optional, runs
+# asynchronously). Any Lighthouse audit id works; metric audits become tiles, everything else
+# is rendered as an opportunity/diagnostic table. See
+# https://github.com/doramatadora/har-poon#a-list-of-lighthouse-performance-audits-ok-sure
+$conf['lighthouse_audits'] = array(
+  # Core metrics
+  "first-contentful-paint",
+  "largest-contentful-paint",
+  "speed-index",
+  "total-blocking-time",
+  "cumulative-layout-shift",
+  "interactive",
+  "server-response-time",
+  "largest-contentful-paint-element",
+  # Images
+  "uses-responsive-images",
+  "modern-image-formats",
+  "uses-optimized-images",
+  "offscreen-images",
+  "unsized-images",
+  "prioritize-lcp-image",
+  # Delivery
+  "render-blocking-resources",
+  "uses-text-compression",
+  "uses-long-cache-ttl",
+  "redirects",
+  "uses-rel-preconnect",
+  "font-display",
+  # Code weight
+  "unused-css-rules",
+  "unused-javascript",
+  "unminified-css",
+  "unminified-javascript",
+  "legacy-javascript",
+  "duplicated-javascript",
+  # Main thread and layout
+  "third-party-summary",
+  "bootup-time",
+  "dom-size",
+  "layout-shifts",
+  "errors-in-console",
+);
+
 # These are the headers that can be used in the URL test. If you are finding you are using the
 # the same headers all the time you can set them here to default to a value
 # For example Accept-Language:es || User-Agent:Mozilla

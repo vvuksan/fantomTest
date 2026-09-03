@@ -391,7 +391,7 @@ function generate_waterfall($har) {
         if ( $request["resp_code"] == 101 )
           $status_class = "status-ws";
 
-        $haroutput .= "\n<tr class='wf-row response_" . $request["resp_code"] . " " . $status_class . "'>";
+        $haroutput .= "\n<tr class='wf-row response_" . $request["resp_code"] . " " . $status_class . "' data-url=\"" . htmlentities($request["url"]) . "\">";
         if ( $request["resp_code"] == 101 ) {
           $haroutput .= "<td class=\"num\" id=\"ws" . $index . "\">" . $index . "</td>";
           $websockets_anchors[] = "ws" . $index;

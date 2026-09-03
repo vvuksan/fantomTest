@@ -81,6 +81,163 @@ body{
 }
 
 /* ==========================================================================
+   Lighthouse lab metrics (waterfall tab)
+   ========================================================================== */
+.wf-check {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #444;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wf-check input { vertical-align: -2px; margin-right: 4px; }
+
+.lh-report {
+  font-family: var(--wf-font);
+  font-size: 12.5px;
+  color: var(--wf-text);
+  border: 1px solid var(--wf-border);
+  border-radius: 8px;
+  background: var(--wf-panel);
+  padding: 12px 16px 14px;
+  margin: 0 0 14px;
+}
+.lh-report .mono { font-family: var(--wf-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.lh-report a { color: #1c7ed6; text-decoration: none; }
+.lh-report a:hover { text-decoration: underline; }
+.lh-report .stat-label { margin-bottom: 0; }
+
+.lh-wait { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--wf-muted); }
+.lh-wait img { height: 18px; }
+.lh-error div { margin-top: 6px; color: #b91c1c; }
+
+.lh-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 10px; }
+.lh-env { font-size: 11px; color: var(--wf-muted); }
+
+.lh-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px 24px; }
+
+.lh-metrics { display: flex; flex-wrap: wrap; gap: 8px; }
+.lh-tile {
+  min-width: 96px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--wf-border);
+  border-left-width: 4px;
+}
+.lh-tile-label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--wf-muted); }
+.lh-tile-value { display: block; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.lh-tile.good { border-left-color: #16a34a; }
+.lh-tile.avg  { border-left-color: #d97706; }
+.lh-tile.poor { border-left-color: #dc2626; }
+.lh-tile.na   { border-left-color: #cbd5e1; }
+.lh-tile.good .lh-tile-value { color: #166534; }
+.lh-tile.avg  .lh-tile-value { color: #92400e; }
+.lh-tile.poor .lh-tile-value { color: #b91c1c; }
+
+/* thumbnail shows the top of the (very tall) full-page screenshot; click to see it all */
+.lh-shot {
+  margin-left: auto;
+  cursor: zoom-in;
+  width: 160px;
+  height: 150px;
+  overflow: hidden;
+  border: 1px solid var(--wf-border);
+  border-radius: 4px;
+  background: #fff;
+}
+.lh-shot img { display: block; width: 100%; }
+.lh-shot.expanded { margin-left: 0; flex-basis: 100%; width: auto; height: auto; cursor: zoom-out; border: 0; background: none; }
+.lh-shot.expanded img { width: auto; max-width: 100%; border: 1px solid var(--wf-border); border-radius: 4px; }
+
+.lh-lcp { margin-top: 12px; }
+.lh-lcp-node { margin: 4px 0 6px; }
+.lh-lcp-node code { font: 11.5px var(--wf-mono); background: #fff; border: 1px solid var(--wf-border); border-radius: 4px; padding: 1px 6px; }
+.lh-lcp-label { color: var(--wf-muted); }
+.lh-phases { display: flex; gap: 2px; max-width: 760px; }
+.lh-phase {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--wf-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lh-phase i { display: block; height: 6px; border-radius: 3px; background: #94a3b8; margin-bottom: 3px; }
+.lh-phase.ttfb i        { background: #f2b807; }
+.lh-phase.loaddelay i   { background: #ef476f; }
+.lh-phase.loadtime i    { background: #228be6; }
+.lh-phase.renderdelay i { background: #7048e8; }
+.lh-phase b { color: var(--wf-text); font-weight: 600; }
+
+.lh-opps { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.lh-opp {
+  background: #fff;
+  border: 1px solid var(--wf-border);
+  border-radius: 6px;
+  padding: 0 12px;
+}
+.lh-opp summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+  list-style: none;
+}
+.lh-opp summary::-webkit-details-marker { display: none; }
+.lh-opp summary::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-right: 1.5px solid var(--wf-muted);
+  border-bottom: 1.5px solid var(--wf-muted);
+  transform: rotate(-45deg);
+  margin: 0 4px 0 2px;
+  flex: 0 0 auto;
+}
+.lh-opp[open] summary::before { transform: rotate(45deg); }
+.lh-dv { color: var(--wf-muted); }
+.lh-savings { margin-left: auto; font-size: 11.5px; font-weight: 600; color: #92400e; background: #fef3c7; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.lh-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+.lh-dot.good { background: #16a34a; }
+.lh-dot.avg  { background: #d97706; }
+.lh-dot.poor { background: #dc2626; }
+.lh-dot.na   { background: #cbd5e1; }
+.lh-opp-body { padding: 0 0 10px 20px; }
+.lh-desc { margin: 0 0 8px; color: var(--wf-muted); font-size: 12px; max-width: 900px; }
+
+.lh-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+.lh-table th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--wf-muted);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--wf-border);
+  white-space: nowrap;
+}
+.lh-table td { padding: 4px 8px 4px 0; border-bottom: 1px solid var(--wf-grid); vertical-align: top; overflow: hidden; }
+/* numeric columns get a fixed width; the remaining text/url columns share what is left */
+.lh-table th.num, .lh-table td.num { text-align: right; width: 130px; padding: 4px 0 4px 12px; white-space: nowrap; }
+.lh-table .ellipsis { display: block; }
+.lh-showmore {
+  margin-top: 6px;
+  font: 600 11.5px var(--wf-font);
+  color: #1c7ed6;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.lh-passed { margin-top: 12px; color: var(--wf-muted); font-size: 12px; display: flex; gap: 8px; align-items: baseline; }
+.lh-passed .lh-dot { position: relative; top: 1px; }
+
+.pill.lh-flag { color: #7c2d12; background: #ffedd5; border-color: #fdba74; cursor: help; }
+
+/* ==========================================================================
    TLS certificate report
    ========================================================================== */
 .tls-report {
