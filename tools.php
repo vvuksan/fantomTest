@@ -118,7 +118,7 @@ function json_prettyprint($json) {
 //////////////////////////////////////////////////////////////////////////////
 function getCountryFlag($countryCode) {
     // Convert to uppercase and validate
-    $countryCode = strtoupper($countryCode);
+    $countryCode = strtoupper((string)$countryCode);
 
     // Check if it's a valid 2-letter code
     if (strlen($countryCode) !== 2 || !ctype_alpha($countryCode)) {
@@ -130,6 +130,47 @@ function getCountryFlag($countryCode) {
     $secondLetter = mb_chr(127462 + ord($countryCode[1]) - ord('A'));
 
     return $firstLetter . $secondLetter;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Small formatting helpers used by the waterfall
+//////////////////////////////////////////////////////////////////////////////
+# Seconds -> "237 ms" or "1.24 s"
+function wf_format_seconds($seconds) {
+    $ms = $seconds * 1000;
+    if ( $ms < 1000 )
+      return round($ms) . " ms";
+    return sprintf("%.2f s", $seconds);
+}
+
+# Milliseconds -> short axis label "500ms" / "1.5s"
+function wf_format_tick($ms) {
+    if ( $ms < 1000 )
+      return $ms . "ms";
+    return rtrim(rtrim(sprintf("%.2f", $ms / 1000), "0"), ".") . "s";
+}
+
+# Bytes -> "263.7 kB"
+function wf_format_bytes($bytes) {
+    if ( $bytes < 1024 )
+      return number_format($bytes) . " B";
+    if ( $bytes < 1024 * 1024 )
+      return sprintf("%.1f kB", $bytes / 1024);
+    return sprintf("%.2f MB", $bytes / (1024 * 1024));
+}
+
+# Fraction of total time as a CSS percentage
+function wf_pct($seconds, $total) {
+    if ( $total <= 0 || $seconds <= 0 )
+      return "0";
+    return sprintf("%.3f", ($seconds / $total) * 100);
+}
+
+# A single timing bar segment (only emitted when it has a duration)
+function wf_segment($class, $label, $seconds, $total) {
+    if ( $seconds <= 0 )
+      return "";
+    return '<span class="seg seg-' . $class . '" title="' . $label . ': ' . wf_format_seconds($seconds) . '" style="width:' . wf_pct($seconds, $total) . '%"></span>';
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -166,14 +207,14 @@ function generate_waterfall($har) {
         $resp_code = intval($request['response']['status']);
         $resp_size = isset($request['response']['content']['size']) ? floatval($request['response']['content']['size']) : 0;
         
-        // Extract the milliseconds since strtotime doesn't seem to retain it
-        if ( preg_match("/(.*)T(.*)\.(.*)(Z)/", $started_time, $out) ) {
-          $milli = $out[3];
-        } else {
-          $milli = 0;
+        // Extract the fractional seconds since strtotime drops them. Works for both
+        // "...T20:18:44.286Z" and "...T20:18:44.286-04:00" style timestamps.
+        $fraction = 0;
+        if ( preg_match("/T\d{2}:\d{2}:\d{2}\.(\d+)/", $started_time, $out) ) {
+          $fraction = floatval("0." . $out[1]);
         }
 
-        $start_time = floatval(strtotime($started_time) . "." . $milli);
+        $start_time = strtotime($started_time) + $fraction;
         $end_time = $start_time + $request_duration;
     
         # Trying to find the start time of the first request
@@ -202,16 +243,24 @@ function generate_waterfall($har) {
           $server_ip = false;
         }
 
+        # HAR uses -1 for timings that don't apply, so clamp everything at zero
+        $t = isset($request['timings']) ? $request['timings'] : array();
+        $timing = function($name) use ($t) { return isset($t[$name]) && $t[$name] > 0 ? $t[$name] / 1000 : 0; };
+
+        # Per HAR spec the "connect" phase includes "ssl", so show TLS separately
+        $connect_only = max(0, $timing('connect') - $timing('ssl'));
+
         $requests[] = array(
             "url" => $url,
             "start_time" => $start_time,
-            "dns_time" => !isset($request['timings']['dns']) || $request['timings']['dns'] <= 0 ? 0 : $request['timings']['dns'] / 1000,
-            "connect_time" => !isset($request['timings']['connect']) || $request['timings']['connect'] <= 0 ? 0 : $request['timings']['connect'] / 1000,
-            "ssl_time" => !isset($request['timings']['ssl']) || $request['timings']['ssl'] <= 0 ? 0 : $request['timings']['ssl'] / 1000,
-            "wait_time" => !isset($request['timings']['wait']) ? 0 : $request['timings']['wait'] / 1000,
-            "download_time" => !isset($request['timings']['receive']) ? 0 : $request['timings']['receive'] / 1000,
+            "blocked_time" => $timing('blocked'),
+            "dns_time" => $timing('dns'),
+            "connect_time" => $connect_only,
+            "ssl_time" => $timing('ssl'),
+            "wait_time" => $timing('send') + $timing('wait'),
+            "download_time" => $timing('receive'),
             "duration" => $request_duration,
-            "size" => $resp_size,
+            "size" => max(0, $resp_size),
             "resp_code" => intval($resp_code),
             "http_version" => $request['response']['httpVersion'],
             "server_ip" =>  $server_ip,
@@ -234,77 +283,99 @@ function generate_waterfall($har) {
     # Total time to fetch the page and all resources
     $total_time = $max_end_time - $min_start_time;
     
-    $content_breakdown = array( "html" => 0,  "images" => 0, "js" => 0, "json" => 0, "css" => 0, "fonts" => 0);
+    $content_breakdown = array( "html" => 0,  "images" => 0, "js" => 0, "json" => 0, "css" => 0, "fonts" => 0, "other" => 0);
     $websockets_anchors = array();
-    
-    $haroutput = '<table class="harview">
+    $total_bytes = 0;
+    $request_count = count($requests);
+
+    # Pick a tick interval for the timeline grid so that we get roughly 6-10 gridlines
+    $total_ms = $total_time * 1000;
+    $tick_candidates = array(10, 20, 50, 100, 200, 250, 500, 1000, 2000, 5000, 10000, 20000, 30000, 60000);
+    $tick_ms = end($tick_candidates);
+    foreach ( $tick_candidates as $candidate ) {
+      if ( $candidate > $total_ms / 8 ) {
+        $tick_ms = $candidate;
+        break;
+      }
+    }
+    $tick_pct = $total_ms > 0 ? ($tick_ms / $total_ms) * 100 : 100;
+    $tick_labels = '<span class="wf-tick wf-tick-first">0</span>';
+    for ( $t = $tick_ms; $t < $total_ms * 0.97; $t += $tick_ms ) {
+      $tick_labels .= '<span class="wf-tick" style="left:' . sprintf("%.3f", ($t / $total_ms) * 100) . '%">' . wf_format_tick($t) . '</span>';
+    }
+
+    # The --wf-tick variable drives the CSS gridlines behind every bar so they line up with the labels
+    $haroutput = '<table class="harview" style="--wf-tick: ' . sprintf("%.4f", $tick_pct) . '%">
+        <colgroup>
+            <col class="col-num"><col class="col-url"><col class="col-ip"><col class="col-server">
+            <col class="col-hit"><col class="col-status"><col class="col-dur"><col class="col-size"><col class="col-timeline">
+        </colgroup>
+        <thead>
         <tr>
-            <th>#</th>
-            <th width=50%>URL</th>
+            <th class="num">#</th>
+            <th>URL</th>
             <th>IP</th>
             <th>Server</th>
-            <th>Hit?</th>
-            <th>Resp Code</th>
-            <th>Dur</th>
-            <th>Size (bytes)</th>
-            <th></th>
-        </tr>'
-    ;
+            <th>Cache</th>
+            <th>Status</th>
+            <th class="num">Time</th>
+            <th class="num">Size</th>
+            <th class="timeline"><div class="wf-ticks">' . $tick_labels . '</div></th>
+        </tr>
+        </thead>
+        <tbody>';
 
-    foreach ( $requests as $key => $request ) {
+    foreach ( $requests as $index => $request ) {
         $time_offset = $request["start_time"] - $min_start_time;
+        $total_bytes += $request["size"];
 
-        $white_space = round(($time_offset / $total_time) * 100);
-        $dns_time_bar = ceil(($request["dns_time"] / $total_time) * 100);
-        $connect_time_bar = ceil(($request["connect_time"] / $total_time) * 100);
-        $ssl_time_bar = ceil(($request["ssl_time"] / $total_time) * 100);
-        $wait_time_bar = ceil(($request["wait_time"] / $total_time) * 100);
-        $download_time_bar = ceil(($request["download_time"] / $total_time) * 100);
+        # Colour rows/pills by response class
+        $status_class = "status-" . intval($request["resp_code"] / 100) . "xx";
+        if ( $request["resp_code"] == 101 )
+          $status_class = "status-ws";
 
-        $haroutput .= "\n<tr class='response_" . $request["resp_code"] . "'>";
+        $haroutput .= "\n<tr class='wf-row response_" . $request["resp_code"] . " " . $status_class . "'>";
         if ( $request["resp_code"] == 101 ) {
-          $haroutput .= "<td><em id=ws" . $key . ">" . $key . "</em></td>";
-          $websockets_anchors[] = "ws" . $key;
+          $haroutput .= "<td class=\"num\" id=\"ws" . $index . "\">" . $index . "</td>";
+          $websockets_anchors[] = "ws" . $index;
         } else {
-          $haroutput .= "<td>" . $key . "</td>";
+          $haroutput .= "<td class=\"num\">" . $index . "</td>";
         }
 
-        # Output the request url but shrink the screen output to 50 characters
-        $haroutput .= "<td><a href='" . $request["url"] . "'>" . substr($request["url"],0,50) . "</a>";
+        # URL: hostname muted, path emphasised, the full URL available as tooltip. CSS handles truncation.
+        $parsed_url = parse_url($request["url"]);
+        $url_host = isset($parsed_url['host']) ? $parsed_url['host'] : "";
+        $url_path = (isset($parsed_url['path']) ? $parsed_url['path'] : "/") . (isset($parsed_url['query']) ? "?" . $parsed_url['query'] : "");
+        $url_html = htmlentities($request["url"]);
 
-        $content_encoding = false;
+        $haroutput .= '<td><div class="url-cell">' .
+            '<button class="hdr-toggle" title="Toggle response headers" onClick="$(\'#item_' . $index . '\').toggle(); $(this).toggleClass(\'open\'); return false"></button>' .
+            '<a class="url-link" href="' . $url_html . '" title="' . $url_html . '" target="_blank" rel="noopener">' .
+              '<span class="url-host">' . htmlentities($url_host) . '</span><span class="url-path">' . htmlentities($url_path) . '</span></a>' .
+            '<span class="url-badges">';
+
+        $content_type_full = isset($request['resp_headers']['content-type']) ? $request['resp_headers']['content-type'] : "Unknown";
+        $content_encoding = isset($request['resp_headers']['content-encoding']) ? $request['resp_headers']['content-encoding'] : false;
         $content_type = false;
 
-        # Add button that toggles response headers
-        $haroutput .= '
-        <button class="header_button" onClick="$(\'#item_' . $key . '\').toggle(); return false">more</button>
-        <div class="http_headers" style="display: none;" id="item_' . $key .'">';
-        $content_type_full = "Unknown";
-
-        $haroutput .= "Browser timing (sec): DNS:" . number_format($request["dns_time"],3) . 
-           " CNCT: " . number_format($request["connect_time"], 3) . 
-           " TLS: " . number_format($request["ssl_time"], 3) .
-           " WAIT: " . number_format($request["wait_time"], 3) . 
-           " DNLD: " . number_format($request["download_time"], 3) .
-           "<br />";
-
-        foreach ( $request['resp_headers'] as $key => $value ) {
-          if ( strtolower($key) == "content-type" ) {
-            $content_type_full = $value;
-          }
-
-          if ( strtolower($key) == "content-encoding" ) {
-            $content_encoding = $value;
-          }
-
-          $haroutput .= "<b>" . htmlentities($key) . "</b>: " . htmlentities($value) . "<br />";
+        # Build the collapsible detail row: timing breakdown plus response headers
+        $details = '<tr class="http_headers wf-details" id="item_' . $index . '" style="display: none;"><td colspan="9">' .
+            '<div class="wf-timing">' .
+              '<span class="chip"><i class="sw seg-blocked"></i>Blocked <b>' . wf_format_seconds($request["blocked_time"]) . '</b></span>' .
+              '<span class="chip"><i class="sw seg-dns"></i>DNS <b>' . wf_format_seconds($request["dns_time"]) . '</b></span>' .
+              '<span class="chip"><i class="sw seg-connect"></i>Connect <b>' . wf_format_seconds($request["connect_time"]) . '</b></span>' .
+              '<span class="chip"><i class="sw seg-tls"></i>TLS <b>' . wf_format_seconds($request["ssl_time"]) . '</b></span>' .
+              '<span class="chip"><i class="sw seg-wait"></i>Wait (TTFB) <b>' . wf_format_seconds($request["wait_time"]) . '</b></span>' .
+              '<span class="chip"><i class="sw seg-download"></i>Download <b>' . wf_format_seconds($request["download_time"]) . '</b></span>' .
+            '</div><div class="hdr-grid">';
+        foreach ( $request['resp_headers'] as $header_name => $header_value ) {
+          $details .= '<div class="hdr-name">' . htmlentities($header_name) . '</div><div class="hdr-value">' . htmlentities((string)$header_value) . '</div>';
         }
+        $details .= '</div></td></tr>';
 
-        $haroutput .= "</div>";
-
-        # If response is HTTP/2 or HTTP/3 put a nice button to identify it
+        # If response is HTTP/2 or HTTP/3 put a nice badge to identify it
         if ( preg_match("/(h|http)\/?([2-3])/i", $request['http_version'], $out) )
-          $haroutput .= " <button title=\"HTTP" . $out[2] . "\" class=\"http" . $out[2] . "\">H" . $out[2] . "</button>";
+          $haroutput .= '<span title="HTTP/' . $out[2] . '" class="pill http' . $out[2] . '">H' . $out[2] . '</span>';
 
         $compressable = false;
 
@@ -350,6 +421,7 @@ function generate_waterfall($har) {
           $compressable = true;
         } else {
           $content_type = "";
+          $content_breakdown["other"] += $request["size"];
         }
 
         $addl = "";
@@ -373,7 +445,7 @@ function generate_waterfall($har) {
         }
 
         if ( $content_type != "" )
-          $haroutput .= " <button $addl class=\"compressed_" . $compressed ."\">". $content_type . "</button>";
+          $haroutput .= "<span $addl class=\"pill type compressed_" . $compressed ."\">". $content_type . "</span>";
 
         ###############################################################################################################
         # Let's check for questionable practices
@@ -389,7 +461,7 @@ function generate_waterfall($har) {
         }
 
         if ( sizeof($questionable_practice) > 0 ) {
-          $haroutput .= "<img title=\"" . join(",", $questionable_practice) . "\" width=20 src=\"img/attention.svg\">";
+          $haroutput .= "<img class=\"badge-icon\" title=\"" . htmlentities(join(", ", $questionable_practice)) . "\" src=\"img/attention.svg\">";
 
         }
 
@@ -398,10 +470,10 @@ function generate_waterfall($har) {
         ###############################################################################################################
         # Identify requests that Set Cookies
         if ( isset($request['resp_headers']['set-cookie']) ) {
-            $haroutput .= "<img title=\"Contains Set Cookie\" width=18 src=\"img/cookie.png\">";
+            $haroutput .= "<img class=\"badge-icon\" title=\"Sets a cookie\" src=\"img/cookie.png\">";
         }
 
-        $haroutput .= "</td>";
+        $haroutput .= "</span></div></td>";
 
         ################################################################################################################
         ############################################# Server IP ########################################################
@@ -461,9 +533,15 @@ function generate_waterfall($har) {
           } else {
             $img_or_as_name = $ip_to_as_cache[$ip_prefix]["as_name"];
           }
-          $haroutput .= "<td>" . $img_or_as_name . getCountryFlag($ip_to_as_cache[$ip_prefix]["as_country"]) . " " . $request['server_ip'] . "</td>";
+          $as_country = isset($ip_to_as_cache[$ip_prefix]["as_country"]) ? $ip_to_as_cache[$ip_prefix]["as_country"] : "";
+          $as_title = isset($ip_to_as_cache[$ip_prefix]["as_name"]) ? $ip_to_as_cache[$ip_prefix]["as_name"] : "";
+          # Long AS names get truncated by CSS; the full name stays in the tooltip
+          $haroutput .= '<td><div class="ip-cell" title="' . htmlentities($as_title) . '">' .
+              '<span class="ip-vendor">' . $img_or_as_name . '</span>' .
+              '<span class="ip-flag">' . getCountryFlag($as_country) . '</span>' .
+              '<span class="ip-addr mono">' . htmlentities($request['server_ip']) . '</span></div></td>';
         } else {
-          $haroutput .= "<td>&nbsp;</td>";
+          $haroutput .= "<td></td>";
         }
 
         ################################################################################################################
@@ -753,12 +831,9 @@ function generate_waterfall($har) {
             $server = "Unknown";
 
         # Let's see if we can find any Cache headers and can identify whether request was a HIT or a MISS
-        if ( isset($request['resp_headers']['x-cache']) && $hit_or_miss == "UNK" ) {
-          # We already figured out for Akamai whether's it's a hit or miss so don't do anything
-          if ( $server == "Akamai")
-            continue;
+        # We already figured out for Akamai whether it's a hit or miss so skip it there
+        if ( isset($request['resp_headers']['x-cache']) && $hit_or_miss == "UNK" && $server != "Akamai" ) {
           $hit_or_miss = strtoupper(preg_replace("/ from Cloudfront/i", "", $request['resp_headers']['x-cache']));
-
         }
 
         if ( $hit_or_miss != "UNK" ) {
@@ -769,55 +844,87 @@ function generate_waterfall($har) {
           }
         }
 
-        $haroutput .= '<td>' . htmlentities($server) . '</td>' .
-        '<td class="x-cache-' . $hit_or_miss_css . '">' . htmlentities($hit_or_miss) . '</td>' .
-        '<td>' . htmlentities($request["resp_code"]) . '</td>
-        <td align="right">' . number_format($request["duration"], 3) . '</td>
-        <td align="right"><i>' . number_format($request["size"]) . '</i></td>
-        <td class="timeline-data"><span class="bar">' .
-        '<span class="fill" style="background: white; width: ' . $white_space .  '%">&nbsp;</span>';
+        if ( $hit_or_miss == "UNK" ) {
+          $hit_html = '<span class="pill unk" title="No cache status header found">&ndash;</span>';
+        } else {
+          $hit_html = '<span class="pill ' . strtolower($hit_or_miss_css) . '">' . htmlentities($hit_or_miss) . '</span>';
+        }
 
-        if ( $dns_time_bar > 0 )
-          $haroutput .= '<span title="DNS wait time" class="fill" style="background: #FFCC00; width: ' . $dns_time_bar .  '%">&nbsp;</span>';
-        if ( $connect_time_bar > 0 )
-          $haroutput .= '<span title="TCP connect time" class="fill" style="background: #FF3366; width: ' . $connect_time_bar .  '%">&nbsp;</span>';
-        if ( $ssl_time_bar > 0 )
-          $haroutput .= '<span title="TLS establishment time" class="fill" style="background: #663399; width: ' . $ssl_time_bar .  '%">&nbsp;</span>';
-        if ( $wait_time_bar > 0 )
-          $haroutput .= '<span title="Wait time (TTFB)" class="fill" style="background: #1FE11F; width: ' . $wait_time_bar .  '%">&nbsp;</span>';
-        if ( $download_time_bar > 0 )
-          $haroutput .= '<span title="Download time" class="fill" style="background: #1977DD; width: ' . $download_time_bar .  '%">&nbsp;</span>';
+        # Position the duration label right after the bar, or before it when the bar ends near the right edge
+        $bar_start_pct = wf_pct($time_offset, $total_time);
+        $bar_end_pct = wf_pct($time_offset + $request["duration"], $total_time);
+        if ( $bar_end_pct > 88 ) {
+          $label_style = 'right: calc(' . (100 - $bar_start_pct) . '% + 4px)';
+        } else {
+          $label_style = 'left: calc(' . $bar_end_pct . '% + 4px)';
+        }
 
-        $haroutput .= "</span></td></tr>";
+        $haroutput .= '<td><span class="ellipsis" title="' . htmlentities($server) . '">' . htmlentities($server) . '</span></td>' .
+        '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_html . '</td>' .
+        '<td><span class="pill ' . $status_class . '">' . intval($request["resp_code"]) . '</span></td>' .
+        '<td class="num mono">' . wf_format_seconds($request["duration"]) . '</td>' .
+        '<td class="num mono" title="' . number_format($request["size"]) . ' bytes">' . wf_format_bytes($request["size"]) . '</td>' .
+        '<td class="timeline-data"><div class="bar">' .
+          '<span class="gap" style="width:' . $bar_start_pct . '%"></span><span class="segs">' .
+          wf_segment("blocked",  "Blocked / queued",          $request["blocked_time"],  $total_time) .
+          wf_segment("dns",      "DNS lookup",                $request["dns_time"],      $total_time) .
+          wf_segment("connect",  "TCP connect",               $request["connect_time"],  $total_time) .
+          wf_segment("tls",      "TLS handshake",             $request["ssl_time"],      $total_time) .
+          wf_segment("wait",     "Waiting for response (TTFB)", $request["wait_time"],   $total_time) .
+          wf_segment("download", "Content download",          $request["download_time"], $total_time) .
+          '</span><span class="bar-label mono" style="' . $label_style . '">' . wf_format_seconds($request["duration"]) . '</span>' .
+        '</div></td></tr>' . $details;
 
     }
 
     unset($requests);
     unset($har);
 
-    $haroutput .= '</table>
-    <script>
+    $haroutput .= '</tbody></table>';
 
-    $(function(){
-      $(".header_button").button();
-    });
-    </script>
-    ';
+    ###############################################################################################################
+    # Summary strip: headline stats, content breakdown and legend for the bar colours
+    $header = '<div class="wf-summary">';
 
-    $header = '<button class="header_button" id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); return false">Show Headers for all requests</button>
-    Page download time is <span id="total-time"><em>' . sprintf("%.3f", $total_time) . '</em></span>s. Content breakdown is ';
-    foreach ( $content_breakdown as $key => $value ) {
-      $header .= strtoupper($key) . "=" . number_format(intval($value/1000)) . "kB ";
+    $header .= '<div class="wf-stats">' .
+      '<div class="stat"><span class="stat-label">Load time</span><span class="stat-value"><span id="total-time">' . sprintf("%.3f", $total_time) . '</span> s</span></div>' .
+      '<div class="stat"><span class="stat-label">Requests</span><span class="stat-value">' . $request_count . '</span></div>' .
+      '<div class="stat"><span class="stat-label">Transferred</span><span class="stat-value">' . wf_format_bytes($total_bytes) . '</span></div>' .
+      '</div>';
+
+    $header .= '<div class="wf-breakdown"><div class="stat-label">Content breakdown</div><div class="wf-stack">';
+    foreach ( $content_breakdown as $type => $bytes ) {
+      if ( $bytes <= 0 ) continue;
+      $header .= '<span class="ct-' . $type . '" title="' . strtoupper($type) . ' ' . wf_format_bytes($bytes) . '" style="width:' . wf_pct($bytes, $total_bytes) . '%"></span>';
     }
+    $header .= '</div><div class="wf-chips">';
+    foreach ( $content_breakdown as $type => $bytes ) {
+      if ( $bytes <= 0 ) continue;
+      $header .= '<span class="chip"><i class="sw ct-' . $type . '"></i>' . strtoupper($type) . ' <b>' . wf_format_bytes($bytes) . '</b></span>';
+    }
+    $header .= '</div></div>';
+
+    $header .= '<div class="wf-legend"><div class="stat-label">Timing</div><div class="wf-chips">' .
+      '<span class="chip"><i class="sw seg-blocked"></i>Blocked</span>' .
+      '<span class="chip"><i class="sw seg-dns"></i>DNS</span>' .
+      '<span class="chip"><i class="sw seg-connect"></i>Connect</span>' .
+      '<span class="chip"><i class="sw seg-tls"></i>TLS</span>' .
+      '<span class="chip"><i class="sw seg-wait"></i>Wait (TTFB)</span>' .
+      '<span class="chip"><i class="sw seg-download"></i>Download</span>' .
+      '</div>';
 
     # Add links to click to Websocket anchors
     if ( count($websockets_anchors) > 0 ) {
-      $header .= "<em class=\"websockets\">Websockets</em> ";
+      $header .= '<div class="wf-chips"><span class="chip"><i class="sw status-ws"></i>WebSockets';
       foreach ( $websockets_anchors as $key => $value ) {
-        $plus1 = $key + 1;
-        $header .= " <a href=\"#" . $value . "\">" . $plus1 . "</a>";
+        $header .= ' <a href="#' . $value . '">#' . ($key + 1) . '</a>';
       }
+      $header .= '</span></div>';
     }
+    $header .= '</div>';
+
+    $header .= '<div class="wf-actions"><button class="wf-btn" id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); $(\'.hdr-toggle\').toggleClass(\'open\'); return false">Toggle all headers</button></div>';
+    $header .= '</div>';
 
     # If we should cache the IP to AS info persist it to disk
     if ( isset($conf["cache_file"]) ) {

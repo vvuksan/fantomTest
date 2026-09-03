@@ -29,75 +29,7 @@ include_once("./tools.php");
 if ( $waterfall_output ) {
 ?>
 
-function buildTimeTicks(totalTime) {
-    console.log("Total time " + totalTime);
-    
-    var defaultMarks = [10, 100, 200, 250, 500, 1000, 2000, 5000, 10000],
-        target = totalTime / 8,
-        mark = target;
-
-    for (var i = 0; i < defaultMarks.length; i++) {
-        if (defaultMarks[i] > target) {
-            mark = defaultMarks[i];
-            break;
-        }
-    }
-
-    var timelineWidth = $('table tr td.timeline-data').width(),
-        timelineHeight = $('table').height(),
-        pixelRatio = 1;
-
-    if (window.devicePixelRatio) {
-        pixelRatio = window.devicePixelRatio;
-    }
-
-    var marks = $('<div><canvas></canvas></div>'),
-        canvas = $('canvas', marks),
-        ctx = canvas.get(0).getContext('2d'),
-        results = $('#results');
-
-    canvas.css({ width: timelineWidth + 'px', height: timelineHeight + 'px' });
-    canvas.attr('width', timelineWidth * pixelRatio);
-    canvas.attr('height', timelineHeight * pixelRatio);
-
-    results.css('position', 'relative');
-    marks.css({
-        position: 'absolute',
-        'top': $('table tr:first-child').height() + 'px',
-        right: '3px',
-    });
-    results.append(marks); 
-
-    var tickWidth = pixelRatio * (timelineWidth * mark / totalTime),
-        x = tickWidth,
-        time = mark;
-
-
-    ctx.fillStyle = '#333';
-    ctx.font = '14pt helvetica';
-    ctx.beginPath();
-    // Add Zero line
-    ctx.fillText("0", 0, 30);
-    ctx.moveTo(0, 40);
-    ctx.lineTo(0, timelineHeight * pixelRatio);
-    while (x < timelineWidth * pixelRatio) {
-        if (time < 1000) {
-            ctx.fillText(time + "ms", x+1, 30);
-            ctx.fillText(time + "ms", x+1, pixelRatio*(timelineHeight));
-        }
-        else {
-            ctx.fillText((time / 1000).toFixed(2) + "s", x+1, 30);
-            ctx.fillText((time / 1000).toFixed(2) + "s", x+1, pixelRatio*timelineHeight);
-        }
-        ctx.moveTo(x, 40);
-        ctx.lineTo(x, timelineHeight * pixelRatio);
-        x += tickWidth;
-        time += mark;
-    }
-    ctx.strokeStyle = '#333';
-    ctx.stroke();
-}
-
+// Timeline gridlines and tick labels are rendered server-side (see generate_waterfall in tools.php)
 function getTimings() {
     window.location.hash = $("#checked_url").val();
     $("#results").html('<img src="img/spinner.gif">');
@@ -111,8 +43,6 @@ function getTimings() {
       data: formData,
       success: function (data) {
         $("#results").html(data);
-        var totalTime = parseInt(parseFloat($('#total-time').text()) * 1000);
-        buildTimeTicks(totalTime);
       },
       error: function (e) {
           //error
