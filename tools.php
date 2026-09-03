@@ -247,7 +247,20 @@ function generate_waterfall($har) {
         $request_duration = $request['time'] / 1000;
         $url = $request['request']['url'];
         $resp_code = intval($request['response']['status']);
+        # Uncompressed body size, used for the "should this be compressed" heuristic
         $resp_size = isset($request['response']['content']['size']) ? floatval($request['response']['content']['size']) : 0;
+
+        # Bytes actually sent over the wire: Chrome's _transferSize if present, otherwise the HAR
+        # bodySize (compressed body) plus headersSize. HAR uses -1 for unknown values.
+        $resp = $request['response'];
+        if ( isset($resp['_transferSize']) && $resp['_transferSize'] >= 0 ) {
+          $wire_size = floatval($resp['_transferSize']);
+        } else if ( (isset($resp['bodySize']) && $resp['bodySize'] >= 0) || (isset($resp['headersSize']) && $resp['headersSize'] >= 0) ) {
+          $wire_size = (isset($resp['bodySize']) && $resp['bodySize'] >= 0 ? floatval($resp['bodySize']) : 0)
+                     + (isset($resp['headersSize']) && $resp['headersSize'] >= 0 ? floatval($resp['headersSize']) : 0);
+        } else {
+          $wire_size = max(0, $resp_size);
+        }
         
         // Extract the fractional seconds since strtotime drops them. Works for both
         // "...T20:18:44.286Z" and "...T20:18:44.286-04:00" style timestamps.
@@ -303,6 +316,7 @@ function generate_waterfall($har) {
             "download_time" => $timing('receive'),
             "duration" => $request_duration,
             "size" => max(0, $resp_size),
+            "wire_size" => $wire_size,
             "resp_code" => intval($resp_code),
             "http_version" => $request['response']['httpVersion'],
             "server_ip" =>  $server_ip,
@@ -370,7 +384,7 @@ function generate_waterfall($har) {
 
     foreach ( $requests as $index => $request ) {
         $time_offset = $request["start_time"] - $min_start_time;
-        $total_bytes += $request["size"];
+        $total_bytes += $request["wire_size"];
 
         # Colour rows/pills by response class
         $status_class = "status-" . intval($request["resp_code"] / 100) . "xx";
@@ -425,34 +439,34 @@ function generate_waterfall($har) {
         if ( preg_match("/text\/html/i", $content_type_full ) ) {
           $content_type = "HTML";
           $compressable = true;
-          $content_breakdown["html"] += $request["size"];
+          $content_breakdown["html"] += $request["wire_size"];
         } else if ( preg_match("/text\/css/i", $content_type_full ) ){
           $content_type = "CSS";
           $compressable = true;
-          $content_breakdown["css"] += $request["size"];
+          $content_breakdown["css"] += $request["wire_size"];
         } else if ( preg_match("/javascript|text\/js/i", $content_type_full ) ){
           $content_type = "JS";
           $compressable = true;
-          $content_breakdown["js"] += $request["size"];
+          $content_breakdown["js"] += $request["wire_size"];
         } else if ( preg_match("/image\/(gif|png|jpeg|avif|webp)/i", $content_type_full, $out ) ) {
           $content_type = strtoupper($out[1]);
-          $content_breakdown["images"] += $request["size"];
+          $content_breakdown["images"] += $request["wire_size"];
           unset($out);
         } else if ( preg_match("/json/i", $content_type_full ) ) {
           $content_type = "JSON";
-          $content_breakdown["json"] += $request["size"];
+          $content_breakdown["json"] += $request["wire_size"];
           $compressable = true;
         } else if ( preg_match("/svg/i", $content_type_full ) ) {
           $content_type = "SVG";
-          $content_breakdown["images"] += $request["size"];
+          $content_breakdown["images"] += $request["wire_size"];
           $compressable = true;
         # WOFF is already compressed https://developers.googleblog.com/2015/02/smaller-fonts-with-woff-20-and-unicode.html
         } else if ( preg_match("/woff/i", $content_type_full ) ){
           $content_type = "FONT";
-          $content_breakdown["fonts"] += $request["size"];
+          $content_breakdown["fonts"] += $request["wire_size"];
         } else if ( preg_match("/font/i", $content_type_full ) ){
           $content_type = "FONT";
-          $content_breakdown["fonts"] += $request["size"];
+          $content_breakdown["fonts"] += $request["wire_size"];
           $compressable = true;
         } else if ( preg_match("/text\/plain/i", $content_type_full ) ){
           $content_type = "TXT";
@@ -464,7 +478,7 @@ function generate_waterfall($har) {
           $compressable = true;
         } else {
           $content_type = "";
-          $content_breakdown["other"] += $request["size"];
+          $content_breakdown["other"] += $request["wire_size"];
         }
 
         $addl = "";
@@ -871,7 +885,7 @@ function generate_waterfall($har) {
         if ( !isset($provider_stats[$provider]) )
           $provider_stats[$provider] = array("requests" => 0, "bytes" => 0);
         $provider_stats[$provider]["requests"]++;
-        $provider_stats[$provider]["bytes"] += $request["size"];
+        $provider_stats[$provider]["bytes"] += $request["wire_size"];
 
         if ( count($cms) > 0 ) {
             $server .= " (" . join(",", $cms) . ")";
@@ -914,7 +928,7 @@ function generate_waterfall($har) {
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_html . '</td>' .
         '<td><span class="pill ' . $status_class . '">' . intval($request["resp_code"]) . '</span></td>' .
         '<td class="num mono">' . wf_format_seconds($request["duration"]) . '</td>' .
-        '<td class="num mono" title="' . number_format($request["size"]) . ' bytes">' . wf_format_bytes($request["size"]) . '</td>' .
+        '<td class="num mono" title="' . number_format($request["wire_size"]) . ' bytes over the wire, ' . number_format($request["size"]) . ' bytes uncompressed">' . wf_format_bytes($request["wire_size"]) . '</td>' .
         '<td class="timeline-data"><div class="bar">' .
           '<span class="gap" style="width:' . $bar_start_pct . '%"></span><span class="segs">' .
           wf_segment("blocked",  "Blocked / queued",          $request["blocked_time"],  $total_time) .
@@ -940,10 +954,10 @@ function generate_waterfall($har) {
     $header .= '<div class="wf-stats">' .
       '<div class="stat"><span class="stat-label">Load time</span><span class="stat-value"><span id="total-time">' . sprintf("%.3f", $total_time) . '</span> s</span></div>' .
       '<div class="stat"><span class="stat-label">Requests</span><span class="stat-value">' . $request_count . '</span></div>' .
-      '<div class="stat"><span class="stat-label">Transferred</span><span class="stat-value">' . wf_format_bytes($total_bytes) . '</span></div>' .
+      '<div class="stat" title="Bytes sent over the wire (compressed bodies plus headers)"><span class="stat-label">Transferred</span><span class="stat-value">' . wf_format_bytes($total_bytes) . '</span></div>' .
       '</div>';
 
-    $header .= '<div class="wf-breakdown"><div class="stat-label">Content breakdown</div><div class="wf-stack">';
+    $header .= '<div class="wf-breakdown"><div class="stat-label" title="Bytes sent over the wire per content type">Content breakdown (wire bytes)</div><div class="wf-stack">';
     foreach ( $content_breakdown as $type => $bytes ) {
       if ( $bytes <= 0 ) continue;
       $header .= '<span class="ct-' . $type . '" title="' . strtoupper($type) . ' ' . wf_format_bytes($bytes) . '" style="width:' . wf_pct($bytes, $total_bytes) . '%"></span>';
