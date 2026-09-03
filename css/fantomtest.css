@@ -280,6 +280,62 @@ table.tablesorter .header {
   border-color: #adb5bd;
 }
 
+/* per-provider breakdown */
+.wf-providers {
+  flex: 1 1 100%;
+  border-top: 1px solid var(--wf-border);
+  padding-top: 10px;
+}
+
+.prov-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) 1fr 1fr;
+  gap: 3px 16px;
+  align-items: center;
+  max-width: 900px;
+}
+
+.prov-head {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--wf-muted);
+}
+
+.prov-name {
+  font-size: 12px;
+}
+
+.prov-bar {
+  position: relative;
+  height: 18px;
+  background: #fff;
+  border: 1px solid var(--wf-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.prov-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 1px;
+}
+.prov-req   { background: #cfe3ff; }
+.prov-bytes { background: #d3f3dc; }
+
+.prov-label {
+  position: absolute;
+  left: 6px;
+  top: 0;
+  line-height: 16px;
+  color: var(--wf-text);
+}
+.prov-label small {
+  font-size: 10px;
+  color: var(--wf-muted);
+}
+
 /* phase & content-type colours (shared by legend, chips and bars) */
 .seg-blocked, .sw.seg-blocked  { background: var(--wf-blocked); }
 .seg-dns, .sw.seg-dns          { background: var(--wf-dns); }

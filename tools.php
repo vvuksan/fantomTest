@@ -166,6 +166,48 @@ function wf_pct($seconds, $total) {
     return sprintf("%.3f", ($seconds / $total) * 100);
 }
 
+# Collapse the detailed server string (which carries edge locations) into a provider name
+# that can be aggregated on. Falls back to the network owner of the IP, then the AS name.
+function wf_provider_name($server, $ip_provider, $as_name) {
+    $prefixes = array(
+      "/^Fastly/i"      => "Fastly",
+      "/^CF:/"          => "Cloudflare",
+      "/^CloudFront/i"  => "CloudFront",
+      "/^Akamai/i"      => "Akamai",
+      "/^Stackpath/i"   => "StackPath",
+      "/^CDNetworks/i"  => "CDNetworks",
+      "/^Quantil/i"     => "Quantil",
+      "/^Limelight/i"   => "Limelight",
+      "/^CDN77/i"       => "CDN77",
+      "/^Edgecast/i"    => "Edgecast",
+      "/^Google/i"      => "Google",
+    );
+    $server = trim($server);
+    if ( $server != "" ) {
+      foreach ( $prefixes as $pattern => $name ) {
+        if ( preg_match($pattern, $server) )
+          return $name;
+      }
+      return $server;
+    }
+    if ( $ip_provider != "UNK" )
+      return $ip_provider;
+    if ( $as_name != "" )
+      return $as_name;
+    return "Unknown";
+}
+
+# One row of the provider breakdown: name, then requests and bytes as labelled mini bars
+function wf_provider_row($name, $stats, $total_requests, $total_bytes) {
+    $req_pct = $total_requests > 0 ? $stats['requests'] / $total_requests * 100 : 0;
+    $byte_pct = $total_bytes > 0 ? $stats['bytes'] / $total_bytes * 100 : 0;
+    return '<div class="prov-name ellipsis" title="' . htmlentities($name) . '">' . htmlentities($name) . '</div>' .
+      '<div class="prov-bar"><span class="prov-fill prov-req" style="width:' . sprintf("%.2f", $req_pct) . '%"></span>' .
+        '<span class="prov-label mono">' . $stats['requests'] . ' <small>(' . round($req_pct) . '%)</small></span></div>' .
+      '<div class="prov-bar"><span class="prov-fill prov-bytes" style="width:' . sprintf("%.2f", $byte_pct) . '%"></span>' .
+        '<span class="prov-label mono">' . wf_format_bytes($stats['bytes']) . ' <small>(' . round($byte_pct) . '%)</small></span></div>';
+}
+
 # A single timing bar segment (only emitted when it has a duration)
 function wf_segment($class, $label, $seconds, $total) {
     if ( $seconds <= 0 )
@@ -287,6 +329,7 @@ function generate_waterfall($har) {
     $websockets_anchors = array();
     $total_bytes = 0;
     $request_count = count($requests);
+    $provider_stats = array();
 
     # Pick a tick interval for the timeline grid so that we get roughly 6-10 gridlines
     $total_ms = $total_time * 1000;
@@ -479,6 +522,8 @@ function generate_waterfall($har) {
         ############################################# Server IP ########################################################
         ################################################################################################################
         # Let's determine the AS number and details
+        $frontend_ip_provider = "UNK";
+        $as_title = "";
         if ($request['server_ip']) {
           $ip_parts = explode(".", $request['server_ip']);
           array_pop($ip_parts);
@@ -487,7 +532,6 @@ function generate_waterfall($har) {
             $ip_details = ip_to_as_info($request['server_ip']);
             $ip_to_as_cache[$ip_prefix] = $ip_details;
           }
-          $frontend_ip_provider = "UNK";
           # Instead of showing text for some of the most common AS let's use an image
           if ( $ip_to_as_cache[$ip_prefix]["as_number"] == "AS16509" || $ip_to_as_cache[$ip_prefix]["as_number"] == "AS14618" ) {
             $img_or_as_name = '<img src="img/aws.svg" class="vendor_img">';
@@ -822,6 +866,13 @@ function generate_waterfall($har) {
         }
 
 
+        # Aggregate requests and bytes per provider before the CMS details get appended
+        $provider = wf_provider_name($server, $frontend_ip_provider, $as_title);
+        if ( !isset($provider_stats[$provider]) )
+          $provider_stats[$provider] = array("requests" => 0, "bytes" => 0);
+        $provider_stats[$provider]["requests"]++;
+        $provider_stats[$provider]["bytes"] += $request["size"];
+
         if ( count($cms) > 0 ) {
             $server .= " (" . join(",", $cms) . ")";
         }
@@ -924,6 +975,32 @@ function generate_waterfall($har) {
     $header .= '</div>';
 
     $header .= '<div class="wf-actions"><button class="wf-btn" id="show_all_headers_button" onClick="$(\'.http_headers\').toggle(); $(\'.hdr-toggle\').toggleClass(\'open\'); return false">Toggle all headers</button></div>';
+
+    # Requests and bytes per provider, largest by bytes first. Long tails get folded into "Other".
+    uasort($provider_stats, function($a, $b) {
+      if ( $a["bytes"] == $b["bytes"] ) return $b["requests"] - $a["requests"];
+      return $b["bytes"] > $a["bytes"] ? 1 : -1;
+    });
+    $max_provider_rows = 10;
+    if ( count($provider_stats) > $max_provider_rows ) {
+      $shown = array_slice($provider_stats, 0, $max_provider_rows - 1, true);
+      $rest = array_slice($provider_stats, $max_provider_rows - 1, NULL, true);
+      $other = array("requests" => 0, "bytes" => 0);
+      foreach ( $rest as $stats ) {
+        $other["requests"] += $stats["requests"];
+        $other["bytes"] += $stats["bytes"];
+      }
+      $shown["Other (" . count($rest) . " providers)"] = $other;
+      $provider_stats = $shown;
+    }
+
+    $header .= '<div class="wf-providers"><div class="stat-label">By provider</div><div class="prov-grid">' .
+      '<div class="prov-head">Provider</div><div class="prov-head">Requests</div><div class="prov-head">Bytes</div>';
+    foreach ( $provider_stats as $name => $stats ) {
+      $header .= wf_provider_row($name, $stats, $request_count, $total_bytes);
+    }
+    $header .= '</div></div>';
+
     $header .= '</div>';
 
     # If we should cache the IP to AS info persist it to disk
