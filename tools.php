@@ -924,19 +924,24 @@ function generate_waterfall($har) {
           $label_style = 'left: calc(' . $bar_end_pct . '% + 4px)';
         }
 
+        # The segment wrapper gets the request's share of the timeline; each phase is then a share of the wrapper
+        $phases_total = $request["blocked_time"] + $request["dns_time"] + $request["connect_time"] + $request["ssl_time"] + $request["wait_time"] + $request["download_time"];
+        if ( $phases_total <= 0 )
+          $phases_total = $request["duration"];
+
         $haroutput .= '<td><span class="ellipsis" title="' . htmlentities($server) . '">' . htmlentities($server) . '</span></td>' .
         '<td class="x-cache-' . $hit_or_miss_css . '">' . $hit_html . '</td>' .
         '<td><span class="pill ' . $status_class . '">' . intval($request["resp_code"]) . '</span></td>' .
         '<td class="num mono">' . wf_format_seconds($request["duration"]) . '</td>' .
         '<td class="num mono" title="' . number_format($request["wire_size"]) . ' bytes over the wire, ' . number_format($request["size"]) . ' bytes uncompressed">' . wf_format_bytes($request["wire_size"]) . '</td>' .
         '<td class="timeline-data"><div class="bar">' .
-          '<span class="gap" style="width:' . $bar_start_pct . '%"></span><span class="segs">' .
-          wf_segment("blocked",  "Blocked / queued",          $request["blocked_time"],  $total_time) .
-          wf_segment("dns",      "DNS lookup",                $request["dns_time"],      $total_time) .
-          wf_segment("connect",  "TCP connect",               $request["connect_time"],  $total_time) .
-          wf_segment("tls",      "TLS handshake",             $request["ssl_time"],      $total_time) .
-          wf_segment("wait",     "Waiting for response (TTFB)", $request["wait_time"],   $total_time) .
-          wf_segment("download", "Content download",          $request["download_time"], $total_time) .
+          '<span class="gap" style="width:' . $bar_start_pct . '%"></span><span class="segs" style="width:' . wf_pct($phases_total, $total_time) . '%">' .
+          wf_segment("blocked",  "Blocked / queued",          $request["blocked_time"],  $phases_total) .
+          wf_segment("dns",      "DNS lookup",                $request["dns_time"],      $phases_total) .
+          wf_segment("connect",  "TCP connect",               $request["connect_time"],  $phases_total) .
+          wf_segment("tls",      "TLS handshake",             $request["ssl_time"],      $phases_total) .
+          wf_segment("wait",     "Waiting for response (TTFB)", $request["wait_time"],   $phases_total) .
+          wf_segment("download", "Content download",          $request["download_time"], $phases_total) .
           '</span><span class="bar-label mono" style="' . $label_style . '">' . wf_format_seconds($request["duration"]) . '</span>' .
         '</div></td></tr>' . $details;
 
